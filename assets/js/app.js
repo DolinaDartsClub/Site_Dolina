@@ -85,9 +85,10 @@ export function erreurFr(error) {
   if (/rate limit|too many|security purposes/i.test(m)) return 'Trop de tentatives en peu de temps. Réessayez dans quelques minutes.';
   if (/invalid email|unable to validate email/i.test(m)) return 'Adresse email invalide.';
   if (/same password|different from the old/i.test(m)) return 'Le nouveau mot de passe doit être différent de l\'ancien.';
-  if (/sending|smtp|email/i.test(m) && /error|fail/i.test(m)) return 'L\'email n\'a pas pu être envoyé. Réessayez plus tard ou prévenez le club.';
+  if (/sending|smtp|email/i.test(m) && /error|fail/i.test(m)) return `L'email n'a pas pu être envoyé. Réessayez plus tard ou prévenez le club. (Détail : ${m})`;
+  if (/database error/i.test(m)) return `Le compte n'a pas pu être enregistré. Prévenez le club. (Détail : ${m})`;
   if (/fetch|network/i.test(m)) return 'Connexion internet indisponible. Réessayez.';
-  return 'Une erreur est survenue. Réessayez dans un instant.';
+  return `Une erreur est survenue. Réessayez dans un instant.${m ? ` (Détail : ${m})` : ''}`;
 }
 
 // Affiche un message dans une zone (classe message--erreur ou message--ok)

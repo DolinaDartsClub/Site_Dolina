@@ -48,6 +48,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 
 img { max-width: 100%; display: block; }
 
+/* Un élément masqué reste masqué, même s'il a une mise en page flex ou grid */
+[hidden] { display: none !important; }
+
 .visuellement-cache {
   position: absolute !important; width: 1px; height: 1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
