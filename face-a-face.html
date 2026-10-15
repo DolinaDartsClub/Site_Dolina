@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Face-à-face – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/face-a-face.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom">Face-à-face</span>
+      <span class="entete__sous">Dolina Darts Club</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page">
+  <div id="acces" hidden></div>
+  <div id="contenu" hidden>
+    <div class="mp-entete">
+      <h1 class="section__titre">Face-à-face</h1>
+      <a class="bouton bouton--petit" href="classement.html">Classement</a>
+    </div>
+    <nav class="t-onglets" role="tablist" aria-label="Type de face-à-face">
+      <button type="button" role="tab" data-mode="joueurs" aria-selected="true">Joueurs</button>
+      <button type="button" role="tab" data-mode="doublettes" aria-selected="false">Doublettes</button>
+    </nav>
+    <section class="ff-choix" aria-label="Choix des adversaires">
+      <div class="ff-choix__camp" id="choix-a"></div>
+      <span class="ff-choix__vs" aria-hidden="true">VS</span>
+      <div class="ff-choix__camp" id="choix-b"></div>
+    </section>
+    <div class="mp-filtres">
+      <div class="mp-filtre" role="group" aria-label="Période" data-filtre="periode">
+        <button type="button" data-valeur="tout" aria-pressed="true">Depuis le début</button>
+        <button type="button" data-valeur="saison" id="btn-saison">Saison</button>
+      </div>
+      <div class="mp-filtre" role="group" aria-label="Jeu" data-filtre="jeu">
+        <button type="button" data-valeur="" aria-pressed="true">301 et 501</button>
+        <button type="button" data-valeur="301">301</button>
+        <button type="button" data-valeur="501">501</button>
+      </div>
+    </div>
+    <div id="resultat" aria-live="polite"></div>
+  </div>
+</main>
+
+</body>
+</html>

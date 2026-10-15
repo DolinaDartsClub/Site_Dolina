@@ -45,7 +45,12 @@ async function init() {
   const saison = debutSaison();
   document.getElementById('btn-saison').textContent = `Saison ${saison.getFullYear()}-${saison.getFullYear() + 1}`;
   document.getElementById('contenu').hidden = false;
-  if (idJoueur !== moi.id) document.getElementById('lien-parties').hidden = true;
+  if (idJoueur !== moi.id) {
+    document.getElementById('lien-parties').hidden = true;
+    const ff = document.getElementById('lien-ff');
+    ff.href = `face-a-face.html?a=${encodeURIComponent(moi.id)}&b=${encodeURIComponent(idJoueur)}`;
+    ff.textContent = 'Face-à-face avec moi';
+  }
   charger();
 }
 

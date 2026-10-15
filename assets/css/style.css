@@ -981,3 +981,31 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .cl-autres .cl-tableau { opacity: 0.85; }
 /* Un tableau large défile dans son cadre sans élargir la page */
 .page > * { min-width: 0; }
+/* Face-à-face */
+.ff-choix { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; margin-bottom: 14px; }
+.ff-choix__camp { display: grid; gap: 8px; justify-items: center; text-align: center; padding: 14px 10px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); min-width: 0; }
+.ff-choix__camp select { width: 100%; min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--bord-fort); background: var(--noir); color: var(--blanc); font: inherit; }
+.ff-choix__nom { font-weight: 700; font-size: 17px; overflow-wrap: anywhere; }
+.ff-choix__vs { font-family: var(--police-titre); font-size: 24px; font-weight: 700; color: var(--orange); }
+.ff-bilan { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; padding: 16px; margin-bottom: 12px; border-radius: var(--rayon); background: var(--orange-fond); border: 1px solid #5a3a14; }
+.ff-bilan__camp { font-size: 17px; overflow-wrap: anywhere; }
+.ff-bilan__camp--droite { text-align: right; }
+.ff-bilan__camp--tete strong { color: var(--orange); }
+.ff-bilan__score { display: grid; justify-items: center; font-family: var(--police-titre); font-size: 52px; font-weight: 700; line-height: 1; grid-template-columns: auto auto auto; column-gap: 8px; }
+.ff-bilan__score i { font-style: normal; color: var(--gris); }
+.ff-bilan__score small { grid-column: 1 / -1; margin-top: 6px; font-family: var(--police); font-size: 12px; font-weight: 500; color: var(--gris-clair); text-align: center; }
+.ff-comparaison { display: grid; gap: 4px; margin-bottom: 18px; }
+.ff-ligne { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; background: var(--carte); }
+.ff-titre { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: var(--gris-clair); text-align: center; }
+.ff-val { font-family: var(--police-titre); font-size: 22px; font-weight: 700; color: var(--gris-clair); }
+.ff-val--droite { text-align: right; }
+.ff-val--mieux { color: var(--orange); }
+.ff-historique { display: grid; gap: 6px; }
+.ff-partie { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 12px; border-radius: 12px; background: var(--carte); border: 1px solid var(--bord); color: var(--blanc); text-decoration: none; }
+.ff-partie:hover { border-color: var(--bord-fort); }
+.ff-partie__date { font-size: 13px; color: var(--gris-clair); }
+.ff-partie__score { grid-row: span 2; align-self: center; font-family: var(--police-titre); font-size: 26px; font-weight: 700; }
+.ff-partie__moy { font-size: 12px; color: var(--gris); }
+.ff-partie__gagnant { font-size: 13px; font-weight: 600; }
+.ff-bilan__camp { overflow-wrap: break-word; hyphens: auto; min-width: 0; }
+@media (max-width: 480px) { .ff-bilan { padding: 12px; gap: 6px; } .ff-bilan__camp { font-size: 15px; } .ff-bilan__score { font-size: 40px; } .ff-val { font-size: 19px; } }
