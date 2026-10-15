@@ -5,7 +5,7 @@
 //  À chaque mise à jour du site, augmenter le numéro de VERSION.
 // =====================================================================
 
-const VERSION = 'dolina-v7';
+const VERSION = 'dolina-v8';
 const FICHIERS = [
   './',
   'index.html',
@@ -17,6 +17,7 @@ const FICHIERS = [
   'mot-de-passe.html',
   'mot-de-passe-oublie.html',
   'compte.html',
+  'admin.html',
   'assets/css/style.css',
   'assets/js/app.js',
   'assets/js/config.js',
@@ -27,6 +28,7 @@ const FICHIERS = [
   'assets/js/mot-de-passe.js',
   'assets/js/mot-de-passe-oublie.js',
   'assets/js/compte.js',
+  'assets/js/admin.js',
   'assets/img/logo.png',
   'assets/img/favicon.png',
 ];

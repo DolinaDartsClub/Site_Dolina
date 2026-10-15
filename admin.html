@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Administration – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <meta name="robots" content="noindex">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script type="module" src="assets/js/admin.js"></script>
+</head>
+<body>
+
+<header class="entete">
+  <a class="entete__marque" href="./">
+    <img class="entete__logo" src="assets/img/logo.png" alt="Logo du Dolina Darts Club">
+    <span class="entete__titres">
+      <span class="entete__nom">Administration</span>
+      <span class="entete__sous">Dolina Darts Club</span>
+    </span>
+  </a>
+  <a class="bouton" href="compte.html">Mon compte</a>
+</header>
+
+<main class="page page--admin">
+  <div class="message" id="message" role="alert" hidden></div>
+
+  <nav class="onglets" id="onglets" aria-label="Rubriques de l'administration" hidden>
+    <button type="button" class="onglet" data-onglet="inscriptions" aria-selected="true">Inscriptions <span class="compteur" id="nb-attente">0</span></button>
+    <button type="button" class="onglet" data-onglet="membres" aria-selected="false">Membres</button>
+    <button type="button" class="onglet" data-onglet="equipes" aria-selected="false">Équipes</button>
+  </nav>
+
+  <section id="vue-inscriptions" class="section" aria-live="polite">
+    <p class="vide">Chargement…</p>
+  </section>
+
+  <section id="vue-membres" class="section" hidden>
+    <label class="champ">
+      <span class="visuellement-cache">Rechercher un membre</span>
+      <input type="search" id="recherche" placeholder="Rechercher : nom, prénom, surnom, email">
+    </label>
+    <div id="liste-membres" class="liste-cartes"></div>
+  </section>
+
+  <section id="vue-equipes" class="section" hidden>
+    <div id="liste-equipes" class="liste-cartes"></div>
+  </section>
+</main>
+
+</body>
+</html>

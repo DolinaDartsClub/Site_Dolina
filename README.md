@@ -16,7 +16,8 @@ Site web du Dolina Darts Club : actualités, matchs en direct, scorer X01, stati
 | `inscription.html`, `connexion.html` | Création de compte et connexion |
 | `mot-de-passe-oublie.html` | Mot de passe oublié : demande du lien (ou contact du club tant que les emails sont inactifs) |
 | `mot-de-passe.html` | Choix d'un nouveau mot de passe (lien reçu par email) |
-| `compte.html` | Mon compte : état de validation, équipes, déconnexion |
+| `compte.html` | Mon compte : état de validation, équipes, espace capitaine, mot de passe |
+| `admin.html` | Administration : inscriptions, membres, rôles, équipes et capitaines |
 | `bientot.html` | Page d'attente pour les rubriques pas encore ouvertes |
 | `assets/css/style.css` | Charte graphique (noir mat, orange, gris) |
 | `assets/js/config.js` | Adresse et clé **publique** de Supabase |
@@ -27,6 +28,7 @@ Site web du Dolina Darts Club : actualités, matchs en direct, scorer X01, stati
 | `supabase/002_premier_admin.sql` | Désignation du premier administrateur |
 | `supabase/003_correctif_parties.sql` | Correctif : lien entre parties et joueurs |
 | `supabase/004_reinitialiser_mot_de_passe.sql` | Réinitialiser le mot de passe d'un joueur (provisoire, par un admin) |
+| `supabase/005_admin.sql` | Administration : suppression de compte, toujours un admin, capitaine membre de son équipe |
 | `supabase/emails/` | Modèles d'emails en français à coller dans Supabase |
 
 ## Sécurité

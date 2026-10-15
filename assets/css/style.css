@@ -244,6 +244,48 @@ img { max-width: 100%; display: block; }
 .statut--ok { background: var(--orange); color: var(--noir); }
 .statut--refus { background: #2a1414; color: var(--erreur); }
 
+/* ---------- Administration ---------- */
+
+.page--admin { max-width: 860px; }
+.onglets { display: flex; gap: 4px; border-bottom: 1px solid #2a2a2a; overflow-x: auto; }
+.onglet {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 14px;
+  border: 0; border-bottom: 3px solid transparent; background: transparent;
+  color: var(--gris); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.onglet[aria-selected="true"] { color: var(--blanc); border-bottom-color: var(--orange); }
+.compteur { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--orange); color: var(--noir); font-size: 13px; text-align: center; }
+.liste-cartes { display: grid; gap: 12px; }
+.infos { margin: 4px 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 15px; }
+.infos dt { color: var(--gris); }
+.infos dd { margin: 0; overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.bouton--danger { border-color: #8a3a3a; color: var(--erreur); }
+.bouton--danger:hover { border-color: var(--erreur); color: var(--erreur); }
+.bouton--petit { min-height: 38px; padding: 0 12px; font-size: 14px; }
+.lien-danger { color: var(--erreur); font-size: 14px; margin-top: 4px; }
+.fiche { padding: 0; }
+.fiche__resume {
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 14px 16px; cursor: pointer; list-style: none;
+}
+.fiche__resume::-webkit-details-marker { display: none; }
+.fiche__resume .match__format { grid-column: 1 / -1; }
+.fiche__nom { font-weight: 600; font-size: 16px; }
+.fiche__badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.fiche__contenu { display: flex; flex-direction: column; gap: 14px; padding: 0 16px 16px; border-top: 1px solid #2a2a2a; padding-top: 14px; }
+.fiche__equipes h3 { margin: 0 0 6px; font-size: 15px; }
+.ligne-equipe {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 10px;
+  padding: 10px 0; border-bottom: 1px solid #2a2a2a;
+}
+.ligne-equipe__nom { font-weight: 600; }
+.ligne-equipe__actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+.ligne-equipe__actions:empty { display: none; }
+.alerte {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 14px 16px; border-radius: var(--rayon); background: var(--orange-fond); border: 1px solid #5a3a14;
+}
+
 /* ---------- Score en direct ---------- */
 
 .live { display: grid; gap: 20px; }
