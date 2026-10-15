@@ -85,6 +85,8 @@ img { max-width: 100%; display: block; }
 .bouton:hover { color: var(--orange-clair); border-color: var(--orange-clair); }
 .bouton--plein { background: var(--orange); color: var(--noir); }
 .bouton--accueil { gap: 6px; padding: 0 14px; flex-shrink: 0; }
+.bouton--icone { width: 44px; padding: 0; flex-shrink: 0; }
+.bouton--icone svg { width: 22px; height: 22px; }
 .bouton--accueil svg { width: 22px; height: 22px; }
 @media (max-width: 420px) {
   /* Petit téléphone : icône seule pour laisser la place au nom du club */

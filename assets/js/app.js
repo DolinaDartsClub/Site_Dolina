@@ -156,8 +156,22 @@ function ajouterBoutonAccueil() {
   lien.className = 'bouton bouton--plein bouton--accueil';
   lien.setAttribute('aria-label', 'Retour à l\'accueil du site');
   lien.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Accueil</span>';
+  // Bouton « page précédente » (flèche seule), juste avant le bouton Accueil
+  const retour = document.createElement('button');
+  retour.type = 'button';
+  retour.className = 'bouton bouton--icone bouton--retour';
+  retour.setAttribute('aria-label', 'Revenir à la page précédente');
+  retour.title = 'Page précédente';
+  retour.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>';
+  retour.addEventListener('click', () => {
+    // Page précédente du site si elle existe, sinon l'accueil
+    const vientDuSite = document.referrer && new URL(document.referrer).origin === location.origin;
+    if (vientDuSite && history.length > 1) history.back();
+    else location.href = './';
+  });
+
   const marque = entete.querySelector('.entete__marque');
-  if (marque) marque.after(lien); else entete.prepend(lien);
+  if (marque) marque.after(retour, lien); else entete.prepend(retour, lien);
 }
 ajouterBoutonAccueil();
 
