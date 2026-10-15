@@ -225,7 +225,7 @@ function vueParticipants() {
     return `
       <li class="t-inscrit${moiIci ? ' t-inscrit--moi' : ''}">
         <span class="t-inscrit__num">${i + 1}</span>
-        <span class="t-inscrit__nom"><strong>${esc(e.nom)}</strong>${e.detail ? `<small>${esc(e.detail)}</small>` : ''}</span>
+        <span class="t-inscrit__nom"><strong>${moi && e.profile_id ? `<a href="profil.html?id=${e.profile_id}">${esc(e.nom)}</a>` : esc(e.nom)}</strong>${e.detail ? `<small>${esc(e.detail)}</small>` : ''}</span>
         ${e.pool_no && t.format === 'pools' ? `<span class="t-poule-mini">Poule ${lettrePoule(e.pool_no)}</span>` : ''}
         ${moiIci ? '<span class="t-moi">Vous</span>' : ''}
         ${peutRetirer ? `<button type="button" class="bouton bouton--icone bouton--danger" data-retirer="${e.id}" aria-label="${moi && e.profile_id === moi.id ? 'Me désinscrire' : `Retirer ${esc(e.nom)}`}" title="${moi && e.profile_id === moi.id ? 'Me désinscrire' : 'Retirer'}">✕</button>` : ''}

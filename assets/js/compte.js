@@ -155,6 +155,7 @@ async function afficher() {
     ${profil.status === 'active' ? `<div class="actions">
       <a class="bouton bouton--plein" href="mes-parties.html">Mes parties</a>
       <a class="bouton" href="stats.html">Mes stats</a>
+      <a class="bouton" href="profil.html">Mon profil</a>
       <a class="bouton" href="jouer.html">Nouvelle partie</a>
     </div>` : ''}
     <details class="carte-info repli" id="bloc-profil">

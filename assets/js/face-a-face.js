@@ -69,7 +69,7 @@ function afficherChoix() {
     if (mode === 'joueurs') {
       z.innerHTML = `
         ${avatar(c?.profil || null, `avatar--grand${c ? '' : ' avatar--vide'}`)}
-        <span class="ff-choix__nom">${c ? (c.id ? `<a href="stats.html?id=${encodeURIComponent(c.id)}">${esc(c.nom)}</a>` : esc(c.nom)) : 'Choisir un joueur'}</span>
+        <span class="ff-choix__nom">${c ? (c.id ? `<a href="profil.html?id=${encodeURIComponent(c.id)}">${esc(c.nom)}</a>` : esc(c.nom)) : 'Choisir un joueur'}</span>
         <button type="button" class="bouton bouton--petit${c ? '' : ' bouton--plein'}" data-choisir="${cote}">${c ? 'Changer' : 'Choisir'}</button>`;
     } else {
       const autre = choix[cote === 'a' ? 'b' : 'a'];

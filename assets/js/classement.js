@@ -106,7 +106,7 @@ function ligne(l) {
   const mien = moi && (l.profile_id === moi.id || (l.cle || '').split('|').includes(moi.id));
   const cellules = {
     rang: `<td class="cl-rang">${l.rang ?? '–'}</td>`,
-    nom: `<th scope="row" class="ts-nom">${l.profile_id ? `<a href="stats.html?id=${encodeURIComponent(l.profile_id)}">${esc(l.nom)}</a>` : `<a href="face-a-face.html?mode=doublettes&a=${encodeURIComponent(l.cle)}" title="Face-à-face de cette doublette">${esc(l.nom)}</a>`}${mien ? ' <span class="t-moi">Vous</span>' : ''}</th>`,
+    nom: `<th scope="row" class="ts-nom">${l.profile_id ? `<a href="profil.html?id=${encodeURIComponent(l.profile_id)}">${esc(l.nom)}</a>` : `<a href="face-a-face.html?mode=doublettes&a=${encodeURIComponent(l.cle)}" title="Face-à-face de cette doublette">${esc(l.nom)}</a>`}${mien ? ' <span class="t-moi">Vous</span>' : ''}</th>`,
     equipes: `<td class="cl-equipe">${esc(l.equipes || '')}</td>`,
     matchs: `<td>${l.matchs}</td>`,
     victoires: `<td class="s-gagne ts-fort">${l.victoires}</td>`,

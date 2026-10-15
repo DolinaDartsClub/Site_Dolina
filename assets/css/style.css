@@ -1016,3 +1016,12 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .avatar--vide { border-style: dashed; border-color: var(--bord-fort); color: var(--gris); }
 .ff-choix__nom a { color: var(--blanc); text-decoration: none; }
 .ff-choix__nom a:hover { color: var(--orange); }
+/* Profil d'un membre */
+.pr-entete { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+.avatar--profil { width: 112px; height: 112px; font-size: 40px; border-width: 3px; }
+.pr-identite { display: grid; gap: 6px; min-width: 0; flex: 1 1 220px; }
+.pr-nom { margin: 0; font-family: var(--police-titre); font-size: clamp(28px, 7vw, 40px); line-height: 1.05; text-transform: uppercase; overflow-wrap: break-word; }
+.pr-sous { margin: 0; font-size: 14px; color: var(--gris-clair); }
+.pr-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.pr-actions { margin-bottom: 22px; }
+.pr-grille { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }

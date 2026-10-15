@@ -50,6 +50,7 @@ async function init() {
     const ff = document.getElementById('lien-ff');
     ff.href = `face-a-face.html?a=${encodeURIComponent(moi.id)}&b=${encodeURIComponent(idJoueur)}`;
     ff.textContent = 'Face-à-face avec moi';
+    ff.insertAdjacentHTML('beforebegin', `<a class="bouton bouton--petit" href="profil.html?id=${encodeURIComponent(idJoueur)}">Profil</a>`);
   }
   charger();
 }
