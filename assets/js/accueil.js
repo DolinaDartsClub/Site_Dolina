@@ -20,6 +20,7 @@ async function chargerMatchs() {
     .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, game_sides(side, name, is_bot), game_players(side, display_name, throw_order)')
     .eq('status', 'live')
     .eq('visibility', 'public')
+    .gte('created_at', new Date(Date.now() - 24 * 3600 * 1000).toISOString())
     .order('created_at', { ascending: false })
     .limit(12);
 

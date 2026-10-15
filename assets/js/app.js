@@ -103,6 +103,16 @@ export function message(zone, texte, type = 'erreur') {
   if (texte) zone.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
+// Supprime une partie non terminée (abandon) avec ses joueurs et ses volées.
+// Si la base n'autorise pas encore la suppression (script 011 non exécuté),
+// la partie est seulement marquée abandonnée.
+export async function supprimerPartie(id) {
+  const { data, error } = await supabase.from('games').delete().eq('id', id).select('id');
+  if (!error && data && data.length) return true;
+  await supabase.from('games').update({ status: 'abandoned' }).eq('id', id);
+  return false;
+}
+
 // Profil de la personne connectée (null si personne n'est connecté)
 export async function profilConnecte() {
   const { data: { session } } = await supabase.auth.getSession();

@@ -2,7 +2,7 @@
 //  Jouer : création d'un match X01 et reprise des parties en cours
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie, supprimerPartie } from './app.js?v=__VERSION__';
 
 const MAX_JOUEURS = 4;
 const DUREE_REPRISE_H = 24;
@@ -52,10 +52,8 @@ async function chargerReprises() {
   const anciennes = (data || []).filter((g) => Date.parse(g.created_at) < limite);
   const recentes = (data || []).filter((g) => Date.parse(g.created_at) >= limite);
 
-  // Au-delà de 24 h, une partie interrompue ne se reprend plus
-  if (anciennes.length) {
-    await supabase.from('games').update({ status: 'abandoned' }).in('id', anciennes.map((g) => g.id));
-  }
+  // Au-delà de 24 h, une partie interrompue ne se reprend plus : elle est supprimée
+  await Promise.all(anciennes.map((g) => supprimerPartie(g.id)));
 
   const bloc = document.getElementById('reprendre');
   bloc.hidden = !recentes.length;
@@ -76,8 +74,8 @@ async function chargerReprises() {
 
 document.getElementById('liste-reprendre').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-abandon]');
-  if (!b || !confirm('Abandonner cette partie ? Elle ne pourra plus être reprise.')) return;
-  await supabase.from('games').update({ status: 'abandoned' }).eq('id', b.dataset.abandon);
+  if (!b || !confirm('Abandonner cette partie ? Elle sera supprimée définitivement, avec tous ses scores.')) return;
+  await supprimerPartie(b.dataset.abandon);
   chargerReprises();
 });
 
@@ -350,7 +348,7 @@ async function creerPartie(premier) {
   }).select('id').single();
 
   const echec = async (err) => {
-    if (game?.id) await supabase.from('games').update({ status: 'abandoned' }).eq('id', game.id);
+    if (game?.id) await supprimerPartie(game.id);
     boutons.forEach((b) => { b.disabled = false; });
     fermer(document.getElementById('fenetre-bull'));
     message(zoneMsg, `La partie n'a pas pu être créée. ${erreurFr(err)}`);

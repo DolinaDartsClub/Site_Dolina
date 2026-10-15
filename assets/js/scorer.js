@@ -6,7 +6,7 @@
 //  un message demande de la ressaisir.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, formatPartie } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, formatPartie, supprimerPartie } from './app.js?v=__VERSION__';
 import {
   calculerEtat, nouvelleVolee, verifierVolee, natureVolee, finissable, suggestionFinish, moyenne,
 } from './x01.js?v=__VERSION__';
@@ -308,9 +308,9 @@ $('fin-annuler').addEventListener('click', annuler);
 // ---------- Abandon ----------
 
 $('btn-abandon').addEventListener('click', async () => {
-  if (!confirm('Abandonner la partie ? Elle ne pourra plus être reprise.')) return;
+  if (!confirm('Abandonner la partie ? Elle sera supprimée définitivement, avec tous ses scores.')) return;
   await file;
-  await supabase.from('games').update({ status: 'abandoned' }).eq('id', id);
+  await supprimerPartie(id);
   location.href = 'jouer.html';
 });
 

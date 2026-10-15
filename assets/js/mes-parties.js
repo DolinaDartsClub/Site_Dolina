@@ -46,6 +46,8 @@ async function init() {
 
 // Applique les filtres communs aux deux requêtes
 function filtrer(q) {
+  // Les parties abandonnées ne sont pas conservées
+  q = q.neq('status', 'abandoned');
   if (filtres.statut) q = q.eq('status', filtres.statut);
   if (filtres.jeu) q = q.eq('variant', filtres.jeu);
   return q.order('created_at', { ascending: false }).range(page * PAR_PAGE, page * PAR_PAGE + PAR_PAGE - 1);
@@ -63,8 +65,11 @@ async function chargerPage() {
     liste.innerHTML = '<p class="vide">Impossible de charger vos parties pour le moment.</p>';
     return;
   }
+  // Une partie interrompue depuis plus de 24 h est considérée comme abandonnée : on ne l'affiche pas
+  const limite = Date.now() - DUREE_REPRISE_H * 3600 * 1000;
   const nouvelles = [...(jouees.data || []), ...(creees.data || [])]
-    .filter((g, i, t) => t.findIndex((x) => x.id === g.id) === i && !parties.some((p) => p.id === g.id));
+    .filter((g, i, t) => t.findIndex((x) => x.id === g.id) === i && !parties.some((p) => p.id === g.id))
+    .filter((g) => g.status !== 'live' || Date.parse(g.created_at) >= limite);
   fin = (jouees.data || []).length < PAR_PAGE && (creees.data || []).length < PAR_PAGE;
 
   // Manches gagnées : les volées de finish suffisent
@@ -104,9 +109,7 @@ const fmtJour = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numer
 const fmtHeure = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
 function resultat(g, monCamp) {
-  const reprenable = g.status === 'live' && Date.parse(g.created_at) >= Date.now() - DUREE_REPRISE_H * 3600 * 1000;
-  if (g.status === 'live' && reprenable) return { cle: 'live', texte: 'En cours' };
-  if (g.status !== 'finished') return { cle: 'abandon', texte: g.status === 'live' ? 'Interrompue' : 'Abandonnée' };
+  if (g.status === 'live') return { cle: 'live', texte: 'En cours' };
   if (!monCamp) return { cle: 'arbitre', texte: 'Score tenu' };
   if (g.game_sides.length < 2) return { cle: 'solo', texte: 'Solo' };
   return g.winner_side === monCamp ? { cle: 'victoire', texte: 'Victoire' } : { cle: 'defaite', texte: 'Défaite' };
