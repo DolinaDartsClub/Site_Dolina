@@ -1032,7 +1032,6 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .pr-sous { margin: 0; font-size: 14px; color: var(--gris-clair); }
 .pr-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .pr-actions { margin-bottom: 22px; }
-.pr-grille { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
 
 /* ---------- Admin : sauvegarde et place utilisée ---------- */
 .sv-jauge { display: grid; gap: 6px; padding: 12px 14px; margin-bottom: 10px; border: 1px solid var(--bord); border-radius: 12px; background: var(--carte); }
@@ -1120,3 +1119,25 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 #bloc-profil .photo-profil { display: grid; gap: 10px; padding-bottom: 16px; border-bottom: 1px solid var(--bord); }
 .lien-bientot { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; border: 1px dashed var(--bord-fort); color: var(--gris); font-size: 11px; font-weight: 600; white-space: nowrap; vertical-align: middle; }
 details.carte-info:not([open]) { gap: 0; }
+
+/* Admin > Membres : photo devant le nom */
+.fiche__resume { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+.fiche__resume .fiche__avatar { grid-row: span 2; }
+.fiche__resume .match__format { grid-column: 2 / -1; }
+
+/* Résumé de saison (Mon compte, profil) : tuiles compactes, 2 lignes au plus */
+.pr-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.pr-grille .s-tuile { padding: 10px 12px; }
+.pr-grille .s-tuile__titre { font-size: 10px; letter-spacing: 0.3px; }
+.pr-grille .s-tuile__valeur { font-size: 24px; }
+.pr-grille .s-tuile--principale .s-tuile__valeur { font-size: 28px; }
+.pr-grille .s-tuile__detail { font-size: 11px; }
+.pr-grille .s-tuile__valeur { white-space: nowrap; }
+@media (max-width: 420px) {
+  .pr-grille .s-tuile__valeur { font-size: 20px; }
+  .pr-grille .s-tuile--principale .s-tuile__valeur { font-size: 24px; }
+  .fiche__resume .fiche__avatar { grid-row: span 3; }
+  .fiche__resume .fiche__nom { grid-column: 2 / -1; }
+  .fiche__resume .fiche__badges { grid-column: 2 / -1; justify-content: flex-start; }
+}
+@media (min-width: 900px) { #profil .pr-grille { grid-template-columns: repeat(5, minmax(0, 1fr)); } }

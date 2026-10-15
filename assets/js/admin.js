@@ -138,6 +138,7 @@ function afficherMembres() {
     return `
       <details class="carte-info fiche" data-fiche="${p.id}" ${ouverts.has(p.id) ? 'open' : ''}>
         <summary class="fiche__resume">
+          ${avatar(p, 'avatar--liste fiche__avatar')}
           <span class="fiche__nom">${esc(nomComplet(p))}${estMoi ? ' (vous)' : ''}</span>
           <span class="fiche__badges">
             <span class="statut ${STATUT_CLASSE[p.status]}">${STATUT[p.status]}</span>
