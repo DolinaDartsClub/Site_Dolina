@@ -877,3 +877,6 @@ a.ta-carte:hover { border-color: var(--bord-fort); border-left-color: var(--oran
 .t-panneau { min-width: 0; }
 .p-poules { align-items: start; }
 .p-poule { align-content: start; }
+.ta-carte--ouvert { border-left-color: #7fdc9a; }
+a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
+.ta-carte__phase--ouvert { color: #7fdc9a; }

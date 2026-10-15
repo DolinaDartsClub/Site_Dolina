@@ -2,7 +2,7 @@
 //  Page d'accueil : matchs en cours (temps réel) + actualités
 // =====================================================================
 
-import { supabase, esc, dateFr, formatPartie, etatPartie, urlImage } from './app.js?v=__VERSION__';
+import { supabase, esc, dateFr, formatPartie, etatPartie, urlImage, profilConnecte } from './app.js?v=__VERSION__';
 
 const CATEGORIES = {
   annonce: 'Annonce de match',
@@ -97,24 +97,43 @@ function carteMatch(g, visits) {
 
 async function chargerTournois() {
   const bloc = document.getElementById('bloc-tournois');
+  const zone = document.getElementById('tournois-en-cours');
   const { data, error } = await supabase.rpc('tournois_en_cours');
-  if (error || !data?.length) {
+  if (error) {
+    // Base pas encore à jour (scripts 012 à 014) : on prévient seulement les admins
+    const moi = await profilConnecte().catch(() => null);
+    if (moi?.role === 'admin') {
+      bloc.hidden = false;
+      zone.innerHTML = `<p class="vide">Bloc « Tournois » indisponible : exécutez les scripts SQL 012, 013 puis 014 dans Supabase. (${esc(error.message || '')})</p>`;
+    } else {
+      bloc.hidden = true;
+    }
+    return;
+  }
+  if (!data?.length) {
     bloc.hidden = true;
     return;
   }
   bloc.hidden = false;
-  document.getElementById('tournois-en-cours').innerHTML = data.map((t) => {
-    const nomsTours = { 1: 'Finale', 2: 'Demi-finales', 3: 'Quarts de finale', 4: 'Huitièmes de finale', 5: 'Seizièmes de finale' };
+  const nomsTours = { 1: 'Finale', 2: 'Demi-finales', 3: 'Quarts de finale', 4: 'Huitièmes de finale', 5: 'Seizièmes de finale' };
+  zone.innerHTML = data.map((t) => {
+    const ouvert = (t.status || 'running') === 'open';
     const restants = t.tours && t.tour ? t.tours - t.tour + 1 : null;
-    const phase = t.phase === 'pool' ? 'Phase de poules' : (restants ? (nomsTours[restants] || `Tour ${t.tour}`) : 'Phase finale');
+    const phase = ouvert ? 'Inscriptions ouvertes'
+      : (t.phase === 'pool' ? 'Phase de poules' : (restants ? (nomsTours[restants] || `Tour ${t.tour}`) : 'Phase finale'));
+    const type = `${t.team_mode === 'double' ? 'Double' : 'Individuel'} · ${t.format === 'pools' ? 'Poules puis élimination directe' : 'Élimination directe'}`;
+    const avancement = ouvert
+      ? `${t.inscrits}${t.max_participants ? ` / ${t.max_participants}` : ''} inscrit${t.inscrits > 1 ? 's' : ''} · rejoindre avec le code de l'organisateur`
+      : `${t.inscrits} ${t.team_mode === 'double' ? 'doublettes' : 'joueurs'} · ${t.matchs_joues} / ${t.matchs_total} matchs joués`;
+    const lien = ouvert ? 'tournois.html#code' : (t.public_matches ? `tournoi.html?id=${encodeURIComponent(t.id)}` : null);
     const contenu = `
-      <span class="ta-carte__haut"><span class="ta-carte__phase">${esc(phase)}</span>${t.matchs_en_cours ? `<span class="m-statut m-statut--live">${t.matchs_en_cours} match${t.matchs_en_cours > 1 ? 's' : ''} en cours</span>` : ''}</span>
+      <span class="ta-carte__haut"><span class="ta-carte__phase${ouvert ? ' ta-carte__phase--ouvert' : ''}">${esc(phase)}</span>${t.matchs_en_cours ? `<span class="m-statut m-statut--live">${t.matchs_en_cours} match${t.matchs_en_cours > 1 ? 's' : ''} en cours</span>` : ''}</span>
       <strong class="ta-carte__nom">${esc(t.name)}</strong>
-      <span class="ta-carte__info">${t.team_mode === 'double' ? 'Double' : 'Individuel'} · ${t.format === 'pools' ? 'Poules puis élimination directe' : 'Élimination directe'} · ${t.inscrits} ${t.team_mode === 'double' ? 'doublettes' : 'joueurs'}</span>
-      <span class="ta-carte__info">${t.matchs_joues} / ${t.matchs_total} matchs joués</span>
-      ${t.public_matches ? '<span class="match__lien">Voir le tournoi →</span>' : '<span class="ta-carte__prive">Suivi réservé aux participants</span>'}`;
-    return t.public_matches
-      ? `<a class="ta-carte" href="tournoi.html?id=${encodeURIComponent(t.id)}">${contenu}</a>`
+      <span class="ta-carte__info">${esc(type)}</span>
+      <span class="ta-carte__info">${esc(avancement)}</span>
+      ${lien ? `<span class="match__lien">${ouvert ? 'Rejoindre (membres du club) →' : 'Voir le tournoi →'}</span>` : '<span class="ta-carte__prive">Suivi réservé aux participants</span>'}`;
+    return lien
+      ? `<a class="ta-carte${ouvert ? ' ta-carte--ouvert' : ''}" href="${lien}">${contenu}</a>`
       : `<div class="ta-carte">${contenu}</div>`;
   }).join('');
 }
