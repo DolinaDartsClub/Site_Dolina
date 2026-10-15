@@ -906,3 +906,16 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .t-correction input { width: 72px; min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--bord-fort); background: var(--noir); color: var(--blanc); font-family: var(--police-titre); font-size: 22px; font-weight: 700; }
 .t-correction input:focus { border-color: var(--orange); outline: none; box-shadow: 0 0 0 2px var(--orange); }
 .t-alerte { color: var(--orange); font-weight: 700; }
+
+/* Nous contacter */
+.contact-intro p { margin: 6px 0 0; color: var(--gris-clair); }
+.contact-accueil { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px; border-radius: var(--rayon); background: var(--orange-fond); border: 1px solid #5a3a14; }
+.contact-accueil p { margin: 4px 0 0; color: var(--gris-clair); }
+.contact-accueil .section__titre { margin: 0; }
+.pied { flex-wrap: wrap; }
+.demande--nouvelle { border-color: var(--orange); }
+.demande__haut { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.demande__coord { display: flex; gap: 6px 16px; flex-wrap: wrap; font-weight: 600; }
+.demande__message { margin: 0; white-space: pre-line; padding: 10px 12px; border-radius: 10px; background: var(--noir); }
+.demande textarea { background: var(--noir); }
+.demande textarea { min-height: 64px; height: 64px; }

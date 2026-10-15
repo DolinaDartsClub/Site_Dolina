@@ -8,6 +8,7 @@
 
 import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur } from './app.js?v=__VERSION__';
 import { initActus } from './admin-actus.js?v=__VERSION__';
+import { initDemandes } from './admin-demandes.js?v=__VERSION__';
 
 const zoneMessage = document.getElementById('message');
 const vues = {
@@ -15,6 +16,7 @@ const vues = {
   membres: document.getElementById('vue-membres'),
   equipes: document.getElementById('vue-equipes'),
   actus: document.getElementById('vue-actus'),
+  demandes: document.getElementById('vue-demandes'),
 };
 const listeMembres = document.getElementById('liste-membres');
 const listeEquipes = document.getElementById('liste-equipes');
@@ -310,7 +312,7 @@ async function init() {
   document.getElementById('onglets').hidden = false;
   const depart = location.hash.slice(1);
   if (vues[depart]) document.querySelector(`[data-onglet="${depart}"]`).click();
-  await Promise.all([charger(), initActus(moi)]);
+  await Promise.all([charger(), initActus(moi), initDemandes(document.getElementById('message'))]);
 }
 
 init();

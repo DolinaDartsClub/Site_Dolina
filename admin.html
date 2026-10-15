@@ -36,6 +36,7 @@
     <button type="button" class="onglet" data-onglet="membres" aria-selected="false">Membres</button>
     <button type="button" class="onglet" data-onglet="equipes" aria-selected="false">Équipes</button>
     <button type="button" class="onglet" data-onglet="actus" aria-selected="false">Actualités</button>
+    <button type="button" class="onglet" data-onglet="demandes" aria-selected="false">Demandes <span class="compteur" id="nb-demandes" hidden>0</span></button>
   </nav>
 
   <section id="vue-inscriptions" class="section" aria-live="polite">
@@ -52,6 +53,10 @@
 
   <section id="vue-equipes" class="section" hidden>
     <div id="liste-equipes" class="liste-cartes"></div>
+  </section>
+
+  <section id="vue-demandes" class="section" hidden aria-live="polite">
+    <p class="vide">Chargement…</p>
   </section>
 
   <section id="vue-actus" class="section" hidden>

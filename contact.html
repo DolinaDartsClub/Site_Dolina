@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Nous contacter – Dolina Darts Club</title>
+  <meta name="description" content="Rejoindre le Dolina Darts Club ou poser une question au club de fléchettes de Boulogne-Billancourt.">
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/contact.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom">Nous contacter</span>
+      <span class="entete__sous">Dolina Darts Club</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page page--jouer">
+  <section class="contact-intro">
+    <h1 class="section__titre">Nous contacter</h1>
+    <p>Envie de rejoindre le club, de venir essayer, ou une question ? Laissez-nous un message : un membre du bureau vous répond rapidement.</p>
+  </section>
+
+  <form class="formulaire" id="form-contact" novalidate>
+    <div class="message" id="message" role="alert" hidden></div>
+    <fieldset class="bloc-choix">
+      <legend>Votre demande</legend>
+      <div class="pastilles" data-groupe="motif">
+        <button type="button" class="pastille-choix" data-valeur="adhesion" aria-pressed="true">Rejoindre le club</button>
+        <button type="button" class="pastille-choix" data-valeur="question">Une question</button>
+        <button type="button" class="pastille-choix" data-valeur="autre">Autre</button>
+      </div>
+    </fieldset>
+    <div class="deux-colonnes">
+      <label class="champ">Prénom<input type="text" name="prenom" autocomplete="given-name" maxlength="60" required></label>
+      <label class="champ">Nom<input type="text" name="nom" autocomplete="family-name" maxlength="60" required></label>
+    </div>
+    <label class="champ">Téléphone mobile<input type="tel" name="telephone" autocomplete="tel" inputmode="tel" maxlength="30" required></label>
+    <label class="champ">Email<input type="email" name="email" autocomplete="email" maxlength="160" required></label>
+    <label class="champ">Message <small>(facultatif)</small><textarea name="message" rows="5" maxlength="2000" placeholder="Votre niveau, vos disponibilités, votre question…"></textarea></label>
+    <!-- Champ piège pour les robots : laissé vide par les humains -->
+    <label class="visuellement-cache" aria-hidden="true">Ne pas remplir<input type="text" name="site" tabindex="-1" autocomplete="off"></label>
+    <label class="t-case"><input type="checkbox" name="accord" required> <span>J'accepte que le club conserve ces informations pour me répondre (<a href="mentions-legales.html">confidentialité</a>).</span></label>
+    <button type="submit" class="bouton bouton--plein bouton--large">Envoyer ma demande</button>
+  </form>
+
+  <section class="carte-info" id="merci" hidden>
+    <h2>Merci, votre demande est envoyée !</h2>
+    <p class="match__format" style="margin:0">Le club vous recontacte très vite par téléphone ou par email.</p>
+    <div class="actions"><a class="bouton" href="./">Retour à l'accueil</a></div>
+  </section>
+
+  <section class="carte-info">
+    <h2>Le club</h2>
+    <p class="match__format" style="margin:0">Dolina Darts Club · association loi 1901 · Boulogne-Billancourt (92). Pour adhérer, le bulletin d'inscription se remplit et se signe au club.</p>
+  </section>
+</main>
+
+</body>
+</html>
