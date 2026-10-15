@@ -184,3 +184,61 @@ export function suggestionFinish(reste) {
   for (const a of FLECHES) for (const d of DOUBLES) for (const b of FLECHES) if (a.v + b.v + d.v === reste) return [a.l, b.l, d.l];
   return null;
 }
+
+// ---------------------------------------------------------------------
+// Correction d'une partie terminée
+//   Recalcule toutes les volées après modification de certains scores.
+//   L'ordre des volées, les camps et les vainqueurs de manche ne changent pas :
+//   - la volée de finish reste le finish ; son score devient le reste à ce moment
+//   - les autres volées gardent leur score ; le bust est recalculé
+//   - une correction qui ferait finir la manche plus tôt, ou rendrait le
+//     finish impossible, est refusée (message d'erreur)
+//   visits : volées dans l'ordre (triées par id), avec les scores corrigés
+//   Renvoie { volees, erreurs: [{ id, message }] }
+// ---------------------------------------------------------------------
+export function recalculerPartie(game, visits) {
+  const restes = new Map();      // `${set}-${leg}-${side}` -> reste
+  const finies = new Set();      // manches déjà terminées
+  const erreurs = [];
+  const volees = visits.map((v) => {
+    const cleManche = `${v.set_no}-${v.leg_no}`;
+    const cle = `${cleManche}-${v.side}`;
+    const avant = restes.has(cle) ? restes.get(cle) : game.start_score;
+    const n = { ...v, remaining_before: avant };
+
+    if (finies.has(cleManche)) {
+      erreurs.push({ id: v.id, message: 'Volée après la fin de la manche.' });
+      return n;
+    }
+    if (v.is_checkout) {
+      if (!finissable(avant)) {
+        erreurs.push({ id: v.id, message: `Avec ces corrections, il resterait ${avant} avant le finish : ce reste ne se finit pas en une volée.` });
+      }
+      n.score = avant;
+      n.is_bust = false;
+      n.darts_used = Math.min(3, Math.max(v.darts_used || 3, suggestionFinish(avant)?.length || 1));
+      n.darts_at_double = Math.min(Math.max(v.darts_at_double || 1, 1), n.darts_used);
+      restes.set(cle, 0);
+      finies.add(cleManche);
+      return n;
+    }
+    const probleme = IMPOSSIBLES.includes(v.score) || !Number.isInteger(v.score) || v.score < 0 || v.score > 180;
+    if (probleme) {
+      erreurs.push({ id: v.id, message: verifierVolee(v.score, 999) || 'Score invalide.' });
+      restes.set(cle, avant);
+      return n;
+    }
+    const nature = natureVolee(v.score, avant);
+    if (nature === 'finish') {
+      erreurs.push({ id: v.id, message: `Avec ce score, la manche serait finie à cette volée (reste ${avant}).` });
+    }
+    n.is_bust = nature === 'bust';
+    n.is_checkout = false;
+    n.darts_used = 3;
+    // Fléchettes au double : seulement si la question se posait (reste ≤ 50 et finissable)
+    n.darts_at_double = avant <= 50 && finissable(avant) ? Math.min(v.darts_at_double || 0, 3) : 0;
+    restes.set(cle, n.is_bust ? avant : avant - v.score);
+    return n;
+  });
+  return { volees, erreurs };
+}

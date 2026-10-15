@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Corriger une partie – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <meta name="robots" content="noindex">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/corriger.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom">Corriger la partie</span>
+      <span class="entete__sous" id="format">Chargement…</span>
+    </span>
+  </div>
+</header>
+
+<main class="page page--corriger">
+  <div class="message" id="message" role="alert" hidden></div>
+  <div id="zone"><p class="vide">Chargement de la partie…</p></div>
+</main>
+
+<div class="barre-correction" id="barre" hidden>
+  <span id="etat-correction">Aucune modification</span>
+  <div class="actions">
+    <a class="bouton" id="lien-retour" href="./">Annuler</a>
+    <button type="button" class="bouton bouton--plein" id="enregistrer" disabled>Enregistrer</button>
+  </div>
+</div>
+
+</body>
+</html>

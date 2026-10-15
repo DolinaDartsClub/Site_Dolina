@@ -2,7 +2,7 @@
 //  Score en direct d'une partie publique (accessible sans compte)
 // =====================================================================
 
-import { supabase, esc, formatPartie, etatPartie } from './app.js?v=__VERSION__';
+import { supabase, esc, formatPartie, etatPartie, profilConnecte, dateFr } from './app.js?v=__VERSION__';
 
 const id = new URLSearchParams(location.search).get('id');
 const zone = document.getElementById('live');
@@ -10,6 +10,9 @@ const badge = document.getElementById('badge');
 const format = document.getElementById('format');
 
 let game = null;
+// Le visiteur peut-il corriger la partie ? (créateur ou admin)
+let peutCorriger = false;
+const profilPret = profilConnecte().catch(() => null);
 let visits = [];
 
 async function charger() {
@@ -17,11 +20,10 @@ async function charger() {
     zone.innerHTML = '<p class="vide">Aucun match indiqué.</p>';
     return;
   }
-  const { data, error } = await supabase
-    .from('games')
-    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, game_sides(side, name, is_bot), game_players(id, side, display_name, throw_order)')
-    .eq('id', id)
-    .maybeSingle();
+  const colonnes = 'id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, created_by, game_sides(side, name, is_bot), game_players(id, side, display_name, throw_order)';
+  let { data, error } = await supabase.from('games').select(`${colonnes}, corrected_at`).eq('id', id).maybeSingle();
+  // Si le script 010 n'a pas encore été exécuté, la colonne corrected_at n'existe pas
+  if (error) ({ data, error } = await supabase.from('games').select(colonnes).eq('id', id).maybeSingle());
 
   if (error || !data) {
     zone.innerHTML = '<p class="vide">Ce match n\'existe pas ou n\'est pas public.</p>';
@@ -35,6 +37,8 @@ async function charger() {
     .select('id, set_no, leg_no, visit_no, side, player_id, score, remaining_before, is_bust, is_checkout, darts_used, darts_at_double')
     .eq('game_id', id);
   visits = res.data || [];
+  const moi = await profilPret;
+  peutCorriger = !!moi && moi.status === 'active' && (moi.id === game.created_by || moi.role === 'admin');
   afficher();
 }
 
@@ -289,6 +293,9 @@ function recapitulatif(sides, ordre, manches, etat, libelle) {
   return `
     <section class="section recap-section">
       <h2 class="section__titre">Récapitulatif de la partie</h2>
+      ${new URLSearchParams(location.search).get('corrige') ? '<p class="message message--ok">La correction est enregistrée : les scores et les statistiques sont à jour.</p>' : ''}
+      ${game.corrected_at ? `<p class="match__format">Partie corrigée le ${esc(dateFr(game.corrected_at))}.</p>` : ''}
+      ${peutCorriger && game.status === 'finished' ? `<a class="bouton" href="corriger.html?id=${encodeURIComponent(game.id)}">Corriger un score de la partie</a>` : ''}
       ${tableGlobal}
       <p class="match__format">En orange : le meilleur de la partie. Réussite au double = finishs ÷ fléchettes lancées au double.</p>
     </section>

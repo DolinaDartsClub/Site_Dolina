@@ -1,7 +1,7 @@
 // Tests automatiques du moteur X01 : node outils/test-x01.mjs
 import assert from 'node:assert/strict';
 import {
-  verifierVolee, natureVolee, finissable, aGagner, calculerEtat, nouvelleVolee, moyenne, suggestionFinish,
+  verifierVolee, natureVolee, finissable, aGagner, calculerEtat, nouvelleVolee, moyenne, suggestionFinish, recalculerPartie,
 } from '../assets/js/x01.js';
 
 let ok = 0;
@@ -123,6 +123,48 @@ test('suggestions de finish (simples privilégiés)', () => {
   assert.deepEqual(suggestionFinish(100), ['T20', 'D20']);
   assert.equal(suggestionFinish(169), null);
   assert.equal(suggestionFinish(1), null);
+});
+
+// Partie de référence : Tony 180,180,81(→60) puis finish 60 ; Anne 60 à chaque fois
+function partieRef() {
+  return jouer(g501({ legs_kind: 'first_to', legs_n: 1 }), [1, 2], [[180], [60], [180], [60], [81], [60], [60, { flechettes: 2, auDouble: 1 }]]).visits;
+}
+
+test('correction : le finish suit le nouveau reste', () => {
+  const v = partieRef();
+  v[4] = { ...v[4], score: 101 };                    // 81 était en fait 101
+  const { volees, erreurs } = recalculerPartie({ start_score: 501 }, v);
+  assert.equal(erreurs.length, 0);
+  assert.equal(volees[6].remaining_before, 40);
+  assert.equal(volees[6].score, 40);
+  assert.equal(volees[6].is_checkout, true);
+  assert.equal(volees[6].darts_used, 2);
+});
+
+test('correction : finish devenu impossible refusé', () => {
+  const v = partieRef();
+  v[4] = { ...v[4], score: 0 };                      // reste 141 avant le finish : possible
+  assert.equal(recalculerPartie({ start_score: 501 }, v).erreurs.length, 0);
+  v[2] = { ...v[2], score: 60 };                     // reste 261 : impossible
+  assert.equal(recalculerPartie({ start_score: 501 }, v).erreurs.length, 1);
+});
+
+test('correction : finish anticipé refusé, bust recalculé', () => {
+  const v = partieRef();
+  v[4] = { ...v[4], score: 141 };                    // finirait à cette volée
+  assert.match(recalculerPartie({ start_score: 501 }, v).erreurs[0].message, /finie/);
+  const w = partieRef();
+  w[4] = { ...w[4], score: 140 };                    // reste 1 : bust
+  const r = recalculerPartie({ start_score: 501 }, w);
+  assert.equal(r.volees[4].is_bust, true);
+  assert.equal(r.volees[6].remaining_before, 141);
+  assert.equal(r.erreurs.length, 0);
+});
+
+test('correction : score impossible refusé', () => {
+  const v = partieRef();
+  v[1] = { ...v[1], score: 179 };
+  assert.equal(recalculerPartie({ start_score: 501 }, v).erreurs.length, 1);
 });
 
 console.log(`\n${ok} tests réussis.`);

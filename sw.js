@@ -21,6 +21,7 @@ const FICHIERS = [
   'article.html',
   'jouer.html',
   'scorer.html',
+  'corriger.html',
   'assets/css/style.css',
   'assets/js/app.js',
   'assets/js/config.js',
@@ -37,6 +38,7 @@ const FICHIERS = [
   'assets/js/x01.js',
   'assets/js/jouer.js',
   'assets/js/scorer.js',
+  'assets/js/corriger.js',
   'assets/img/logo.png',
   'assets/img/favicon.png',
 ];
