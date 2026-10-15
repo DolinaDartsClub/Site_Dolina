@@ -970,3 +970,14 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .aj-bilan { display: grid; gap: 4px; font-size: 14px; }
 .aj-ok { margin: 0; color: #7fdc9a; font-weight: 600; }
 .aj-refus { margin: 0; padding-left: 18px; color: var(--erreur); }
+/* Classement */
+.cl-tableau td.cl-rang { font-family: var(--police-titre); font-size: 18px; font-weight: 700; color: var(--gris-clair); }
+.cl-podium--1 .cl-rang { color: var(--orange); }
+.cl-podium--1 .cl-rang::after { content: ' ★'; font-size: 13px; }
+.cl-equipe { font-size: 12px; color: var(--gris-clair); }
+.cl-tableau .ts-nom a { color: var(--blanc); text-decoration: none; font-weight: 700; }
+.cl-tableau .ts-nom a:hover { color: var(--orange); }
+.cl-autres { margin-top: 18px; gap: 10px; }
+.cl-autres .cl-tableau { opacity: 0.85; }
+/* Un tableau large défile dans son cadre sans élargir la page */
+.page > * { min-width: 0; }
