@@ -110,7 +110,7 @@ img { max-width: 100%; display: block; }
 
 .nav-bas {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
   background: var(--noir-2); border-top: 1px solid #2a2a2a;
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -700,3 +700,93 @@ img { max-width: 100%; display: block; }
 .mp-plus { display: block; margin: 16px auto 0; }
 .lien-mes-parties { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; margin-bottom: 16px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); color: var(--blanc); font-weight: 700; text-decoration: none; }
 .lien-mes-parties span { color: var(--orange); font-size: 20px; }
+
+/* =====================================================================
+   Tournois
+   ===================================================================== */
+.jouer-tournoi { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: -6px 0 16px; }
+.pastilles--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.t-petit { font-size: 12px; font-weight: 500; color: var(--gris); text-transform: none; }
+.t-erreur { margin: 0; min-height: 18px; font-size: 14px; font-weight: 600; color: var(--erreur); }
+.t-erreur:empty { min-height: 0; }
+.t-case { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: 15px; cursor: pointer; }
+.t-case input { width: 20px; height: 20px; accent-color: var(--orange); flex-shrink: 0; }
+.t-ou { font-size: 13px; color: var(--gris); }
+.t-partenaire { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.t-partenaire input { flex: 1 1 180px; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--bord-fort); background: var(--noir); color: var(--blanc); font: inherit; }
+.t-partenaire input:focus { border-color: var(--orange); outline: none; box-shadow: 0 0 0 2px var(--orange); }
+
+/* Statuts */
+.t-statut { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+.t-statut::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.t-statut--prep { background: #262626; color: var(--gris-clair); }
+.t-statut--ouvert { background: #13261a; color: #7fdc9a; }
+.t-statut--cours { background: var(--orange); color: var(--noir); }
+.t-statut--fini { background: #1e1e1e; color: var(--gris); }
+.t-role { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; border: 1px solid var(--bord-fort); color: var(--gris-clair); }
+.t-role--joueur { border-color: var(--orange); color: var(--orange); }
+
+/* Page Tournois */
+.t-actions { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 16px; }
+.t-action { display: flex; gap: 14px; align-items: center; padding: 16px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); color: var(--blanc); text-decoration: none; }
+.t-action strong { display: block; font-size: 17px; }
+.t-action small { display: block; font-size: 13px; color: var(--gris-clair); font-weight: 400; }
+.t-action--plein { border-color: var(--orange); background: var(--orange-fond); }
+.t-action__icone { flex-shrink: 0; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--orange); color: var(--noir); font-size: 28px; font-weight: 700; line-height: 1; }
+.t-rejoindre { flex-direction: column; align-items: stretch; gap: 10px; }
+.t-rejoindre__ligne { display: flex; gap: 8px; }
+.t-rejoindre input { flex: 1; min-width: 0; min-height: 48px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--bord-fort); background: var(--noir); color: var(--blanc); font-family: var(--police-titre); font-size: 24px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; }
+.t-rejoindre input::placeholder { font-size: 16px; letter-spacing: 1px; color: #555; }
+.t-rejoindre input:focus { border-color: var(--orange); outline: none; box-shadow: 0 0 0 2px var(--orange); }
+.t-apercu { margin-bottom: 16px; border-color: var(--orange); }
+.t-apercu h2 { margin: 0; font-size: 22px; }
+.t-apercu__haut { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.t-doublette { display: grid; gap: 10px; padding: 12px; border-radius: 12px; background: var(--noir-2, #101010); }
+.t-description { margin: 4px 0 0; white-space: pre-line; color: var(--gris-clair); font-size: 15px; }
+.t-places { font-size: 14px; color: var(--gris-clair); }
+.t-liste { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.t-carte { display: grid; gap: 6px; padding: 14px; border-radius: 14px; background: var(--carte); border: 1px solid var(--bord); color: var(--blanc); text-decoration: none; }
+.t-carte:hover { border-color: var(--bord-fort); }
+.t-carte__haut { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.t-carte__nom { font-size: 18px; }
+.t-carte__format { font-size: 13px; color: var(--gris-clair); }
+.t-carte__bas { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--gris); }
+.t-code-mini { font-size: 12px; color: var(--gris); }
+.t-code-mini b { font-family: var(--police-titre); font-size: 15px; letter-spacing: 1.5px; color: var(--blanc); }
+
+/* Page d'un tournoi */
+.t-entete { display: grid; gap: 6px; margin-bottom: 14px; }
+.t-entete__haut { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.t-titre { margin: 0; font-family: var(--police-titre); font-size: clamp(28px, 7vw, 40px); line-height: 1.05; text-transform: uppercase; overflow-wrap: anywhere; }
+.t-sous { margin: 0; font-size: 14px; color: var(--gris-clair); }
+.t-jauge { height: 6px; border-radius: 999px; background: #262626; overflow: hidden; margin-top: 6px; }
+.t-jauge span { display: block; height: 100%; background: var(--orange); border-radius: inherit; }
+.t-code { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px 12px; padding: 14px 16px; margin-bottom: 14px; border-radius: var(--rayon); background: var(--carte); border: 1px dashed var(--orange); }
+.t-code__titre { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--gris); letter-spacing: 0.5px; }
+.t-code__valeur { display: block; font-family: var(--police-titre); font-size: 38px; font-weight: 700; letter-spacing: 6px; line-height: 1.1; color: var(--orange); user-select: all; }
+.t-code__actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.t-code__aide { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--gris-clair); }
+@media (max-width: 420px) { .t-code { grid-template-columns: 1fr; } .t-code__actions { justify-content: flex-start; } }
+.t-gestion { display: grid; gap: 10px; padding: 14px 16px; margin-bottom: 14px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord-fort); }
+.t-gestion__titre { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gris); }
+.t-gestion__ligne { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.t-gestion__ligne strong { display: block; }
+.t-gestion__ligne small { display: block; font-size: 13px; color: var(--gris-clair); }
+.t-gestion .bouton small { font-size: 11px; font-weight: 500; margin-left: 4px; }
+.t-onglets { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--bord-fort); margin-bottom: 14px; }
+.t-onglets button { flex-shrink: 0; padding: 10px 14px; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--gris-clair); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+.t-onglets button[aria-selected="true"] { color: var(--blanc); border-bottom-color: var(--orange); }
+.t-compte { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: #2a2a2a; font-size: 12px; text-align: center; }
+.t-inscrits { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.t-inscrit { display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 12px; border-radius: 12px; background: var(--carte); border: 1px solid var(--bord); }
+.t-inscrit--moi { border-color: var(--orange); background: var(--orange-fond); }
+.t-inscrit__num { width: 24px; font-family: var(--police-titre); font-size: 18px; color: var(--gris); text-align: center; }
+.t-inscrit__nom { flex: 1; min-width: 0; }
+.t-inscrit__nom strong, .t-inscrit__nom small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.t-inscrit__nom small { font-size: 13px; color: var(--gris-clair); }
+.t-moi { padding: 2px 8px; border-radius: 999px; background: var(--orange); color: var(--noir); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.t-inscrit .bouton--icone { width: 36px; height: 36px; min-height: 36px; }
+.t-recap { display: grid; grid-template-columns: minmax(120px, auto) 1fr; gap: 10px 16px; margin: 0; }
+.t-recap dt { font-size: 13px; color: var(--gris); font-weight: 600; }
+.t-recap dd { margin: 0; font-size: 15px; }
+@media (max-width: 480px) { .t-recap { grid-template-columns: 1fr; gap: 2px; } .t-recap dd { margin-bottom: 10px; } }

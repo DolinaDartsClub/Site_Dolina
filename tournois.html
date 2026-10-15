@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tournois – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/tournois.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom">Tournois</span>
+      <span class="entete__sous">Dolina Darts Club</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page">
+  <div id="acces" hidden></div>
+
+  <div id="contenu" hidden>
+    <h1 class="section__titre">Tournois</h1>
+
+    <div class="t-actions">
+      <a class="t-action t-action--plein" href="tournoi-creer.html">
+        <span class="t-action__icone" aria-hidden="true">+</span>
+        <span><strong>Créer un tournoi</strong><small>Élimination directe ou poules, en individuel ou en double</small></span>
+      </a>
+      <form class="t-action t-rejoindre" id="form-code" novalidate>
+        <label for="code"><strong>Rejoindre un tournoi</strong><small>Saisissez le code donné par l'organisateur</small></label>
+        <div class="t-rejoindre__ligne">
+          <input id="code" name="code" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="8" placeholder="EX. K7DX4P" aria-describedby="erreur-code">
+          <button type="submit" class="bouton bouton--plein">Rejoindre</button>
+        </div>
+        <p class="t-erreur" id="erreur-code" role="alert"></p>
+      </form>
+    </div>
+
+    <!-- Aperçu du tournoi trouvé avec le code -->
+    <section class="carte-info t-apercu" id="apercu" hidden aria-live="polite"></section>
+
+    <section class="section">
+      <h2 class="section__titre">Mes tournois</h2>
+      <div class="t-liste" id="mes-tournois"><p class="vide">Chargement…</p></div>
+    </section>
+
+    <section class="section" id="bloc-admin" hidden>
+      <h2 class="section__titre">Autres tournois du club <small class="t-petit">(visible par les admins)</small></h2>
+      <div class="t-liste" id="autres-tournois"></div>
+    </section>
+  </div>
+</main>
+
+</body>
+</html>

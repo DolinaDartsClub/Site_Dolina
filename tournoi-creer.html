@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Créer un tournoi – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/tournoi-creer.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom" id="titre-page">Créer un tournoi</span>
+      <span class="entete__sous">Tournois</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page page--jouer">
+  <div class="message" id="message" role="alert" hidden></div>
+  <div id="acces" hidden></div>
+
+  <!-- Étape 1 : paramètres -->
+  <form class="formulaire-jeu" id="form-tournoi" novalidate hidden>
+    <h1 class="section__titre" id="titre-form">Nouveau tournoi</h1>
+
+    <fieldset class="bloc-choix">
+      <legend>Tournoi</legend>
+      <label class="champ">Nom du tournoi<input type="text" name="name" maxlength="80" required placeholder="Ex. Tournoi d'hiver 2026"></label>
+      <label class="champ">Description <small>(facultatif)</small><textarea name="description" maxlength="1000" rows="3" placeholder="Lieu, horaires, lots…"></textarea></label>
+    </fieldset>
+
+    <fieldset class="bloc-choix" id="bloc-mode">
+      <legend>Participants</legend>
+      <div class="pastilles pastilles--2" data-groupe="team_mode">
+        <button type="button" class="pastille-choix" data-valeur="single" aria-pressed="true">Individuel</button>
+        <button type="button" class="pastille-choix" data-valeur="double">Double 2v2</button>
+      </div>
+      <p class="match__format" id="aide-mode"></p>
+      <label class="champ">Nombre de places maximum
+        <input type="number" inputmode="numeric" name="max_participants" min="2" max="64" value="16" required>
+        <small>Entre 2 et 64.</small>
+      </label>
+    </fieldset>
+
+    <fieldset class="bloc-choix">
+      <legend>Format</legend>
+      <div class="pastilles pastilles--2" data-groupe="format">
+        <button type="button" class="pastille-choix" data-valeur="knockout" aria-pressed="true">Élimination directe</button>
+        <button type="button" class="pastille-choix" data-valeur="pools">Poules + élimination</button>
+      </div>
+      <div id="bloc-poules" hidden>
+        <div class="deux-colonnes">
+          <label class="champ">Qualifiés par poule
+            <input type="number" inputmode="numeric" name="pool_qualifiers" min="1" max="8" value="2">
+          </label>
+          <label class="champ">Nombre de poules
+            <select name="pools_count">
+              <option value="">Proposé au lancement</option>
+            </select>
+          </label>
+        </div>
+        <p class="resume-format" id="aide-poules"></p>
+        <p class="match__format">Classement des poules : 3 points par victoire, 1 point par défaite. En cas d'égalité de points : le plus de manches gagnées, puis le vainqueur du match entre les joueurs à égalité.</p>
+      </div>
+      <label class="t-case"><input type="checkbox" name="third_place"> Match pour la 3e place</label>
+      <p class="match__format" style="margin:0">Le jeu (301, 501…) et le format des matchs (manches, sets) se choisissent au lancement de chaque phase.</p>
+    </fieldset>
+
+    <fieldset class="bloc-choix">
+      <legend>Visibilité et inscriptions</legend>
+      <label class="t-case"><input type="checkbox" name="public_matches" checked> Matchs publics : visibles par tous dans « Matchs en cours »</label>
+      <label class="t-case" id="case-ouvrir"><input type="checkbox" name="ouvrir" checked> Ouvrir les inscriptions dès la création</label>
+      <p class="match__format" style="margin:0">Seuls l'organisateur et les inscrits voient le tournoi et son code.</p>
+    </fieldset>
+
+    <button type="submit" class="bouton bouton--plein bouton--large">Vérifier les paramètres</button>
+  </form>
+
+  <!-- Étape 2 : vérification avant création -->
+  <section class="formulaire-jeu" id="recap" hidden>
+    <h1 class="section__titre">Vérifiez avant de confirmer</h1>
+    <dl class="t-recap" id="recap-liste"></dl>
+    <div class="actions">
+      <button type="button" class="bouton" id="btn-modifier">Modifier</button>
+      <button type="button" class="bouton bouton--plein" id="btn-confirmer">Créer le tournoi</button>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

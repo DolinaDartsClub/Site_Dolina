@@ -33,6 +33,7 @@ async function init() {
   }
   form.hidden = false;
   document.getElementById('lien-mes-parties').hidden = false;
+  document.getElementById('liens-tournoi').hidden = false;
   joueurs = [{ type: 'membre', id: moi.id, nom: nomAffiche(moi) }];
   afficherJoueurs();
   majFormat();

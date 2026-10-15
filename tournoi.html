@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tournoi – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/tournoi.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom">Tournoi</span>
+      <span class="entete__sous"><a href="tournois.html">Tous mes tournois</a></span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page">
+  <div class="message" id="message" role="alert" hidden></div>
+  <div id="tournoi" aria-live="polite"><p class="vide">Chargement du tournoi…</p></div>
+</main>
+
+<!-- Ajout d'un participant par l'organisateur -->
+<div class="fenetre" id="fen-ajout" role="dialog" aria-modal="true" aria-labelledby="t-ajout" hidden>
+  <form class="fenetre__boite" id="form-ajout" novalidate>
+    <h2 id="t-ajout">Ajouter un participant</h2>
+    <label class="champ" data-double>Nom de la doublette<input type="text" name="team_name" maxlength="40"></label>
+    <div class="champ"><span data-double>Joueur 1</span><span data-simple>Participant</span>
+      <div class="t-partenaire" data-zone="1"></div>
+    </div>
+    <div class="champ" data-double><span>Joueur 2</span>
+      <div class="t-partenaire" data-zone="2"></div>
+    </div>
+    <p class="t-erreur" id="erreur-ajout" role="alert"></p>
+    <div class="actions">
+      <button type="button" class="bouton" data-fermer>Annuler</button>
+      <button type="submit" class="bouton bouton--plein">Ajouter</button>
+    </div>
+  </form>
+</div>
+
+</body>
+</html>
