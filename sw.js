@@ -5,7 +5,7 @@
 //  À chaque mise à jour du site, augmenter le numéro de VERSION.
 // =====================================================================
 
-const VERSION = 'dolina-v4';
+const VERSION = 'dolina-v5';
 const FICHIERS = [
   './',
   'index.html',

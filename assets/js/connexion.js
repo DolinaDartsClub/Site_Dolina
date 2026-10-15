@@ -46,7 +46,12 @@ document.getElementById('oubli').addEventListener('click', async () => {
     redirectTo: BASE_URL + 'mot-de-passe.html',
   });
   if (error) {
-    message(zoneMessage, erreurFr(error));
+    // L'envoi d'emails n'est pas encore en place : on oriente vers un admin
+    if (/sending|smtp|email/i.test(error.message || '')) {
+      message(zoneMessage, 'L\'envoi d\'emails n\'est pas encore disponible sur le site. Demandez à un admin du club de réinitialiser votre mot de passe, ou écrivez à dolinadartsclub@gmail.com.');
+    } else {
+      message(zoneMessage, erreurFr(error));
+    }
     return;
   }
   // Même message qu'il existe un compte ou non (on ne dévoile pas qui est inscrit)
