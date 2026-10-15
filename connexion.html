@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Connexion – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script type="module" src="assets/js/connexion.js"></script>
+</head>
+<body>
+
+<header class="entete">
+  <a class="entete__marque" href="./">
+    <img class="entete__logo" src="assets/img/logo.png" alt="Logo du Dolina Darts Club">
+    <span class="entete__titres">
+      <span class="entete__nom">Dolina Darts Club</span>
+      <span class="entete__sous">Depuis 1984</span>
+    </span>
+  </a>
+</header>
+
+<main class="page">
+  <form class="formulaire" id="formulaire" novalidate>
+    <h1>Connexion</h1>
+    <div class="message" id="message" role="alert" hidden></div>
+    <label class="champ">Email<input name="email" type="email" autocomplete="email" required></label>
+    <label class="champ">Mot de passe<input name="password" type="password" autocomplete="current-password" required></label>
+    <button class="bouton bouton--plein bouton--large" type="submit" id="envoyer">Se connecter</button>
+    <button class="lien-discret" type="button" id="oubli">Mot de passe oublié ?</button>
+    <p class="centre">Pas encore de compte ? <a href="inscription.html">Créer mon compte joueur</a></p>
+  </form>
+</main>
+
+</body>
+</html>

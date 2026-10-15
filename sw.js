@@ -5,18 +5,26 @@
 //  À chaque mise à jour du site, augmenter le numéro de VERSION.
 // =====================================================================
 
-const VERSION = 'dolina-v1';
+const VERSION = 'dolina-v2';
 const FICHIERS = [
   './',
   'index.html',
   'live.html',
   'bientot.html',
   'mentions-legales.html',
+  'inscription.html',
+  'connexion.html',
+  'mot-de-passe.html',
+  'compte.html',
   'assets/css/style.css',
   'assets/js/app.js',
   'assets/js/config.js',
   'assets/js/accueil.js',
   'assets/js/live.js',
+  'assets/js/inscription.js',
+  'assets/js/connexion.js',
+  'assets/js/mot-de-passe.js',
+  'assets/js/compte.js',
   'assets/img/logo.png',
   'assets/img/favicon.png',
 ];

@@ -178,6 +178,49 @@ img { max-width: 100%; display: block; }
 .texte h2 { font-size: 20px; margin: 28px 0 8px; }
 .texte p, .texte li { color: #dcdcdc; }
 
+/* ---------- Formulaires ---------- */
+
+.formulaire { width: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.formulaire h1 { margin: 0; font-family: var(--police-titre); font-size: 30px; text-transform: uppercase; }
+.formulaire .intro { margin: 0; color: var(--gris-clair); font-size: 15px; }
+.champ { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; }
+.champ input, .champ select {
+  width: 100%; min-height: 48px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--bord-fort); background: var(--carte); color: var(--blanc);
+  font: inherit; font-size: 16px; font-weight: 400;
+}
+.champ input:focus, .champ select:focus { border-color: var(--orange); outline: none; box-shadow: 0 0 0 2px var(--orange); }
+.champ small { font-weight: 400; color: var(--gris); }
+.deux-colonnes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.choix { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px; }
+.choix legend { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.choix__grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.case {
+  display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding: 11px 12px;
+  border-radius: 8px; border: 1px solid var(--bord-fort); font-size: 15px; cursor: pointer;
+}
+.case input { width: 18px; height: 18px; flex-shrink: 0; margin: 1px 0 0; accent-color: var(--orange); }
+.case--simple { border: 0; padding: 0; min-height: 0; color: #d0d0d0; font-size: 14px; line-height: 1.4; }
+.repli { border-top: 1px solid #2a2a2a; padding-top: 12px; }
+.repli summary { cursor: pointer; font-size: 14px; font-weight: 600; min-height: 32px; }
+.repli[open] summary { margin-bottom: 12px; }
+.repli__contenu { display: flex; flex-direction: column; gap: 12px; }
+.bouton--large { width: 100%; min-height: 52px; font-size: 17px; }
+.bouton[disabled] { opacity: 0.6; cursor: wait; }
+.message { scroll-margin-top: 110px; padding: 12px 14px; border-radius: 8px; font-size: 15px; line-height: 1.45; }
+.message--erreur { background: #2a1414; border: 1px solid #5a2a2a; color: var(--erreur); }
+.message--ok { background: var(--orange-fond); border: 1px solid #5a3a14; color: #ffd2a6; }
+.message[hidden] { display: none; }
+.lien-discret { background: none; border: 0; padding: 0; font: inherit; color: var(--orange); cursor: pointer; text-align: left; }
+.centre { text-align: center; }
+
+.carte-info { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); }
+.carte-info h2 { margin: 0; font-size: 17px; }
+.statut { align-self: flex-start; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.statut--attente { background: #2a2414; color: #ffd27a; }
+.statut--ok { background: var(--orange); color: var(--noir); }
+.statut--refus { background: #2a1414; color: var(--erreur); }
+
 /* ---------- Score en direct ---------- */
 
 .live { display: grid; gap: 20px; }

@@ -72,6 +72,56 @@ export function etatPartie(game, sides, visits) {
   return etat;
 }
 
+// Adresse de base du site (sert aux liens envoyés par email)
+export const BASE_URL = new URL('./', location.href).href;
+
+// Traduit en français les messages d'erreur les plus courants de Supabase
+export function erreurFr(error) {
+  const m = (error && (error.message || error.error_description)) || '';
+  if (/already registered|already been registered|already exists/i.test(m)) return 'Un compte existe déjà avec cet email. Utilisez « Se connecter » ou « Mot de passe oublié ».';
+  if (/invalid login credentials/i.test(m)) return 'Email ou mot de passe incorrect.';
+  if (/email not confirmed/i.test(m)) return 'Votre email n\'est pas encore confirmé. Cliquez sur le lien reçu par email (pensez à regarder dans les spams).';
+  if (/password should be at least|weak password/i.test(m)) return 'Mot de passe trop court ou trop simple : 8 caractères minimum.';
+  if (/rate limit|too many|security purposes/i.test(m)) return 'Trop de tentatives en peu de temps. Réessayez dans quelques minutes.';
+  if (/invalid email|unable to validate email/i.test(m)) return 'Adresse email invalide.';
+  if (/same password|different from the old/i.test(m)) return 'Le nouveau mot de passe doit être différent de l\'ancien.';
+  if (/sending|smtp|email/i.test(m) && /error|fail/i.test(m)) return 'L\'email n\'a pas pu être envoyé. Réessayez plus tard ou prévenez le club.';
+  if (/fetch|network/i.test(m)) return 'Connexion internet indisponible. Réessayez.';
+  return 'Une erreur est survenue. Réessayez dans un instant.';
+}
+
+// Affiche un message dans une zone (classe message--erreur ou message--ok)
+export function message(zone, texte, type = 'erreur') {
+  zone.hidden = !texte;
+  zone.className = `message message--${type}`;
+  zone.textContent = texte || '';
+  if (texte) zone.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+// Profil de la personne connectée (null si personne n'est connecté)
+export async function profilConnecte() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return null;
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, first_name, last_name, nickname, status, role')
+    .eq('id', session.user.id)
+    .maybeSingle();
+  return data ? { ...data, email: session.user.email } : { id: session.user.id, email: session.user.email, status: 'pending' };
+}
+
+// En-tête : « Connexion » devient « Mon compte » quand on est connecté
+async function brancherEntete() {
+  const lien = document.getElementById('lien-compte');
+  if (!lien) return;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    lien.textContent = 'Mon compte';
+    lien.href = 'compte.html';
+  }
+}
+brancherEntete();
+
 // Enregistre le service worker (installation du site comme une appli)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

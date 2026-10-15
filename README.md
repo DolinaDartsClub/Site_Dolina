@@ -13,6 +13,9 @@ Site web du Dolina Darts Club : actualités, matchs en direct, scorer X01, stati
 | `index.html` | Page d'accueil : matchs en cours et actualités |
 | `live.html` | Score en direct d'une partie publique |
 | `mentions-legales.html` | Mentions légales et politique de confidentialité |
+| `inscription.html`, `connexion.html` | Création de compte et connexion |
+| `mot-de-passe.html` | Choix d'un nouveau mot de passe (lien reçu par email) |
+| `compte.html` | Mon compte : état de validation, équipes, déconnexion |
 | `bientot.html` | Page d'attente pour les rubriques pas encore ouvertes |
 | `assets/css/style.css` | Charte graphique (noir mat, orange, gris) |
 | `assets/js/config.js` | Adresse et clé **publique** de Supabase |
@@ -21,6 +24,8 @@ Site web du Dolina Darts Club : actualités, matchs en direct, scorer X01, stati
 | `manifest.webmanifest`, `sw.js` | Installation du site comme une appli (PWA) |
 | `supabase/001_schema.sql` | Création de la base de données et des règles d'accès |
 | `supabase/002_premier_admin.sql` | Désignation du premier administrateur |
+| `supabase/003_correctif_parties.sql` | Correctif : lien entre parties et joueurs |
+| `supabase/emails/` | Modèles d'emails en français à coller dans Supabase |
 
 ## Sécurité
 
