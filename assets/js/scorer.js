@@ -253,7 +253,9 @@ function valider(score) {
     $('choix-finish').innerHTML = [1, 2, 3].filter((n) => n >= mini)
       .map((n) => `<button type="button" class="bouton bouton--plein touche-choix" data-flechettes="${n}">${n}</button>`).join('');
     $('fen-finish').hidden = false;
-  } else if (reste <= 50 && finissable(reste)) {
+  } else if (reste <= 50 || reste - score <= 50) {
+    // Le reste est passé à 50 ou moins pendant la volée (avant ou après) :
+    // des fléchettes ont pu être lancées sur un double
     demanderDouble(0, 3);
   } else {
     enregistrer();
@@ -263,7 +265,7 @@ function valider(score) {
 function demanderDouble(min, max) {
   $('aide-double').textContent = enAttente.nature === 'finish'
     ? 'Y compris la fléchette du finish.'
-    : `Reste ${enAttente.reste} : fléchettes lancées sur un double pendant cette volée.`;
+    : `${enAttente.nature === 'bust' || enAttente.reste <= 50 ? `Reste ${enAttente.reste}` : `De ${enAttente.reste} à ${enAttente.reste - enAttente.score}`} : fléchettes lancées sur un double pendant cette volée.`;
   const options = [];
   for (let n = min; n <= max; n++) options.push(n);
   $('choix-double').innerHTML = options

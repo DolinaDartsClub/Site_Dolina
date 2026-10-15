@@ -1144,3 +1144,22 @@ details.carte-info:not([open]) { gap: 0; }
 .valide-ok { display: inline-grid; place-items: center; width: 28px; height: 28px; color: var(--orange); }
 .valide-ok svg { width: 26px; height: 26px; }
 .fiche__badges { align-items: center; }
+
+/* Scorer à 3-4 joueurs : noms et manches plus lisibles */
+.scorer--nombreux .camp__nom { font-size: 20px; }
+.scorer--nombreux .camp__stats b { font-size: 22px; }
+.scorer--nombreux .camp__stats b.orange { font-size: 30px; }
+.scorer--nombreux .camp__stats small { font-size: 12px; }
+.scorer--nombreux .mini-camp__nom { font-size: 16px; }
+.scorer--nombreux .mini-camp__manches { font-size: 13px; }
+.scorer--nombreux .mini-camp__manches b { font-size: 20px; }
+@media (min-width: 900px) {
+  .scorer--nombreux .camp__nom { font-size: 30px; }
+  .scorer--nombreux .camp__badge { font-size: 13px; padding: 4px 10px; }
+  .scorer--nombreux .camp__stats small { font-size: 14px; }
+  .scorer--nombreux .camp__stats b { font-size: 30px; }
+  .scorer--nombreux .camp__stats b.orange { font-size: 44px; }
+  .scorer--nombreux .mini-camp__nom { font-size: 21px; }
+  .scorer--nombreux .mini-camp__manches { font-size: 15px; }
+  .scorer--nombreux .mini-camp__manches b { font-size: 26px; }
+}
