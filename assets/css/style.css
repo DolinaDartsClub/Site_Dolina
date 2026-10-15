@@ -1141,3 +1141,6 @@ details.carte-info:not([open]) { gap: 0; }
   .fiche__resume .fiche__badges { grid-column: 2 / -1; justify-content: flex-start; }
 }
 @media (min-width: 900px) { #profil .pr-grille { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.valide-ok { display: inline-grid; place-items: center; width: 28px; height: 28px; color: var(--orange); }
+.valide-ok svg { width: 26px; height: 26px; }
+.fiche__badges { align-items: center; }

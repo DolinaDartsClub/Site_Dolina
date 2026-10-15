@@ -141,7 +141,9 @@ function afficherMembres() {
           ${avatar(p, 'avatar--liste fiche__avatar')}
           <span class="fiche__nom">${esc(nomComplet(p))}${estMoi ? ' (vous)' : ''}</span>
           <span class="fiche__badges">
-            <span class="statut ${STATUT_CLASSE[p.status]}">${STATUT[p.status]}</span>
+            ${p.status === 'active'
+    ? '<span class="valide-ok" role="img" aria-label="Compte validé" title="Compte validé"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg></span>'
+    : `<span class="statut ${STATUT_CLASSE[p.status]}">${STATUT[p.status]}</span>`}
             ${p.role === 'admin' ? '<span class="statut statut--ok">Admin</span>' : ''}
           </span>
           <span class="match__format">${esc(resumeEquipes || 'Sans équipe')}</span>
