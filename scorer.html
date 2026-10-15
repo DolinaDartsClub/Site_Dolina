@@ -19,7 +19,7 @@
 
 <div class="scorer" id="scorer">
   <header class="scorer__barre">
-    <a class="bouton bouton--icone" href="jouer.html" aria-label="Quitter le scorer (la partie reste reprenable 24 h)" title="Quitter">
+    <a class="bouton bouton--icone" id="btn-quitter" href="jouer.html" aria-label="Quitter le scorer (la partie reste reprenable 24 h)" title="Quitter">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     </a>
     <div class="scorer__titre">
@@ -78,9 +78,11 @@
   <div class="fenetre__boite fenetre__boite--accent centre">
     <h2 id="t-fin" class="titre-game-shot">Game shot and the match</h2>
     <p class="fin__gagnant" id="fin-gagnant"></p>
-    <p class="match__format" style="margin:0">La partie est enregistrée dans le compte de chaque membre.</p>
+    <p class="match__format" id="fin-texte" style="margin:0">La partie est enregistrée dans le compte de chaque membre.</p>
     <div class="actions" style="justify-content:center">
-      <a class="bouton bouton--plein" href="jouer.html">Nouvelle partie</a>
+      <button type="button" class="bouton bouton--plein" id="fin-valider" hidden>Valider le résultat</button>
+      <a class="bouton bouton--plein" id="fin-tournoi" href="tournois.html" hidden>Retour au tournoi</a>
+      <a class="bouton bouton--plein" id="fin-nouvelle" href="jouer.html">Nouvelle partie</a>
       <a class="bouton" id="fin-live" href="#">Voir le résumé</a>
       <button type="button" class="bouton" id="fin-annuler">Annuler la dernière volée</button>
     </div>

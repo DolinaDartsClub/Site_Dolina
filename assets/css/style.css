@@ -880,3 +880,19 @@ a.ta-carte:hover { border-color: var(--bord-fort); border-left-color: var(--oran
 .ta-carte--ouvert { border-left-color: #7fdc9a; }
 a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .ta-carte__phase--ouvert { color: #7fdc9a; }
+
+/* ---------- Tournoi : matchs joués ---------- */
+.bouton--discret { border-color: var(--bord-fort); color: var(--gris-clair); }
+.bouton--discret:hover { border-color: var(--gris); color: var(--blanc); }
+.m-carte__note { margin: 4px 0 0; font-size: 12px; font-weight: 700; color: var(--orange); }
+.t-choix-bull { display: grid; gap: 8px; }
+.t-gestion__ligne--alerte { padding: 10px 12px; border-radius: 10px; background: var(--orange-fond); border: 1px solid var(--orange); }
+.t-podium { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.t-podium__place { display: grid; gap: 2px; padding: 12px 14px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); }
+.t-podium__place--1 { border-color: var(--orange); background: var(--orange-fond); }
+.t-podium__place--moi { box-shadow: inset 0 0 0 2px var(--orange); }
+.t-podium__rang { font-family: var(--police-titre); font-size: 34px; font-weight: 700; line-height: 1; color: var(--gris); }
+.t-podium__place--1 .t-podium__rang { color: var(--orange); }
+.t-podium__titre { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--gris-clair); letter-spacing: 0.4px; }
+.t-podium__place strong { font-size: 18px; overflow-wrap: anywhere; }
+.mp-carte__ctx--tournoi { color: var(--orange); text-decoration: none; }

@@ -10,7 +10,7 @@ import { supabase, esc, formatPartie, etatPartie, profilConnecte } from './app.j
 
 const PAR_PAGE = 20;
 const DUREE_REPRISE_H = 24;
-const COLONNES = 'id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, visibility, created_by, created_at, finished_at, game_sides(side, name, is_bot), game_players(side, profile_id, display_name, throw_order)';
+let COLONNES = 'tournament_match_id, id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, visibility, created_by, created_at, finished_at, game_sides(side, name, is_bot), game_players(side, profile_id, display_name, throw_order)';
 
 const zoneAcces = document.getElementById('acces');
 const contenu = document.getElementById('contenu');
@@ -23,8 +23,13 @@ let page = 0;
 let parties = [];
 let fin = false;
 
-// Contexte d'une partie : « match » pour l'instant, « tournoi » plus tard
-function contexte() {
+// Contexte d'une partie : match libre ou match de tournoi
+const matchsTournoi = new Map();     // id du match de tournoi → { nom, match_no, tournament_id }
+function contexte(g) {
+  const mt = g.tournament_match_id && matchsTournoi.get(g.tournament_match_id);
+  if (g.tournament_match_id) {
+    return { type: 'tournoi', libelle: mt ? `Tournoi · ${mt.nom} · M${mt.match_no}` : 'Tournoi', lien: mt ? `tournoi.html?id=${encodeURIComponent(mt.tournament_id)}` : null };
+  }
   return { type: 'match', libelle: 'Match' };
 }
 
@@ -56,10 +61,16 @@ function filtrer(q) {
 async function chargerPage() {
   btnPlus.disabled = true;
   // 1. Parties jouées avec mon compte ; 2. parties que j'ai créées (j'ai pu tenir le score sans jouer)
-  const [jouees, creees] = await Promise.all([
+  const lire = () => Promise.all([
     filtrer(supabase.from('games').select(`${COLONNES}, moi:game_players!inner(profile_id)`).eq('moi.profile_id', moi.id)),
     filtrer(supabase.from('games').select(COLONNES).eq('created_by', moi.id)),
   ]);
+  let [jouees, creees] = await lire();
+  // Base sans les tournois (script 016 non exécuté) : on relit sans la colonne du tournoi
+  if (jouees.error && /tournament_match_id/.test(jouees.error.message || '')) {
+    COLONNES = COLONNES.replace('tournament_match_id, ', '');
+    [jouees, creees] = await lire();
+  }
   btnPlus.disabled = false;
   if (jouees.error && creees.error) {
     liste.innerHTML = '<p class="vide">Impossible de charger vos parties pour le moment.</p>';
@@ -71,6 +82,14 @@ async function chargerPage() {
     .filter((g, i, t) => t.findIndex((x) => x.id === g.id) === i && !parties.some((p) => p.id === g.id))
     .filter((g) => g.status !== 'live' || Date.parse(g.created_at) >= limite);
   fin = (jouees.data || []).length < PAR_PAGE && (creees.data || []).length < PAR_PAGE;
+
+  // Nom du tournoi des matchs de tournoi
+  const aChercher = [...new Set(nouvelles.map((g) => g.tournament_match_id).filter((x) => x && !matchsTournoi.has(x)))];
+  if (aChercher.length) {
+    const { data: mts } = await supabase.from('tournament_matches').select('id, match_no, tournament_id, tournaments(name)').in('id', aChercher);
+    (mts || []).forEach((x) => matchsTournoi.set(x.id, { nom: x.tournaments?.name || 'Tournoi', match_no: x.match_no, tournament_id: x.tournament_id }));
+  }
+  if (nouvelles.some((g) => g.tournament_match_id)) document.getElementById('filtre-type').hidden = false;
 
   // Manches gagnées : les volées de finish suffisent
   if (nouvelles.length) {
@@ -141,7 +160,7 @@ function carte(g) {
   return `
     <article class="mp-carte mp-carte--${res.cle}">
       <header class="mp-carte__haut">
-        <span class="mp-carte__ctx">${esc(ctx.libelle)}</span>
+        ${ctx.lien ? `<a class="mp-carte__ctx mp-carte__ctx--tournoi" href="${ctx.lien}">${esc(ctx.libelle)}</a>` : `<span class="mp-carte__ctx">${esc(ctx.libelle)}</span>`}
         <span class="mp-carte__date">${esc(fmtJour.format(date))} · ${esc(fmtHeure.format(date))}</span>
         <span class="mp-resultat mp-resultat--${res.cle}">${esc(res.texte)}</span>
       </header>

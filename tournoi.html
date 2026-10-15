@@ -51,6 +51,30 @@
   </form>
 </div>
 
+<!-- Lancer un match : tirage au bull -->
+<div class="fenetre" id="fen-bull" role="dialog" aria-modal="true" aria-labelledby="t-bull" hidden>
+  <div class="fenetre__boite">
+    <h2 id="t-bull">Tirage au bull</h2>
+    <p class="match__format" id="bull-match" style="margin:0"></p>
+    <p style="margin:0">Chacun lance une fléchette. Qui est le plus proche du bull ? Il commencera la première manche.</p>
+    <div class="t-choix-bull" id="bull-choix"></div>
+    <p class="t-erreur" id="erreur-bull" role="alert"></p>
+    <button type="button" class="bouton" data-fermer>Annuler</button>
+  </div>
+</div>
+
+<!-- Forfait (organisateur) -->
+<div class="fenetre" id="fen-forfait" role="dialog" aria-modal="true" aria-labelledby="t-forfait" hidden>
+  <div class="fenetre__boite">
+    <h2 id="t-forfait">Déclarer un forfait</h2>
+    <p class="match__format" id="forfait-match" style="margin:0"></p>
+    <p style="margin:0">Le joueur qui déclare forfait perd le match (0 point en poule) ; son adversaire est qualifié.</p>
+    <div class="t-choix-bull" id="forfait-choix"></div>
+    <p class="t-erreur" id="erreur-forfait" role="alert"></p>
+    <button type="button" class="bouton" data-fermer>Annuler</button>
+  </div>
+</div>
+
 <!-- Lancement du tournoi (organisateur) -->
 <div class="fenetre" id="fen-lancer" role="dialog" aria-modal="true" aria-labelledby="t-lancer" hidden>
   <form class="fenetre__boite" id="form-lancer" novalidate>

@@ -39,7 +39,7 @@ select _t(:'F', 'participant ne peut pas modifier le tournoi', $$update tourname
 select _t(:'W', 'vérif : nom inchangé', $$select name from tournaments where code=current_setting('test.code')$$);
 select _t(:'W', 'organisateur ne peut pas passer « en cours » à la main', $$update tournaments set status='running' where name='Coupe Will' returning id$$, 'au lancement');
 select _t(:'W', 'organisateur ne peut pas changer le code', $$update tournaments set code='BBBBBB' where name='Coupe Will' returning (code = current_setting('test.code'))::text$$);
-select _t(:'F', 'Franck se désinscrit', $$delete from tournament_entries where profile_id='33333333-3333-3333-3333-333333333333' returning id::text$$);
+select _t(:'F', 'Franck se désinscrit', $$delete from tournament_entries where profile_id='33333333-3333-3333-3333-333333333333' and tournament_id = (select id from tournaments where name='Coupe Will') returning id::text$$);
 select _t(:'F', 'Franck ne voit plus le tournoi', $$select count(*)::text from tournaments where name='Coupe Will'$$);
 select _t(:'G', 'Gérald ne peut pas retirer l''invité', $$delete from tournament_entries where guest_name='Jean' returning id::text$$);
 select _t(:'W', 'vérif : 3 inscrits', $$select count(*)::text from tournament_entries e join tournaments t on t.id=e.tournament_id where t.name='Coupe Will'$$);

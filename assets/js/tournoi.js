@@ -54,12 +54,17 @@ async function charger() {
   inscrits = data.inscrits || [];
   matchs = data.matchs || [];
   parId = new Map(inscrits.map((e) => [e.id, e]));
+  etiquettes = null;
   document.title = `${t.name} – Dolina Darts Club`;
   if (!onglet) onglet = t.status === 'running' || t.status === 'finished' ? (t.format === 'pools' ? 'poules' : 'arbre') : 'participants';
   afficher();
 }
 
 const estOrganisateur = () => role === 'organisateur';
+// Poules toutes jouées et phase finale pas encore créée
+const poulesTerminees = () => t.format === 'pools' && t.status === 'running'
+  && matchs.some((m) => m.phase === 'pool') && !matchs.some((m) => m.phase === 'final')
+  && matchs.filter((m) => m.phase === 'pool').every((m) => m.status === 'done' || m.status === 'bye');
 const avantLancement = () => t.status === 'draft' || t.status === 'open';
 const monInscription = () => (moi ? inscrits.find((e) => estMoi(e, moi.id)) : null);
 const estMonMatch = (m) => { const mi = monInscription(); return !!mi && (m.entry_a === mi.id || m.entry_b === mi.id); };
@@ -91,7 +96,9 @@ function afficher() {
         <p class="t-places">${nb} / ${t.max_participants} inscrits · ${esc(STATUTS[t.status].aide)}</p>`}
     </section>
 
-    ${t.code ? blocCode() : ''}
+    ${t.status === 'finished' ? podium() : ''}
+    ${poulesTerminees() && !orga ? '<p class="message message--ok">Toutes les poules sont terminées : l\'organisateur va lancer la phase finale.</p>' : ''}
+    ${t.code && t.status !== 'finished' ? blocCode() : ''}
     ${orga ? panneauOrganisateur() : ''}
 
     <nav class="t-onglets" role="tablist" aria-label="Sections du tournoi">
@@ -111,6 +118,28 @@ function avancement() {
   return `
     <div class="t-jauge" role="img" aria-label="${joues} matchs joués sur ${vrais.length}"><span style="width:${pct}%"></span></div>
     <p class="t-places">${inscrits.length} ${t.team_mode === 'double' ? 'doublettes' : 'joueurs'} · ${joues} / ${vrais.length} matchs joués${live ? ` · ${live} en cours` : ''}${format ? ` · ${esc(formatPartie(format))}` : ''}</p>`;
+}
+
+function podium() {
+  const finale = matchs.find((m) => m.phase === 'final' && !m.is_third_place && !m.next_match_id);
+  const petite = matchs.find((m) => m.is_third_place);
+  if (!finale?.winner_entry) return '';
+  const second = finale.winner_entry === finale.entry_a ? finale.entry_b : finale.entry_a;
+  const places = [
+    ['1', 'Vainqueur', finale.winner_entry],
+    ['2', 'Finaliste', second],
+    ...(petite?.winner_entry ? [['3', '3e place', petite.winner_entry]] : []),
+  ];
+  const mi = monInscription();
+  return `
+    <section class="t-podium" aria-label="Podium">
+      ${places.map(([rang, titre, idE]) => `
+        <div class="t-podium__place t-podium__place--${rang}${mi && idE === mi.id ? ' t-podium__place--moi' : ''}">
+          <span class="t-podium__rang">${rang}</span>
+          <span class="t-podium__titre">${titre}</span>
+          <strong>${esc(nomEntree(idE))}</strong>
+        </div>`).join('')}
+    </section>`;
 }
 
 function blocCode() {
@@ -138,6 +167,11 @@ function panneauOrganisateur() {
     return `
       <section class="t-gestion" aria-label="Gestion du tournoi">
         <h2 class="t-gestion__titre">Gestion du tournoi</h2>
+        ${poulesTerminees() ? `
+        <div class="t-gestion__ligne t-gestion__ligne--alerte">
+          <span><strong>Toutes les poules sont terminées</strong><small>Vérifiez les classements, puis lancez la phase finale avec les ${t.pool_qualifiers * t.pools_count} qualifiés.</small></span>
+          <button type="button" class="bouton bouton--petit bouton--plein" data-action="phase-finale">Lancer la phase finale</button>
+        </div>` : ''}
         <div class="t-gestion__ligne">
           <span><strong>Tournoi lancé</strong><small>${commence ? 'Des matchs ont été joués : le tirage est définitif.' : 'Aucun match joué : vous pouvez encore annuler le lancement pour corriger les inscriptions.'}</small></span>
           ${commence ? '' : '<button type="button" class="bouton bouton--petit bouton--danger" data-action="annuler-lancement">Annuler le lancement</button>'}
@@ -200,6 +234,20 @@ function vueParticipants() {
 
 // ---------- Matchs : briques communes ----------
 
+// « A1 » = 1er de la poule A (phase finale d'un tournoi à poules)
+let etiquettes = null;
+function etiquettePoule(idE) {
+  if (!etiquettes) {
+    etiquettes = new Map();
+    for (let k = 1; k <= (t.pools_count || 0); k++) {
+      const membres = inscrits.filter((e) => e.pool_no === k).sort((a, b) => (a.seed || 0) - (b.seed || 0));
+      classementPoule(membres.map((e) => e.id), matchs.filter((m) => m.phase === 'pool' && m.pool_no === k))
+        .forEach((c) => etiquettes.set(c.id, `${lettrePoule(k)}${c.rang}`));
+    }
+  }
+  return etiquettes.get(idE) || '';
+}
+
 function nomEntree(idInscrit) {
   return parId.get(idInscrit)?.nom || 'Ancien joueur';
 }
@@ -238,7 +286,7 @@ function ligneJoueur(m, cote) {
     const texte = m.status === 'bye' ? 'Exempté' : placeVide(m, cote);
     return `<div class="m-joueur m-joueur--vide"><span class="m-joueur__nom">${esc(texte)}</span><span class="m-joueur__score"></span></div>`;
   }
-  const seed = parId.get(idE)?.seed;
+  const seed = m.phase === 'final' && t.format === 'pools' ? etiquettePoule(idE) : parId.get(idE)?.seed;
   return `
     <div class="m-joueur${gagnant ? ' m-joueur--gagnant' : ''}${m.status === 'done' && !gagnant ? ' m-joueur--perdant' : ''}${moiIci ? ' m-joueur--moi' : ''}">
       ${m.phase === 'final' && seed ? `<span class="m-joueur__seed">${seed}</span>` : ''}
@@ -248,16 +296,35 @@ function ligneJoueur(m, cote) {
 }
 
 function boutonMatch(m) {
+  const orga = role === 'organisateur';
+  const autorise = orga || role === 'participant';
+  const jeTiensLeScore = moi && m.game_created_by === moi.id;
+  const boutons = [];
+  if (m.status === 'ready' && autorise) {
+    boutons.push(`<button type="button" class="bouton bouton--petit${estMonMatch(m) ? ' bouton--plein' : ''}" data-lancer="${m.id}">Lancer le match</button>`);
+  }
   if (m.status === 'live' && m.game_id) {
-    return `<a class="bouton bouton--petit" href="live.html?id=${encodeURIComponent(m.game_id)}">Suivre en direct</a>`;
+    if (m.game_status === 'finished' && (jeTiensLeScore || orga)) {
+      boutons.push(`<button type="button" class="bouton bouton--petit bouton--plein" data-valider="${m.game_id}">Valider le résultat</button>`);
+    }
+    if (jeTiensLeScore || (moi?.role === 'admin')) {
+      boutons.push(`<a class="bouton bouton--petit${m.game_status === 'finished' ? '' : ' bouton--plein'}" href="scorer.html?id=${encodeURIComponent(m.game_id)}">${m.game_status === 'finished' ? 'Ouvrir le scorer' : 'Reprendre le scorer'}</a>`);
+    } else {
+      boutons.push(`<a class="bouton bouton--petit" href="live.html?id=${encodeURIComponent(m.game_id)}">${m.game_status === 'finished' ? 'Voir le score' : 'Suivre en direct'}</a>`);
+    }
   }
   if (m.status === 'done' && m.game_id) {
-    return `<a class="bouton bouton--petit" href="live.html?id=${encodeURIComponent(m.game_id)}">Récapitulatif</a>`;
+    boutons.push(`<a class="bouton bouton--petit" href="live.html?id=${encodeURIComponent(m.game_id)}">Récapitulatif</a>`);
   }
-  const autorise = role === 'organisateur' || role === 'participant';
-  if (m.status === 'ready' && autorise) {
-    return `<button type="button" class="bouton bouton--petit${estMonMatch(m) ? ' bouton--plein' : ''}" disabled title="Disponible à l'étape suivante">Lancer le match <small>(bientôt)</small></button>`;
+  if (orga) {
+    if (m.status === 'ready' || m.status === 'live') boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-forfait="${m.id}">Forfait…</button>`);
+    if (m.status === 'done' || m.status === 'live') boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-reinit="${m.id}">Remettre à jouer</button>`);
   }
+  return boutons.join('');
+}
+
+function etatPartieMatch(m) {
+  if (m.status === 'live' && m.game_status === 'finished') return '<p class="m-carte__note">Partie terminée : résultat à valider.</p>';
   return '';
 }
 
@@ -274,7 +341,7 @@ function carteMatch(m, { avecLibelle = true, compacte = false } = {}) {
       </header>
       ${ligneJoueur(m, 'a')}
       ${ligneJoueur(m, 'b')}
-      ${compacte ? '' : `<div class="m-carte__actions">${boutonMatch(m)}</div>`}
+      ${compacte ? '' : `${etatPartieMatch(m)}<div class="m-carte__actions">${boutonMatch(m)}</div>`}
     </article>`;
 }
 
@@ -286,7 +353,7 @@ function vuePoules() {
   const mi = monInscription();
   const blocs = [];
   for (let k = 1; k <= nbPoules; k++) {
-    const membres = inscrits.filter((e) => e.pool_no === k);
+    const membres = inscrits.filter((e) => e.pool_no === k).sort((a, b) => (a.seed || 0) - (b.seed || 0));
     const mPoule = matchs.filter((m) => m.phase === 'pool' && m.pool_no === k);
     const classement = classementPoule(membres.map((e) => e.id), mPoule);
     const qualif = t.pool_qualifiers || 0;
@@ -470,6 +537,11 @@ function brancher() {
   zone.querySelector('[data-action="ajouter"]')?.addEventListener('click', ouvrirAjout);
   zone.querySelector('[data-action="lancer"]')?.addEventListener('click', ouvrirLancement);
   zone.querySelector('[data-action="annuler-lancement"]')?.addEventListener('click', annulerLancement);
+  zone.querySelector('[data-action="phase-finale"]')?.addEventListener('click', () => ouvrirLancement('finale'));
+  zone.querySelectorAll('[data-lancer]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirBull(b.dataset.lancer); }));
+  zone.querySelectorAll('[data-valider]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); valider(b.dataset.valider, b); }));
+  zone.querySelectorAll('[data-forfait]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirForfait(b.dataset.forfait); }));
+  zone.querySelectorAll('[data-reinit]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); reinitialiser(b.dataset.reinit); }));
 }
 
 async function copier(texte) {
@@ -543,14 +615,28 @@ function annulerLancement() {
 
 const choixLancement = { variant: '501' };
 
-function ouvrirLancement() {
+let modeLancement = 'tournoi';     // 'tournoi' (tirage) ou 'finale' (phase finale après les poules)
+
+function ouvrirLancement(mode = 'tournoi') {
+  modeLancement = mode;
   const f = document.getElementById('form-lancer');
   f.reset();
-  choixLancement.variant = '501';
+  choixLancement.variant = t.pool_format?.variant && mode === 'finale' ? t.pool_format.variant : '501';
+  if (mode === 'finale' && t.pool_format?.variant === 'libre') f.elements.start_score.value = t.pool_format.start_score;
   majVariant();
   const n = inscrits.length;
   const blocPoules = document.getElementById('lancer-poules');
-  blocPoules.hidden = t.format !== 'pools';
+  blocPoules.hidden = t.format !== 'pools' || mode === 'finale';
+  document.getElementById('t-lancer').textContent = mode === 'finale' ? 'Lancer la phase finale' : 'Lancer le tournoi';
+  f.querySelector('[type=submit]').textContent = mode === 'finale' ? 'Créer l\'arbre final' : 'Lancer et tirer au sort';
+  if (mode === 'finale') {
+    const q = t.pool_qualifiers * t.pools_count;
+    document.getElementById('erreur-lancer').textContent = '';
+    document.getElementById('lancer-intro').textContent = `Les ${t.pool_qualifiers} premier${t.pool_qualifiers > 1 ? 's' : ''} de chaque poule (${q} qualifiés) : les premiers de poule sont les mieux placés, et deux joueurs d'une même poule ne se rencontrent pas au premier tour quand c'est possible (1er A contre 2e B…). Choisissez le format des matchs de la phase finale.`;
+    majResumeLancement();
+    fenLancer.hidden = false;
+    return;
+  }
   if (t.format === 'pools') {
     const sel = f.elements.poules;
     const max = Math.min(16, Math.floor(n / 2));
@@ -588,7 +674,7 @@ function majResumeLancement() {
   f.sets_n.hidden = !f.sets_kind.value;
   const format = lireFormat();
   let texte = formatPartie(format);
-  if (t.format === 'pools') {
+  if (t.format === 'pools' && modeLancement !== 'finale') {
     const n = inscrits.length;
     const p = Number(f.poules.value) || 1;
     const base = Math.floor(n / p);
@@ -622,17 +708,104 @@ document.getElementById('form-lancer').addEventListener('submit', (e) => {
   const bouton = e.target.querySelector('[type=submit]');
   action(async () => {
     bouton.disabled = true;
-    const params = { p_tournoi: t.id, p_format: format };
-    if (t.format === 'pools') params.p_poules = Number(e.target.elements.poules.value);
-    const { error } = await supabase.rpc('lancer_tournoi', params);
+    let error;
+    if (modeLancement === 'finale') {
+      ({ error } = await supabase.rpc('lancer_phase_finale', { p_tournoi: t.id, p_format: format }));
+    } else {
+      const params = { p_tournoi: t.id, p_format: format };
+      if (t.format === 'pools') params.p_poules = Number(e.target.elements.poules.value);
+      ({ error } = await supabase.rpc('lancer_tournoi', params));
+    }
     bouton.disabled = false;
     if (error) { erreur.textContent = erreurFr(error); return; }
     fenLancer.hidden = true;
-    message(zoneMsg, t.format === 'pools' ? 'Tournoi lancé : les poules sont tirées au sort.' : 'Tournoi lancé : l\'arbre est tiré au sort.', 'ok');
-    onglet = t.format === 'pools' ? 'poules' : 'arbre';
+    message(zoneMsg, modeLancement === 'finale' ? 'Phase finale lancée : l\'arbre est créé avec les qualifiés.'
+      : (t.format === 'pools' ? 'Tournoi lancé : les poules sont tirées au sort.' : 'Tournoi lancé : l\'arbre est tiré au sort.'), 'ok');
+    onglet = modeLancement === 'finale' ? 'arbre' : (t.format === 'pools' ? 'poules' : 'arbre');
     await charger();
   });
 });
+
+// ---------- Matchs : lancer (tirage au bull), valider, forfait, correction ----------
+
+const fenBull = document.getElementById('fen-bull');
+const fenForfait = document.getElementById('fen-forfait');
+let matchChoisi = null;
+
+function ouvrirBull(idMatch) {
+  matchChoisi = matchs.find((m) => m.id === idMatch);
+  if (!matchChoisi) return;
+  document.getElementById('bull-match').textContent = `M${matchChoisi.match_no} · ${libelleMatch(matchChoisi)}`;
+  document.getElementById('bull-choix').innerHTML = [['1', matchChoisi.entry_a], ['2', matchChoisi.entry_b]]
+    .map(([cote, idE]) => `<button type="button" class="bouton bouton--plein bouton--large" data-premier="${cote}">${esc(nomEntree(idE))}</button>`).join('');
+  document.getElementById('erreur-bull').textContent = '';
+  fenBull.hidden = false;
+}
+
+document.getElementById('bull-choix').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-premier]');
+  if (!b || !matchChoisi) return;
+  action(async () => {
+    fenBull.querySelectorAll('button').forEach((x) => { x.disabled = true; });
+    const { data, error } = await supabase.rpc('lancer_match_tournoi', { p_match: matchChoisi.id, p_premier: Number(b.dataset.premier) });
+    fenBull.querySelectorAll('button').forEach((x) => { x.disabled = false; });
+    if (error) {
+      document.getElementById('erreur-bull').textContent = erreurFr(error);
+      await charger();
+      return;
+    }
+    location.href = `scorer.html?id=${encodeURIComponent(data)}`;
+  });
+});
+fenBull.addEventListener('click', (e) => { if (e.target === fenBull || e.target.closest('[data-fermer]')) fenBull.hidden = true; });
+
+function valider(idPartie, bouton) {
+  action(async () => {
+    bouton.disabled = true;
+    const { error } = await supabase.rpc('valider_match_tournoi', { p_game: idPartie });
+    if (error) { bouton.disabled = false; return message(zoneMsg, `Le résultat n'a pas été validé : ${erreurFr(error)}`); }
+    message(zoneMsg, 'Résultat validé : le tournoi est à jour.', 'ok');
+    await charger();
+  });
+}
+
+function ouvrirForfait(idMatch) {
+  matchChoisi = matchs.find((m) => m.id === idMatch);
+  if (!matchChoisi) return;
+  document.getElementById('forfait-match').textContent = `M${matchChoisi.match_no} · ${libelleMatch(matchChoisi)}${matchChoisi.status === 'live' ? ' — la partie commencée sera effacée' : ''}`;
+  document.getElementById('forfait-choix').innerHTML = [matchChoisi.entry_a, matchChoisi.entry_b]
+    .map((idE) => `<button type="button" class="bouton bouton--danger bouton--large" data-perdant="${idE}">${esc(nomEntree(idE))} déclare forfait</button>`).join('');
+  document.getElementById('erreur-forfait').textContent = '';
+  fenForfait.hidden = false;
+}
+
+document.getElementById('forfait-choix').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-perdant]');
+  if (!b || !matchChoisi) return;
+  action(async () => {
+    const { error } = await supabase.rpc('forfait_match', { p_match: matchChoisi.id, p_forfait: b.dataset.perdant });
+    if (error) { document.getElementById('erreur-forfait').textContent = erreurFr(error); return; }
+    fenForfait.hidden = true;
+    message(zoneMsg, `Forfait enregistré : ${nomEntree(b.dataset.perdant)} est éliminé de ce match.`, 'ok');
+    await charger();
+  });
+});
+fenForfait.addEventListener('click', (e) => { if (e.target === fenForfait || e.target.closest('[data-fermer]')) fenForfait.hidden = true; });
+
+function reinitialiser(idMatch) {
+  const m = matchs.find((x) => x.id === idMatch);
+  if (!m) return;
+  const texte = m.status === 'live'
+    ? `Remettre M${m.match_no} « à jouer » ? La partie en cours sera effacée.`
+    : `Remettre M${m.match_no} « à jouer » ? Le résultat et la partie seront effacés, et le vainqueur retiré du match suivant.`;
+  if (!confirm(texte)) return;
+  action(async () => {
+    const { error } = await supabase.rpc('reinitialiser_match', { p_match: idMatch });
+    if (error) return message(zoneMsg, erreurFr(error));
+    message(zoneMsg, `M${m.match_no} est de nouveau à jouer.`, 'ok');
+    await charger();
+  });
+}
 
 // ---------- Ajout manuel (organisateur) ----------
 
@@ -677,7 +850,7 @@ fenAjout.addEventListener('click', (e) => {
   if (e.target === fenAjout || e.target.closest('[data-fermer]')) fenAjout.hidden = true;
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { fenAjout.hidden = true; fenLancer.hidden = true; }
+  if (e.key === 'Escape') { fenAjout.hidden = true; fenLancer.hidden = true; fenBull.hidden = true; fenForfait.hidden = true; }
 });
 
 document.getElementById('form-ajout').addEventListener('submit', (e) => {

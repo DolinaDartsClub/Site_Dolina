@@ -25,6 +25,7 @@ let saisie = '';
 let enAttente = null;     // volée en cours de confirmation (questions finish / double)
 let file = Promise.resolve();
 let prochainIdLocal = 1;
+let tournoi = null;        // match de tournoi : { match_no, status, tournament_id, nom }
 
 // ---------- Chargement ----------
 
@@ -61,6 +62,7 @@ async function init() {
   // Guide de finish masqué si le créateur l'a choisi
   document.querySelector('.scorer__finish').hidden = game.show_checkout === false;
   $('fin-live').href = `live.html?id=${encodeURIComponent(id)}`;
+  if (game.tournament_match_id) await chargerTournoi();
   document.body.classList.toggle('scorer--nombreux', camps.length > 2);
   construirePave();
   rafraichir();
@@ -140,7 +142,53 @@ function afficherEvenement(texte) {
   ev.classList.add('flash');
 }
 
+// ---------- Match de tournoi ----------
+
+async function chargerTournoi() {
+  const { data } = await supabase.from('tournament_matches')
+    .select('id, match_no, status, tournament_id, tournaments(name)')
+    .eq('id', game.tournament_match_id).maybeSingle();
+  if (!data) return;
+  tournoi = { match_no: data.match_no, status: data.status, tournament_id: data.tournament_id, nom: data.tournaments?.name || 'Tournoi' };
+  const lien = `tournoi.html?id=${encodeURIComponent(tournoi.tournament_id)}`;
+  $('btn-quitter').href = lien;
+  $('btn-quitter').setAttribute('aria-label', 'Retour au tournoi (le match reste en cours)');
+  $('fin-tournoi').href = lien;
+  $('titre-format').textContent = `${tournoi.nom} · M${tournoi.match_no} · ${formatPartie(game)}`;
+  if (tournoi.status === 'done') resultatValide();
+}
+
+function resultatValide() {
+  tournoi.status = 'done';
+  $('scorer').classList.add('scorer--fige');
+  $('btn-annuler').hidden = true;
+  $('btn-abandon').hidden = true;
+  $('fin-valider').hidden = true;
+  $('fin-annuler').hidden = true;
+  $('fin-tournoi').hidden = false;
+  $('fin-texte').textContent = 'Résultat validé : le tournoi est à jour. En cas d\'erreur, contactez l\'organisateur.';
+}
+
+$('fin-valider').addEventListener('click', async () => {
+  const bouton = $('fin-valider');
+  if (bouton.disabled) return;
+  bouton.disabled = true;                    // pas de double validation
+  await file;                                // dernières volées bien enregistrées
+  const { error } = await supabase.rpc('valider_match_tournoi', { p_game: id });
+  bouton.disabled = false;
+  if (error) return message(zoneMsg, `Le résultat n'a pas été validé : ${erreurFr(error)}`);
+  resultatValide();
+});
+
 function afficherFin() {
+  if (tournoi) {
+    $('fin-nouvelle').hidden = true;
+    const valide = tournoi.status === 'done';
+    $('fin-valider').hidden = valide;
+    $('fin-tournoi').hidden = !valide;
+    $('fin-annuler').hidden = valide;
+    if (!valide) $('fin-texte').textContent = 'Vérifiez le score puis validez : le résultat sera enregistré dans le tournoi.';
+  }
   $('fin-gagnant').textContent = `${nomsCamps[etat.gagnant]} gagne ${game.sets_n
     ? camps.map((s) => etat.sets[s]).join(' – ') + ' (sets)'
     : camps.map((s) => etat.manches[s]).join(' – ')}`;
@@ -310,10 +358,13 @@ $('fin-annuler').addEventListener('click', annuler);
 // ---------- Abandon ----------
 
 $('btn-abandon').addEventListener('click', async () => {
-  if (!confirm('Abandonner la partie ? Elle sera supprimée définitivement, avec tous ses scores.')) return;
+  const texte = tournoi
+    ? 'Abandonner ce match de tournoi ? La partie sera effacée et le match redeviendra « à jouer ».'
+    : 'Abandonner la partie ? Elle sera supprimée définitivement, avec tous ses scores.';
+  if (!confirm(texte)) return;
   await file;
   await supprimerPartie(id);
-  location.href = 'jouer.html';
+  location.href = tournoi ? `tournoi.html?id=${encodeURIComponent(tournoi.tournament_id)}` : 'jouer.html';
 });
 
 // ---------- Écran toujours allumé (tablette posée près de la cible) ----------
