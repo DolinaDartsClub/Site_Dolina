@@ -89,7 +89,7 @@ img { max-width: 100%; display: block; }
 .bouton--plein { background: var(--orange); color: var(--noir); }
 .bouton--accueil { gap: 6px; padding: 0 14px; flex-shrink: 0; }
 .bouton--icone { width: 44px; padding: 0; flex-shrink: 0; }
-.bouton--icone svg { width: 22px; height: 22px; }
+.bouton--icone svg, .bouton--compact svg { width: 22px; height: 22px; }
 .bouton--accueil svg { width: 22px; height: 22px; }
 @media (max-width: 420px) {
   /* Petit téléphone : icône seule pour laisser la place au nom du club */
@@ -361,7 +361,10 @@ img { max-width: 100%; display: block; }
 /* ---------- Petits téléphones ---------- */
 
 @media (max-width: 420px) {
-  .entete { gap: 10px; }
+  .entete { gap: 8px; }
+  .entete__sous { display: none; }
+  .bouton--compact { width: 44px; padding: 0; }
+  .bouton--compact span { display: none; }
   .entete__nom { font-size: 18px; white-space: normal; line-height: 1.1; }
   .entete .bouton { padding: 0 12px; }
 }

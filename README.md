@@ -33,6 +33,7 @@ Site web du Dolina Darts Club : actualités, matchs en direct, scorer X01, stati
 | `supabase/006_actualites.sql` | Stockage des images d'actualités (envoi réservé aux admins) |
 | `outils/generer-partage.mjs` | Prépare le site et crée une page d'aperçu de partage par article |
 | `.github/workflows/publier-site.yml` | Publication automatique du site sur GitHub Pages |
+| `supabase/007_profil.sql` | Profil : marque des fléchettes |
 | `supabase/emails/` | Modèles d'emails en français à coller dans Supabase |
 
 ## Sécurité

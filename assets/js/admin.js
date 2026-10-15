@@ -148,6 +148,11 @@ function afficherMembres() {
             <dt>Inscrit le</dt><dd>${esc(dateFr(p.created_at))}</dd>
           </dl>
           <div class="deux-colonnes">
+            <label class="champ">Prénom<input type="text" maxlength="60" value="${esc(p.first_name)}" data-champ="first_name" data-id="${p.id}"></label>
+            <label class="champ">Nom<input type="text" maxlength="60" value="${esc(p.last_name)}" data-champ="last_name" data-id="${p.id}"></label>
+          </div>
+          <button type="button" class="bouton bouton--petit" data-action="renommer" data-id="${p.id}" style="align-self:flex-start">Enregistrer le nom</button>
+          <div class="deux-colonnes">
             <label class="champ">Statut du compte
               <select data-action="statut" data-id="${p.id}" ${estMoi ? 'disabled' : ''}>
                 ${Object.entries(STATUT).map(([v, l]) => `<option value="${v}" ${p.status === v ? 'selected' : ''}>${l}</option>`).join('')}
@@ -208,6 +213,13 @@ async function executer(action, el) {
   let res = { error: null };
 
   switch (action) {
+    case 'renommer': {
+      const prenom = document.querySelector(`[data-champ="first_name"][data-id="${id}"]`).value.trim();
+      const nom = document.querySelector(`[data-champ="last_name"][data-id="${id}"]`).value.trim();
+      if (!prenom || !nom) { message(zoneMessage, 'Le prénom et le nom sont obligatoires.'); return; }
+      res = await supabase.from('profiles').update({ first_name: prenom, last_name: nom }).eq('id', id);
+      break;
+    }
     case 'valider':
       res = await supabase.from('profiles').update({ status: 'active' }).eq('id', id);
       break;

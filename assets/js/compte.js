@@ -33,11 +33,18 @@ async function afficher() {
   const estActif = profil.status === 'active';
   const estAdmin = estActif && profil.role === 'admin';
 
-  // Équipes du club et mes rattachements
-  const [{ data: equipes }, { data: mesRattachements }] = await Promise.all([
+  // Équipes du club, mes rattachements, mon profil détaillé et mon téléphone
+  const [{ data: equipes }, { data: mesRattachements }, { data: detail }, { data: prive }] = await Promise.all([
     supabase.from('teams').select('id, name, captain_id').order('sort_order'),
     supabase.from('team_members').select('team_id, status').eq('profile_id', profil.id),
+    supabase.from('profiles').select('nickname, hand, dart_weight, dart_brand').eq('id', profil.id).maybeSingle(),
+    supabase.from('profile_private').select('phone').eq('id', profil.id).maybeSingle(),
   ]);
+  const p = detail || {};
+  // Résumé du matériel, ex. « Droitier · Target · 23,5 g »
+  const poidsTexte = p.dart_weight ? `${Number(p.dart_weight).toLocaleString('fr-FR')} g` : '';
+  const materiel = [p.hand === 'gaucher' ? 'Gaucher' : (p.hand === 'droitier' ? 'Droitier' : ''), p.dart_brand, poidsTexte]
+    .filter(Boolean).join(' · ');
 
   // Espace capitaine : demandes en attente pour mon équipe
   const monEquipe = (equipes || []).find((t) => t.captain_id === profil.id && estActif);
@@ -126,7 +133,30 @@ async function afficher() {
       <span class="statut ${classe}">${libelle}</span>
       ${estAdmin ? '<span class="statut statut--ok">Administrateur</span>' : ''}
       ${explication}
+      ${materiel ? `<span class="match__format">${esc(materiel)}</span>` : ''}
     </div>
+    <details class="carte-info repli" id="bloc-profil">
+      <summary>Modifier mon profil</summary>
+      <form class="repli__contenu" id="form-profil" novalidate>
+        <div class="message" id="message-profil" role="alert" hidden></div>
+        <label class="champ">Surnom<input name="nickname" type="text" maxlength="40" value="${esc(p.nickname || '')}"></label>
+        <label class="champ">Téléphone<input name="phone" type="tel" maxlength="30" value="${esc(prive?.phone || '')}">
+          <small>Visible uniquement par vous et les admins du club.</small></label>
+        <div class="deux-colonnes">
+          <label class="champ">Main
+            <select name="hand">
+              <option value="" ${!p.hand ? 'selected' : ''}>—</option>
+              <option value="droitier" ${p.hand === 'droitier' ? 'selected' : ''}>Droitier</option>
+              <option value="gaucher" ${p.hand === 'gaucher' ? 'selected' : ''}>Gaucher</option>
+            </select>
+          </label>
+          <label class="champ">Poids (g)<input name="dart_weight" type="number" inputmode="decimal" min="10" max="50" step="0.5" value="${esc(p.dart_weight ?? '')}"></label>
+        </div>
+        <label class="champ">Marque des fléchettes<input name="dart_brand" type="text" maxlength="40" placeholder="Ex. Target, Winmau, Harrows…" value="${esc(p.dart_brand || '')}"></label>
+        <p class="match__format" style="margin:0">Pour corriger votre nom ou prénom, demandez à un admin du club.</p>
+        <button class="bouton bouton--plein" type="submit">Enregistrer mon profil</button>
+      </form>
+    </details>
     ${blocCapitaine}
     <div class="carte-info">
       <h2>Mes équipes</h2>
@@ -148,6 +178,46 @@ async function afficher() {
 
   messageGeneral = document.getElementById('message-general');
   brancherChangementMotDePasse(profil.email);
+  brancherProfil();
+}
+
+// ---------- Modification du profil ----------
+
+function brancherProfil() {
+  const form = document.getElementById('form-profil');
+  const zoneMsg = document.getElementById('message-profil');
+  const bouton = form.querySelector('button[type="submit"]');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = form.elements;
+    const poids = f.dart_weight.value.trim().replace(',', '.');
+    if (poids && (Number.isNaN(Number(poids)) || Number(poids) < 10 || Number(poids) > 50)) {
+      return message(zoneMsg, 'Le poids doit être compris entre 10 et 50 grammes.');
+    }
+    if (f.phone.value.trim() && f.phone.value.replace(/[^0-9]/g, '').length < 9) {
+      return message(zoneMsg, 'Indiquez un numéro de téléphone valide.');
+    }
+
+    bouton.disabled = true;
+    const [r1, r2] = await Promise.all([
+      supabase.from('profiles').update({
+        nickname: f.nickname.value.trim() || null,
+        hand: f.hand.value || null,
+        dart_weight: poids ? Number(poids) : null,
+        dart_brand: f.dart_brand.value.trim() || null,
+      }).eq('id', profil.id),
+      supabase.from('profile_private').update({ phone: f.phone.value.trim() }).eq('id', profil.id),
+    ]);
+    bouton.disabled = false;
+    const erreur = r1.error || r2.error;
+    if (erreur) return message(zoneMsg, erreurFr(erreur));
+
+    await afficher();
+    const msg = document.getElementById('message-profil');
+    document.getElementById('bloc-profil').open = true;
+    message(msg, 'Profil enregistré.', 'ok');
+  });
 }
 
 // ---------- Actions : équipes et capitaine ----------
