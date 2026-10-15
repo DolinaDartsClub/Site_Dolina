@@ -6,7 +6,7 @@
 //  Les droits sont vérifiés par la base : un non-admin ne peut rien modifier.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur, avatar, DOSSIER_PHOTOS } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur, avatar, DOSSIER_PHOTOS, formatPartie } from './app.js?v=__VERSION__';
 import { initActus } from './admin-actus.js?v=__VERSION__';
 import { initDemandes } from './admin-demandes.js?v=__VERSION__';
 import { initSauvegarde } from './admin-sauvegarde.js?v=__VERSION__';
@@ -179,6 +179,12 @@ function afficherMembres() {
             <h3>Équipes</h3>
             ${lignesEquipes}
           </div>
+          <div class="fiche__parties">
+            <h3>Parties</h3>
+            <div class="fiche__liste-parties" data-liste-parties="${p.id}">
+              <button type="button" class="bouton bouton--petit" data-partie-action="voir" data-id="${p.id}" style="align-self:flex-start">Voir ses parties</button>
+            </div>
+          </div>
           ${estMoi || p.role === 'admin' ? '' : `
           <button type="button" class="lien-discret lien-danger" data-action="supprimer" data-id="${p.id}">Supprimer définitivement ce compte</button>`}
         </div>
@@ -284,6 +290,65 @@ async function executer(action, el) {
   }
   await charger();
 }
+
+// ---------- Parties d'un membre (suppression par l'admin) ----------
+
+const STATUT_PARTIE = { live: 'En cours', finished: 'Terminée', abandoned: 'Abandonnée' };
+const fmtPartie = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+async function afficherPartiesMembre(id) {
+  const zone = document.querySelector(`[data-liste-parties="${id}"]`);
+  if (!zone) return;
+  zone.innerHTML = '<p class="vide">Chargement…</p>';
+  const { data, error } = await supabase.from('games')
+    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, status, winner_side, created_at, finished_at, tournament_match_id, game_players(side, profile_id, display_name, throw_order), moi:game_players!inner(profile_id, side)')
+    .eq('moi.profile_id', id).order('created_at', { ascending: false }).limit(100);
+  if (error) { zone.innerHTML = `<p class="vide">${esc(erreurFr(error))}</p>`; return; }
+  const quand = (g) => new Date(g.finished_at || g.created_at).getTime();
+  const parties = (data || []).sort((a, b) => quand(b) - quand(a));
+  if (!parties.length) { zone.innerHTML = '<p class="vide">Aucune partie enregistrée.</p>'; return; }
+  const { data: fins } = await supabase.from('visits').select('game_id, side').in('game_id', parties.map((g) => g.id)).eq('is_checkout', true);
+  const manches = (g, side) => (fins || []).filter((f) => f.game_id === g.id && f.side === side).length;
+  zone.innerHTML = `<p class="match__format" style="margin:0">${parties.length} partie${parties.length > 1 ? 's' : ''}${parties.length === 100 ? ' (les 100 plus récentes)' : ''}. Les matchs de tournoi se corrigent depuis la page du tournoi.</p>
+    <ul class="adm-parties">${parties.map((g) => {
+    const monCamp = g.moi?.[0]?.side;
+    const camps = [...new Set(g.game_players.map((x) => x.side))].sort((a, b) => a - b);
+    const nomCamp = (c) => g.game_players.filter((x) => x.side === c).sort((a, b) => a.throw_order - b.throw_order).map((x) => x.display_name).join(' / ');
+    const adversaires = camps.filter((c) => c !== monCamp).map(nomCamp).join(', ');
+    let resultat = STATUT_PARTIE[g.status] || g.status;
+    if (g.status === 'finished' && camps.length > 1) resultat = g.winner_side === monCamp ? 'Victoire' : 'Défaite';
+    const score = [monCamp, ...camps.filter((c) => c !== monCamp)].map((c) => manches(g, c)).join(' – ');
+    return `
+      <li class="adm-partie">
+        <div class="adm-partie__texte">
+          <strong>${esc(fmtPartie.format(new Date(g.finished_at || g.created_at)))} · ${esc(resultat)}${camps.length > 1 ? ` · ${esc(score)}` : ''}</strong>
+          <small>${adversaires ? `contre ${esc(adversaires)}` : 'Seul'} · ${esc(formatPartie(g))}</small>
+        </div>
+        <span class="adm-partie__actions">
+          <a class="bouton bouton--petit" href="live.html?id=${encodeURIComponent(g.id)}">Voir</a>
+          ${g.tournament_match_id ? '<span class="t-role">Tournoi</span>'
+    : `<button type="button" class="bouton bouton--petit bouton--danger" data-partie-action="supprimer" data-id="${id}" data-partie="${g.id}" data-resume="${esc(`${fmtPartie.format(new Date(g.finished_at || g.created_at))}, ${adversaires ? `contre ${adversaires}` : 'seul'}`)}">Supprimer</button>`}
+        </span>
+      </li>`;
+  }).join('')}</ul>`;
+}
+
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-partie-action]');
+  if (!b) return;
+  if (b.dataset.partieAction === 'voir') return afficherPartiesMembre(b.dataset.id);
+  if (b.dataset.partieAction === 'supprimer') {
+    if (!confirm(`Supprimer définitivement cette partie (${b.dataset.resume}) ?\n\nElle disparaîtra pour tous les joueurs, avec ses volées : leurs statistiques et le classement seront recalculés sans elle.`)) return;
+    b.disabled = true;
+    const { data, error } = await supabase.from('games').delete().eq('id', b.dataset.partie).select('id');
+    if (error || !data?.length) {
+      b.disabled = false;
+      return message(zoneMessage, error ? (error.code === 'P0001' ? error.message : erreurFr(error)) : 'La partie n\'a pas pu être supprimée.');
+    }
+    message(zoneMessage, 'Partie supprimée.', 'ok');
+    afficherPartiesMembre(b.dataset.id);
+  }
+});
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('button[data-action]');
