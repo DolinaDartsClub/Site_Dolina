@@ -1052,3 +1052,46 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .photo-profil__actions label { cursor: pointer; }
 .bouton--inactif { opacity: .45; }
 .donnees__titre { margin: 10px 0 0; font-size: 16px; }
+
+/* ---------- Mes données (RGPD) ---------- */
+.md-entete h1 { margin-bottom: 4px; }
+.md-actions { margin: 12px 0 6px; }
+.md-bloc { margin-bottom: 14px; }
+.md-bloc h2 { margin: 0 0 6px; }
+.md-liste { display: grid; gap: 0; margin: 0; }
+.md-ligne { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--bord); }
+.md-ligne:last-child { border-bottom: 0; }
+.md-ligne dt { color: var(--gris-clair); font-size: 14px; }
+.md-ligne dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.md-vide { color: var(--gris); font-weight: 400; margin: 0; }
+.md-note { margin: 0 0 8px; font-size: 13px; color: var(--gris); line-height: 1.45; }
+.md-puces { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.md-sous { margin: 10px 0 6px; font-size: 15px; }
+.md-defil { overflow-x: auto; }
+.md-tableau { font-size: 14px; }
+.md-tableau td { vertical-align: top; }
+.md-tableau small { color: var(--gris); }
+.md-num { text-align: right; white-space: nowrap; }
+@media (max-width: 560px) { .md-ligne { grid-template-columns: 1fr; gap: 2px; } }
+
+/* Impression / PDF : noir sur blanc, sans les boutons ni la navigation */
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .entete, .nav-bas, .nav-haut, .md-actions, .md-ecran, .bouton { display: none !important; }
+  .page { padding: 0 !important; max-width: none !important; }
+  .carte-info, .md-bloc { background: #fff !important; border: 1px solid #bbb !important; break-inside: avoid; color: #000 !important; }
+  .md-ligne { border-color: #ddd !important; }
+  .md-ligne dt, .md-note, .md-vide, .md-tableau small, .intro { color: #444 !important; }
+  .tableau th, .tableau td { border-color: #ccc !important; color: #000 !important; }
+  .s-gagne { color: #000 !important; font-weight: 700; }
+  .md-defil { overflow: visible; }
+  h1, h2, h3 { color: #000 !important; }
+}
+.md-parties { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.md-partie { display: grid; gap: 3px; padding: 10px 12px; border: 1px solid var(--bord); border-radius: 10px; break-inside: avoid; }
+.md-partie__haut { display: flex; justify-content: space-between; gap: 10px; font-weight: 700; }
+.md-partie__res { white-space: nowrap; }
+.md-partie__contre { font-weight: 600; }
+.md-partie__contre small, .md-partie__info { color: var(--gris-clair); font-size: 14px; font-weight: 400; }
+@media (min-width: 900px) { .md-parties { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media print { .md-partie { border-color: #ccc !important; } .md-partie__info, .md-partie__contre small { color: #444 !important; } }

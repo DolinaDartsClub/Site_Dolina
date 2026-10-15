@@ -218,8 +218,8 @@ async function afficher() {
       <summary>Mes données et suppression du compte</summary>
       <div class="repli__contenu">
         <div class="message" id="message-donnees" role="alert" hidden></div>
-        <p class="match__format" style="margin:0">Téléchargez toutes les données du site qui vous concernent : profil, coordonnées, équipes, parties et volées, tournois.</p>
-        <button type="button" class="bouton bouton--petit" id="btn-mes-donnees" style="align-self:flex-start">Télécharger mes données</button>
+        <p class="match__format" style="margin:0">Consultez toutes les données du site qui vous concernent (profil, coordonnées, équipes, parties, tournois), à imprimer, enregistrer en PDF ou télécharger en fichier.</p>
+        <a class="bouton bouton--petit" href="mes-donnees.html" style="align-self:flex-start">Voir mes données</a>
         <h3 class="donnees__titre">Supprimer mon compte</h3>
         <p class="match__format" style="margin:0">Votre profil, vos coordonnées, votre photo et vos parties jouées seul ou contre des invités sont effacés.
           Dans les parties contre d'autres membres et dans les tournois, vous apparaîtrez comme « Ancien joueur » pour que leurs résultats restent justes.
@@ -241,22 +241,6 @@ async function afficher() {
 
 function brancherDonnees(p) {
   const zoneMsg = document.getElementById('message-donnees');
-
-  document.getElementById('btn-mes-donnees').addEventListener('click', async (e) => {
-    const b = e.currentTarget;
-    b.disabled = true;
-    const { data, error } = await supabase.rpc('mes_donnees');
-    b.disabled = false;
-    if (error) return message(zoneMsg, erreurFr(error));
-    const lien = document.createElement('a');
-    lien.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-    lien.download = `mes-donnees-dolina-${new Date().toLocaleDateString('fr-CA')}.json`;
-    document.body.appendChild(lien);
-    lien.click();
-    lien.remove();
-    setTimeout(() => URL.revokeObjectURL(lien.href), 10000);
-    message(zoneMsg, 'Vos données ont été téléchargées.', 'ok');
-  });
 
   document.getElementById('btn-supprimer-compte').addEventListener('click', async (e) => {
     const b = e.currentTarget;
