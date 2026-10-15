@@ -62,6 +62,7 @@ function remplir(t) {
   f.pool_qualifiers.value = t.pool_qualifiers || 2;
   f.third_place.checked = t.third_place;
   f.public_matches.checked = t.public_matches;
+  f.show_checkout.checked = t.show_checkout !== false;
   choix.team_mode = t.team_mode;
   choix.format = t.format;
   majOptionsPoules();
@@ -150,6 +151,7 @@ function lire() {
     pools_count: choix.format === 'pools' && f.pools_count.value ? Number(f.pools_count.value) : null,
     third_place: f.third_place.checked,
     public_matches: f.public_matches.checked,
+    show_checkout: f.show_checkout.checked,
   };
 }
 
@@ -183,6 +185,7 @@ form.addEventListener('submit', (e) => {
   }
   lignes.push(['Match pour la 3e place', v.third_place ? 'Oui' : 'Non']);
   lignes.push(['Matchs', v.public_matches ? 'Publics (visibles dans « Matchs en cours »)' : 'Privés']);
+  lignes.push(['Guide de finish', v.show_checkout ? 'Affiché dans le scorer' : 'Masqué']);
   lignes.push(['Format des matchs', 'Choisi au lancement de chaque phase']);
   if (!existant) lignes.push(['Statut à la création', esc(STATUTS[ouvrir ? 'open' : 'draft'].libelle) + (ouvrir ? ' : le code est utilisable tout de suite' : ' : vous ouvrirez les inscriptions plus tard')]);
   document.getElementById('recap-liste').innerHTML = lignes.map(([k, val]) => `<dt>${k}</dt><dd>${val}</dd>`).join('');
@@ -209,6 +212,13 @@ document.getElementById('btn-confirmer').addEventListener('click', async () => {
     res = await supabase.from('tournaments')
       .insert({ ...v, status: form.elements.ouvrir.checked ? 'open' : 'draft' })
       .select('id').single();
+  }
+  // Base pas encore à jour (script 015 non exécuté) : enregistrement sans l'option « guide de finish »
+  if (res.error && /show_checkout/.test(res.error.message || '')) {
+    const { show_checkout: _ignore, ...sansGuide } = v;
+    res = existant
+      ? await supabase.from('tournaments').update(sansGuide).eq('id', existant.id).select('id').single()
+      : await supabase.from('tournaments').insert({ ...sansGuide, status: form.elements.ouvrir.checked ? 'open' : 'draft' }).select('id').single();
   }
   if (res.error) {
     envoi = false;

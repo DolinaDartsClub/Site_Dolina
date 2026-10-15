@@ -417,6 +417,7 @@ function vueInfos() {
   lignes.push(['Placement', 'Tirage au sort ; les exemptions éventuelles sont réparties dans l\'arbre']);
   lignes.push(['Match pour la 3e place', t.third_place ? 'Oui' : 'Non']);
   lignes.push(['Matchs', t.public_matches ? 'Publics (visibles dans « Matchs en cours »)' : 'Privés']);
+  lignes.push(['Guide de finish', t.show_checkout === false ? 'Masqué' : 'Affiché dans le scorer']);
   lignes.push(['Créé le', esc(dateFr(t.created_at))]);
   if (t.started_at) lignes.push(['Lancé le', esc(dateFr(t.started_at))]);
   return `<dl class="t-recap">${lignes.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;

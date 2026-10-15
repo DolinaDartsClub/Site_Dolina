@@ -13,7 +13,7 @@ const zoneAcces = document.getElementById('acces');
 
 let moi = null;
 let membres = [];
-const choix = { variant: '501', mode: 'single', public: true };
+const choix = { variant: '501', mode: 'single', public: true, guide: true };
 let joueurs = [];          // { type: 'membre' | 'invite', id?, nom }
 let affectation = {};      // index du joueur -> 1 | 2 (doublettes)
 
@@ -282,6 +282,19 @@ document.getElementById('btn-visi').addEventListener('click', (e) => {
     : 'Visible uniquement des membres connectés';
 });
 
+// ---------- Guide de finish affiché / masqué ----------
+
+document.getElementById('btn-guide').addEventListener('click', (e) => {
+  choix.guide = !choix.guide;
+  e.currentTarget.textContent = choix.guide ? 'Affiché' : 'Masqué';
+  e.currentTarget.classList.toggle('bouton--plein', choix.guide);
+  e.currentTarget.setAttribute('aria-pressed', String(choix.guide));
+  document.getElementById('guide-titre').textContent = choix.guide ? 'Guide de finish affiché' : 'Guide de finish masqué';
+  document.getElementById('guide-aide').textContent = choix.guide
+    ? 'Le scorer propose le chemin de sortie (ex. T20 · T19 · D12)'
+    : 'Le scorer n\'affiche pas de suggestion de finish';
+});
+
 // ---------- Lancement ----------
 
 // Camps de la partie : [{ side, nom, joueurs: [index…] }]
@@ -335,7 +348,7 @@ async function creerPartie(premier) {
   boutons.forEach((b) => { b.disabled = true; });
   const camps = construireCamps();
 
-  const { data: game, error } = await supabase.from('games').insert({
+  const ligneGame = {
     created_by: moi.id,
     variant: choix.variant,
     start_score: choix.variant === 'libre' ? Number(f.start_score.value) : Number(choix.variant),
@@ -346,7 +359,14 @@ async function creerPartie(premier) {
     sets_n: f.sets_kind.value ? Number(f.sets_n.value) || 1 : null,
     visibility: choix.public ? 'public' : 'private',
     first_side: premier,
-  }).select('id').single();
+    show_checkout: choix.guide,
+  };
+  let { data: game, error } = await supabase.from('games').insert(ligneGame).select('id').single();
+  // Base pas encore à jour (script 015 non exécuté) : on crée la partie sans l'option
+  if (error && /show_checkout/.test(error.message || '')) {
+    delete ligneGame.show_checkout;
+    ({ data: game, error } = await supabase.from('games').insert(ligneGame).select('id').single());
+  }
 
   const echec = async (err) => {
     if (game?.id) await supprimerPartie(game.id);

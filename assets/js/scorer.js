@@ -58,6 +58,8 @@ async function init() {
   prochainIdLocal = (visits.at(-1)?.id || 0) + 1;
 
   $('titre-format').textContent = `${formatPartie(game)} · finish double`;
+  // Guide de finish masqué si le créateur l'a choisi
+  document.querySelector('.scorer__finish').hidden = game.show_checkout === false;
   $('fin-live').href = `live.html?id=${encodeURIComponent(id)}`;
   document.body.classList.toggle('scorer--nombreux', camps.length > 2);
   construirePave();
