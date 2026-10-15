@@ -1009,3 +1009,10 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .ff-partie__gagnant { font-size: 13px; font-weight: 600; }
 .ff-bilan__camp { overflow-wrap: break-word; hyphens: auto; min-width: 0; }
 @media (max-width: 480px) { .ff-bilan { padding: 12px; gap: 6px; } .ff-bilan__camp { font-size: 15px; } .ff-bilan__score { font-size: 40px; } .ff-val { font-size: 19px; } }
+/* Pastille de profil (photo ou initiales) */
+.avatar { position: relative; display: inline-grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: #2a2a2a; border: 2px solid var(--orange); color: var(--blanc); font-family: var(--police-titre); font-weight: 700; font-size: 16px; overflow: hidden; }
+.avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+.avatar--grand { width: 76px; height: 76px; font-size: 28px; }
+.avatar--vide { border-style: dashed; border-color: var(--bord-fort); color: var(--gris); }
+.ff-choix__nom a { color: var(--blanc); text-decoration: none; }
+.ff-choix__nom a:hover { color: var(--orange); }

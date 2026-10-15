@@ -3,7 +3,7 @@
 //  face-a-face.html?a=<id>&b=<id>  ·  face-a-face.html?mode=doublettes&a=<clé>&b=<clé>
 // =====================================================================
 
-import { supabase, esc, profilConnecte, nomAffiche } from './app.js?v=__VERSION__';
+import { supabase, esc, profilConnecte, nomAffiche, avatar } from './app.js?v=__VERSION__';
 import { choisirMembre } from './tournoi-commun.js?v=__VERSION__';
 
 const params = new URLSearchParams(location.search);
@@ -36,10 +36,10 @@ async function init() {
   document.getElementById('contenu').hidden = false;
   if (mode === 'joueurs') {
     const ids = [params.get('a') || moi.id, params.get('b')].filter(Boolean);
-    const { data } = await supabase.from('profiles').select('id, first_name, last_name, nickname, use_nickname').in('id', ids);
+    const { data } = await supabase.from('profiles').select('id, first_name, last_name, nickname, use_nickname, photo_path').in('id', ids);
     const trouve = (x) => (data || []).find((p) => p.id === x);
-    if (trouve(ids[0])) choix.a = { id: ids[0], nom: nomAffiche(trouve(ids[0])) };
-    if (ids[1] && trouve(ids[1])) choix.b = { id: ids[1], nom: nomAffiche(trouve(ids[1])) };
+    if (trouve(ids[0])) choix.a = { id: ids[0], nom: nomAffiche(trouve(ids[0])), profil: trouve(ids[0]) };
+    if (ids[1] && trouve(ids[1])) choix.b = { id: ids[1], nom: nomAffiche(trouve(ids[1])), profil: trouve(ids[1]) };
   } else {
     await chargerDoublettes();
     choix.a = doublettes.find((d) => d.cle === params.get('a')) || null;
@@ -68,7 +68,8 @@ function afficherChoix() {
     const c = choix[cote];
     if (mode === 'joueurs') {
       z.innerHTML = `
-        <span class="ff-choix__nom">${c ? esc(c.nom) : 'Choisir un joueur'}</span>
+        ${avatar(c?.profil || null, `avatar--grand${c ? '' : ' avatar--vide'}`)}
+        <span class="ff-choix__nom">${c ? (c.id ? `<a href="stats.html?id=${encodeURIComponent(c.id)}">${esc(c.nom)}</a>` : esc(c.nom)) : 'Choisir un joueur'}</span>
         <button type="button" class="bouton bouton--petit${c ? '' : ' bouton--plein'}" data-choisir="${cote}">${c ? 'Changer' : 'Choisir'}</button>`;
     } else {
       const autre = choix[cote === 'a' ? 'b' : 'a'];
@@ -86,7 +87,7 @@ function afficherChoix() {
     const autre = choix[cote === 'a' ? 'b' : 'a'];
     const m = await choisirMembre({ titre: 'Choisir un joueur', exclure: new Set(autre ? [autre.id] : []) });
     if (!m) return;
-    choix[cote] = { id: m.id, nom: nomAffiche(m) };
+    choix[cote] = { id: m.id, nom: nomAffiche(m), profil: m };
     afficherChoix();
     charger();
   }));
@@ -170,7 +171,10 @@ document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('clic
   mode = b.dataset.mode;
   choix = { a: null, b: null };
   if (mode === 'doublettes') await chargerDoublettes();
-  else choix.a = { id: moi.id, nom: nomAffiche(moi) };
+  else {
+    const { data: p } = await supabase.from('profiles').select('id, first_name, last_name, nickname, use_nickname, photo_path').eq('id', moi.id).maybeSingle();
+    choix.a = { id: moi.id, nom: nomAffiche(p || moi), profil: p || moi };
+  }
   majOnglets();
   afficherChoix();
   charger();

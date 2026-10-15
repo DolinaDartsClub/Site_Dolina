@@ -76,6 +76,23 @@ export function urlImage(chemin) {
   return chemin ? `${SUPABASE_URL}/storage/v1/object/public/public-images/${chemin}` : '';
 }
 
+// Photo de profil (envoi des photos : étape 7) — dossier « photos-profil »
+export function urlPhoto(chemin) {
+  return chemin ? `${SUPABASE_URL}/storage/v1/object/public/photos-profil/${chemin}` : '';
+}
+
+// Pastille de profil : la photo si le membre en a une, sinon ses initiales
+export function avatar(profil, classe = '') {
+  const nom = profil ? nomAffiche(profil) : '?';
+  const initiales = (profil?.first_name && profil?.last_name && !profil.use_nickname
+    ? `${profil.first_name[0]}${profil.last_name[0]}`
+    : nom.split(/\s+/).map((m) => m[0]).join('').slice(0, 2)).toUpperCase();
+  if (profil?.photo_path) {
+    return `<span class="avatar ${classe}"><img src="${esc(urlPhoto(profil.photo_path))}" alt="" loading="lazy" onerror="this.remove()"><span aria-hidden="true">${esc(initiales)}</span></span>`;
+  }
+  return `<span class="avatar ${classe}" aria-hidden="true"><span>${esc(initiales)}</span></span>`;
+}
+
 // Adresse de base du site (sert aux liens envoyés par email)
 export const BASE_URL = new URL('./', location.href).href;
 

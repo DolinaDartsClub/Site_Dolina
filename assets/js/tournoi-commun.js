@@ -73,7 +73,7 @@ export async function chargerMembres() {
   if (membresCache) return membresCache;
   const { data } = await supabase
     .from('profiles')
-    .select('id, first_name, last_name, nickname, use_nickname')
+    .select('id, first_name, last_name, nickname, use_nickname, photo_path')
     .eq('status', 'active')
     .order('last_name');
   membresCache = data || [];
