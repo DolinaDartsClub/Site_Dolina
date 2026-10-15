@@ -263,10 +263,14 @@ async function brancherEntete() {
   const lien = document.getElementById('lien-compte');
   if (!lien) return;
   const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    lien.textContent = 'Mon compte';
-    lien.href = 'compte.html';
-  }
+  const libelle = session ? 'Mon compte' : (lien.textContent.trim() || 'Connexion');
+  if (session) lien.href = 'compte.html';
+  // Icône + texte : sur les petits téléphones, seule l'icône reste (le titre de la page garde sa place)
+  lien.classList.add('lien-compte');
+  // Visiteur sur l'accueil : le mot « Connexion » reste écrit (assez de place, plus clair)
+  if (!session && /\/(index\.html)?$/.test(location.pathname)) lien.classList.add('lien-compte--texte');
+  lien.setAttribute('aria-label', libelle);
+  lien.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>${libelle}</span>`;
 }
 brancherEntete();
 

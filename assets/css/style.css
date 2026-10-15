@@ -374,6 +374,14 @@ img { max-width: 100%; display: block; }
   .entete__nom { font-size: 18px; white-space: normal; line-height: 1.1; }
   .entete .bouton { padding: 0 12px; }
 }
+.lien-compte svg { width: 20px; height: 20px; flex-shrink: 0; }
+.lien-compte { gap: 6px; }
+@media (min-width: 421px) { .lien-compte svg { display: none; } }
+@media (max-width: 420px) {
+  .entete .lien-compte:not(.lien-compte--texte) { width: 44px; padding: 0; }
+  .lien-compte:not(.lien-compte--texte) span { display: none; }
+  .lien-compte--texte svg { display: none; }
+}
 
 /* ---------- Grands écrans et paysage ---------- */
 
