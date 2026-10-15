@@ -104,24 +104,40 @@ async function afficher() {
       }).join('') : '<p class="intro">Aucune demande en attente pour votre équipe.</p>'}
     </div>` : '';
 
-  // ----- Mes équipes -----
-  const lignesEquipes = (equipes || []).map((t) => {
-    const m = (mesRattachements || []).find((x) => x.team_id === t.id);
+  // ----- Mon équipe : seulement les équipes demandées ou rejointes -----
+  const rattachements = mesRattachements || [];
+  const mesEquipes = (equipes || []).filter((t) => rattachements.some((x) => x.team_id === t.id));
+  const autresEquipes = (equipes || []).filter((t) => !rattachements.some((x) => x.team_id === t.id));
+  const lignesEquipes = mesEquipes.map((t) => {
+    const m = rattachements.find((x) => x.team_id === t.id);
     const capitaine = t.captain_id === profil.id;
     let action = '';
-    if (!m) action = `<button type="button" class="bouton bouton--petit" data-action="rejoindre" data-team="${t.id}">Demander à rejoindre</button>`;
-    else if (m.status === 'pending') action = `<button type="button" class="bouton bouton--petit bouton--danger" data-action="annuler" data-team="${t.id}">Annuler la demande</button>`;
+    if (m.status === 'pending') action = `<button type="button" class="bouton bouton--petit bouton--danger" data-action="annuler" data-team="${t.id}">Annuler la demande</button>`;
     else if (m.status === 'refused') action = `<button type="button" class="bouton bouton--petit" data-action="redemander" data-team="${t.id}">Refaire une demande</button>`;
     else if (!capitaine) action = `<button type="button" class="bouton bouton--petit bouton--danger" data-action="quitter" data-team="${t.id}" data-nom="${esc(t.name)}">Quitter l'équipe</button>`;
-    const [c, l] = m ? STATUTS_EQUIPE[m.status] : [null, null];
+    const [c, l] = STATUTS_EQUIPE[m.status];
     return `
       <div class="ligne-equipe">
         <span class="ligne-equipe__nom">${esc(t.name)}${capitaine ? ' <span class="statut statut--ok">Capitaine</span>' : ''}</span>
-        ${m ? `<span class="statut ${c}">${l}</span>` : '<span class="match__format">—</span>'}
+        <span class="statut ${c}">${l}</span>
         <span class="ligne-equipe__actions">${action}</span>
       </div>`;
   }).join('');
-  const aucuneEquipe = !(mesRattachements || []).some((m) => m.status === 'accepted');
+  const aucuneEquipe = !rattachements.some((m) => m.status === 'accepted');
+
+  // Bouton « Rejoindre une équipe » : déplie la liste des autres équipes
+  const blocRejoindre = autresEquipes.length ? `
+    <details class="repli rejoindre">
+      <summary class="bouton bouton--petit">Rejoindre une équipe</summary>
+      <div class="repli__contenu">
+        <p class="match__format" style="margin:0">Votre demande sera envoyée au capitaine de l'équipe, qui l'acceptera ou la refusera.</p>
+        ${autresEquipes.map((t) => `
+          <div class="ligne-equipe">
+            <span class="ligne-equipe__nom">${esc(t.name)}</span>
+            <button type="button" class="bouton bouton--petit bouton--plein" data-action="rejoindre" data-team="${t.id}">Demander à rejoindre</button>
+          </div>`).join('')}
+      </div>
+    </details>` : '';
 
   zone.innerHTML = `
     <h1>Mon compte</h1>
@@ -159,9 +175,11 @@ async function afficher() {
     </details>
     ${blocCapitaine}
     <div class="carte-info">
-      <h2>Mes équipes</h2>
-      ${aucuneEquipe ? '<p class="intro" style="margin:0">Sans équipe, vous avez accès à tout le site sauf aux espaces équipe. Vous pouvez demander à rejoindre une équipe : son capitaine validera.</p>' : ''}
+      <h2>${mesEquipes.length > 1 ? 'Mes équipes' : 'Mon équipe'}</h2>
+      ${!mesEquipes.length ? '<p class="intro" style="margin:0">Vous n\'êtes dans aucune équipe : vous avez accès à tout le site, sauf aux espaces équipe.</p>'
+        : (aucuneEquipe ? '<p class="intro" style="margin:0">En attente de la réponse du capitaine.</p>' : '')}
       ${lignesEquipes}
+      ${blocRejoindre}
     </div>
     <details class="carte-info repli" id="bloc-mdp">
       <summary>Changer mon mot de passe</summary>

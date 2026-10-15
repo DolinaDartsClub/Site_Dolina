@@ -326,6 +326,12 @@ img { max-width: 100%; display: block; }
   .carte-actu__image { width: 100%; }
 }
 
+.rejoindre { border-top: 0; padding-top: 4px; }
+.rejoindre > summary { list-style: none; align-self: flex-start; display: inline-flex; }
+.rejoindre > summary::-webkit-details-marker { display: none; }
+.rejoindre[open] > summary { margin-bottom: 8px; }
+.rejoindre .ligne-equipe { grid-template-columns: minmax(0, 1fr) auto; }
+
 .alerte {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   padding: 14px 16px; border-radius: var(--rayon); background: var(--orange-fond); border: 1px solid #5a3a14;
