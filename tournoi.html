@@ -35,18 +35,31 @@
 <!-- Ajout d'un participant par l'organisateur -->
 <div class="fenetre" id="fen-ajout" role="dialog" aria-modal="true" aria-labelledby="t-ajout" hidden>
   <form class="fenetre__boite" id="form-ajout" novalidate>
-    <h2 id="t-ajout">Ajouter un participant</h2>
+    <h2 id="t-ajout">Ajouter des participants</h2>
+    <p class="match__format" id="ajout-places" style="margin:0"></p>
+    <!-- Individuel : plusieurs membres et invités d'un coup -->
+    <div data-simple class="aj-multi">
+      <div class="champ"><span>Membres <small id="aj-nb-membres"></small></span>
+        <input type="search" id="aj-recherche" placeholder="Rechercher : nom, prénom, surnom" autocomplete="off" aria-label="Rechercher un membre">
+        <div class="aj-liste" id="aj-liste"><p class="vide">Chargement…</p></div>
+      </div>
+      <label class="champ">Invités sans compte <small>(un nom par ligne)</small>
+        <textarea id="aj-invites" rows="3" maxlength="1200" placeholder="Jean Dupont&#10;Marie Martin"></textarea>
+      </label>
+    </div>
+    <!-- Double : une doublette à la fois, la fenêtre reste ouverte -->
     <label class="champ" data-double>Nom de la doublette<input type="text" name="team_name" maxlength="40"></label>
-    <div class="champ"><span data-double>Joueur 1</span><span data-simple>Participant</span>
+    <div class="champ" data-double><span>Joueur 1</span>
       <div class="t-partenaire" data-zone="1"></div>
     </div>
     <div class="champ" data-double><span>Joueur 2</span>
       <div class="t-partenaire" data-zone="2"></div>
     </div>
+    <div class="aj-bilan" id="aj-bilan" hidden></div>
     <p class="t-erreur" id="erreur-ajout" role="alert"></p>
     <div class="actions">
-      <button type="button" class="bouton" data-fermer>Annuler</button>
-      <button type="submit" class="bouton bouton--plein">Ajouter</button>
+      <button type="button" class="bouton" data-fermer id="aj-fermer">Fermer</button>
+      <button type="submit" class="bouton bouton--plein" id="aj-valider">Ajouter</button>
     </div>
   </form>
 </div>

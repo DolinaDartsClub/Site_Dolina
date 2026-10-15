@@ -69,7 +69,7 @@ export function normaliserCode(v) {
 // ---------------------------------------------------------------------
 let membresCache = null;
 
-async function chargerMembres() {
+export async function chargerMembres() {
   if (membresCache) return membresCache;
   const { data } = await supabase
     .from('profiles')

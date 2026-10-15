@@ -6,6 +6,7 @@
 // =====================================================================
 
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie } from './app.js?v=__VERSION__';
+import { chargerMembres } from './tournoi-commun.js?v=__VERSION__';
 import {
   badgeStatut, resumeFormat, estMoi, choisirMembre, STATUTS,
   classementPoule, nomTour, lettrePoule, POINTS_VICTOIRE, POINTS_DEFAITE,
@@ -1015,17 +1016,92 @@ function reinitialiser(idMatch) {
 
 const choixAjout = { 1: null, 2: null };    // membre choisi pour joueur 1 / joueur 2
 
-function ouvrirAjout() {
+// Individuel : membres cochés + invités (un par ligne), ajoutés en une fois
+const cochesAjout = new Set();
+let membresAjout = [];
+let ajoutsFaits = 0;
+
+function placesRestantes() {
+  return t.max_participants - inscrits.length;
+}
+
+function majPlacesAjout() {
+  const reste = placesRestantes();
+  const nbInvites = lireInvites().length;
+  const total = cochesAjout.size + nbInvites;
+  document.getElementById('ajout-places').textContent = `${inscrits.length} / ${t.max_participants} inscrits · ${reste} place${reste > 1 ? 's' : ''} restante${reste > 1 ? 's' : ''}`;
+  document.getElementById('aj-nb-membres').textContent = cochesAjout.size ? `(${cochesAjout.size} coché${cochesAjout.size > 1 ? 's' : ''})` : '';
+  const bouton = document.getElementById('aj-valider');
+  if (t.team_mode !== 'double') {
+    bouton.textContent = total ? `Ajouter ${total} participant${total > 1 ? 's' : ''}` : 'Ajouter';
+    bouton.disabled = !total;
+    document.getElementById('erreur-ajout').textContent = total > reste ? `Il ne reste que ${reste} place${reste > 1 ? 's' : ''} : seuls les ${reste} premiers seront ajoutés.` : '';
+  }
+}
+
+function lireInvites() {
+  return [...new Set(document.getElementById('aj-invites').value.split('\n').map((x) => x.trim()).filter(Boolean))];
+}
+
+function afficherMembresAjout() {
+  const q = document.getElementById('aj-recherche').value.trim().toLowerCase();
+  const deja = dejaInscrits();
+  const liste = membresAjout.filter((m) => !deja.has(m.id)
+    && (!q || [m.first_name, m.last_name, m.nickname].some((v) => (v || '').toLowerCase().includes(q))));
+  document.getElementById('aj-liste').innerHTML = liste.length
+    ? liste.map((m) => `
+      <label class="aj-membre${cochesAjout.has(m.id) ? ' aj-membre--coche' : ''}">
+        <input type="checkbox" value="${m.id}"${cochesAjout.has(m.id) ? ' checked' : ''}>
+        <span><strong>${esc(nomAffiche(m))}</strong>${m.use_nickname ? `<small>${esc(`${m.first_name} ${m.last_name}`)}</small>` : (m.nickname ? `<small>${esc(m.nickname)}</small>` : '')}</span>
+      </label>`).join('')
+    : `<p class="vide">${q ? 'Aucun membre ne correspond : ajoutez-le comme invité ci-dessous.' : 'Tous les membres sont déjà inscrits.'}</p>`;
+}
+
+async function ouvrirAjout() {
   const double = t.team_mode === 'double';
   fenAjout.querySelectorAll('[data-double]').forEach((el) => { el.hidden = !double; });
   fenAjout.querySelectorAll('[data-simple]').forEach((el) => { el.hidden = double; });
   document.getElementById('form-ajout').reset();
   document.getElementById('erreur-ajout').textContent = '';
+  document.getElementById('aj-bilan').hidden = true;
+  document.getElementById('t-ajout').textContent = double ? 'Ajouter des doublettes' : 'Ajouter des participants';
+  document.getElementById('aj-valider').textContent = double ? 'Ajouter la doublette' : 'Ajouter';
+  document.getElementById('aj-valider').disabled = false;
+  ajoutsFaits = 0;
   choixAjout[1] = null;
   choixAjout[2] = null;
-  zoneJoueur(1);
-  if (double) zoneJoueur(2);
+  cochesAjout.clear();
+  if (double) {
+    zoneJoueur(1);
+    zoneJoueur(2);
+  }
   fenAjout.hidden = false;
+  majPlacesAjout();
+  if (!double) {
+    membresAjout = await chargerMembres();
+    afficherMembresAjout();
+    document.getElementById('aj-recherche').focus();
+  }
+}
+
+document.getElementById('aj-recherche').addEventListener('input', afficherMembresAjout);
+document.getElementById('aj-invites').addEventListener('input', majPlacesAjout);
+document.getElementById('aj-liste').addEventListener('change', (e) => {
+  const c = e.target.closest('input[type=checkbox]');
+  if (!c) return;
+  if (c.checked) cochesAjout.add(c.value); else cochesAjout.delete(c.value);
+  c.closest('.aj-membre').classList.toggle('aj-membre--coche', c.checked);
+  majPlacesAjout();
+});
+
+function fermerAjout() {
+  fenAjout.hidden = true;
+  if (ajoutsFaits) {
+    const mot = t.team_mode === 'double' ? 'doublette' : 'participant';
+    message(zoneMsg, `${ajoutsFaits} ${mot}${ajoutsFaits > 1 ? 's' : ''} ajouté${t.team_mode === 'double' ? 'e' : ''}${ajoutsFaits > 1 ? 's' : ''}.`, 'ok');
+    onglet = 'participants';
+    charger();
+  }
 }
 
 function dejaInscrits() {
@@ -1051,14 +1127,15 @@ function zoneJoueur(n) {
 }
 
 fenAjout.addEventListener('click', (e) => {
-  if (e.target === fenAjout || e.target.closest('[data-fermer]')) fenAjout.hidden = true;
+  if (e.target === fenAjout || e.target.closest('[data-fermer]')) fermerAjout();
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { fenAjout.hidden = true; fenLancer.hidden = true; fenBull.hidden = true; fenForfait.hidden = true; fenCorriger.hidden = true; }
+  if (e.key === 'Escape') { if (!fenAjout.hidden) fermerAjout(); fenLancer.hidden = true; fenBull.hidden = true; fenForfait.hidden = true; fenCorriger.hidden = true; }
 });
 
 document.getElementById('form-ajout').addEventListener('submit', (e) => {
   e.preventDefault();
+  if (t.team_mode !== 'double') { ajouterPlusieurs(); return; }
   const erreur = document.getElementById('erreur-ajout');
   const double = t.team_mode === 'double';
   const invite = (n) => fenAjout.querySelector(`[data-invite="${n}"]`)?.value.trim() || null;
@@ -1081,12 +1158,68 @@ document.getElementById('form-ajout').addEventListener('submit', (e) => {
     const { error } = await supabase.from('tournament_entries').insert(ligne).select('id').single();
     bouton.disabled = false;
     if (error) { erreur.textContent = erreurFr(error); return; }
-    fenAjout.hidden = true;
-    message(zoneMsg, 'Participant ajouté.', 'ok');
-    onglet = 'participants';
-    await charger();
+    // Doublette ajoutée : la fenêtre reste ouverte pour la suivante
+    ajoutsFaits += 1;
+    await rechargerInscrits();
+    const bilan = document.getElementById('aj-bilan');
+    bilan.hidden = false;
+    bilan.innerHTML = `<p class="aj-ok">✓ « ${esc(ligne.team_name)} » ajoutée (${ajoutsFaits} doublette${ajoutsFaits > 1 ? 's' : ''} ajoutée${ajoutsFaits > 1 ? 's' : ''}). Saisissez la suivante ou fermez.</p>`;
+    e.target.elements.team_name.value = '';
+    choixAjout[1] = null;
+    choixAjout[2] = null;
+    zoneJoueur(1);
+    zoneJoueur(2);
+    majPlacesAjout();
+    if (placesRestantes() <= 0) { erreur.textContent = 'Le tournoi est complet.'; bouton.disabled = true; }
+    e.target.elements.team_name.focus();
   });
 });
+
+// Relit la liste des inscrits (sans redessiner la page) pendant l'ajout
+async function rechargerInscrits() {
+  const { data } = await supabase.rpc('tournoi_detail', { p_tournoi: id });
+  if (data) {
+    inscrits = data.inscrits || [];
+    parId = new Map(inscrits.map((x) => [x.id, x]));
+  }
+}
+
+// Individuel : ajoute les membres cochés puis les invités, un par un,
+// pour indiquer précisément ceux qui n'ont pas pu être ajoutés
+function ajouterPlusieurs() {
+  const erreur = document.getElementById('erreur-ajout');
+  const bouton = document.getElementById('aj-valider');
+  const aAjouter = [
+    ...[...cochesAjout].map((idM) => ({ ligne: { tournament_id: t.id, profile_id: idM }, nom: nomAffiche(membresAjout.find((m) => m.id === idM) || {}) })),
+    ...lireInvites().map((nom) => ({ ligne: { tournament_id: t.id, guest_name: nom.slice(0, 40) }, nom })),
+  ];
+  if (!aAjouter.length) { erreur.textContent = 'Cochez des membres ou saisissez des noms d\'invités.'; return; }
+  action(async () => {
+    bouton.disabled = true;
+    bouton.textContent = 'Ajout en cours…';
+    const ok = [];
+    const refus = [];
+    for (const x of aAjouter) {
+      const { error } = await supabase.from('tournament_entries').insert(x.ligne).select('id').single();
+      if (error) refus.push(`${x.nom} : ${erreurFr(error)}`); else ok.push(x.nom);
+    }
+    ajoutsFaits += ok.length;
+    await rechargerInscrits();
+    cochesAjout.clear();
+    // Les invités refusés restent dans la zone de saisie pour correction
+    const refusesInvites = aAjouter.filter((x) => x.ligne.guest_name && !ok.includes(x.nom)).map((x) => x.nom);
+    document.getElementById('aj-invites').value = refusesInvites.join('\n');
+    afficherMembresAjout();
+    majPlacesAjout();
+    const bilan = document.getElementById('aj-bilan');
+    bilan.hidden = false;
+    bilan.innerHTML = `${ok.length ? `<p class="aj-ok">✓ ${ok.length} ajouté${ok.length > 1 ? 's' : ''} : ${esc(ok.join(', '))}</p>` : ''}${refus.length ? `<ul class="aj-refus">${refus.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}`;
+    erreur.textContent = '';
+    if (!refus.length) {
+      fermerAjout();
+    }
+  });
+}
 
 // Mise à jour automatique quand un match du tournoi change (si le temps réel est disponible)
 supabase
