@@ -55,6 +55,7 @@ async function charger() {
   matchs = data.matchs || [];
   parId = new Map(inscrits.map((e) => [e.id, e]));
   etiquettes = null;
+  statsTournoi = null;
   document.title = `${t.name} – Dolina Darts Club`;
   if (!onglet) onglet = t.status === 'running' || t.status === 'finished' ? (t.format === 'pools' ? 'poules' : 'arbre') : 'participants';
   afficher();
@@ -80,6 +81,7 @@ function afficher() {
     ...(t.format === 'pools' && lance ? [['poules', 'Poules'], ['arbre', 'Phase finale']] : []),
     ...(t.format === 'knockout' && lance ? [['arbre', 'Arbre']] : []),
     ...(lance ? [['matchs', `Matchs${mesMatchsAJouer() ? ' <span class="t-compte t-compte--moi">' + mesMatchsAJouer() + '</span>' : ''}`]] : []),
+    ...(lance ? [['stats', 'Stats']] : []),
     ['participants', `Participants <span class="t-compte">${nb}</span>`],
     ['infos', 'Infos'],
   ];
@@ -204,6 +206,7 @@ function contenuOnglet(cle) {
   if (cle === 'poules') return vuePoules();
   if (cle === 'arbre') return vueArbre();
   if (cle === 'matchs') return vueMatchs();
+  if (cle === 'stats') return vueStats();
   return vueInfos();
 }
 
@@ -488,6 +491,95 @@ function mesMatchsAJouer() {
   return matchs.filter((m) => (m.status === 'ready' || m.status === 'live') && estMonMatch(m)).length;
 }
 
+// ---------- Stats du tournoi : tableau par joueur ----------
+
+let statsTournoi = null;           // résultat de stats_tournoi (rechargé avec la page)
+let chargementStats = false;
+let triStats = { cle: 'victoires', sens: -1 };
+const virguleT = (n, d = 1) => (n === null || n === undefined || !Number.isFinite(n) ? '–' : n.toFixed(d).replace('.', ','));
+
+const COLONNES_STATS = [
+  ['nom', 'Joueur', (l) => l.nom],
+  ['matchs', 'MJ', (l) => l.matchs, 'Matchs joués'],
+  ['victoires', 'V', (l) => l.victoires, 'Victoires'],
+  ['defaites', 'D', (l) => l.defaites, 'Défaites'],
+  ['manches', 'Manches', (l) => l.manches_gagnees - l.manches_perdues, 'Manches gagnées – perdues'],
+  ['moyenne', 'Moy.', (l) => l.moyenne ?? -1, 'Moyenne 3 fléchettes'],
+  ['double', 'Double', (l) => l.double ?? -1, 'Réussite au double'],
+  ['nb_180', '180', (l) => l.nb_180, 'Nombre de 180'],
+  ['meilleur_finish', 'Finish', (l) => l.meilleur_finish ?? -1, 'Meilleur finish'],
+];
+
+async function chargerStats() {
+  if (chargementStats) return;
+  chargementStats = true;
+  const { data, error } = await supabase.rpc('stats_tournoi', { p_tournoi: id });
+  chargementStats = false;
+  statsTournoi = error ? { erreur: error } : (data || []).map((l) => ({
+    ...l,
+    nom: nomEntree(l.entry_id),
+    moyenne: l.flechettes ? (l.points / l.flechettes) * 3 : null,
+    double: l.flechettes_double ? (l.finishs / l.flechettes_double) * 100 : null,
+  }));
+  if (onglet === 'stats') {
+    const panneau = zone.querySelector('.t-panneau');
+    if (panneau) { panneau.innerHTML = vueStats(); brancherStats(); }
+  }
+}
+
+function vueStats() {
+  if (!statsTournoi) {
+    chargerStats();
+    return '<p class="vide">Calcul des statistiques…</p>';
+  }
+  if (statsTournoi.erreur) {
+    return `<p class="vide">${esc(statsTournoi.erreur.code === 'P0001' ? statsTournoi.erreur.message : 'Statistiques indisponibles (script SQL 020 à exécuter dans Supabase ?).')}</p>`;
+  }
+  const col = COLONNES_STATS.find((c) => c[0] === triStats.cle) || COLONNES_STATS[2];
+  const lignes = [...statsTournoi].sort((a, b) => {
+    const va = col[2](a); const vb = col[2](b);
+    if (typeof va === 'string') return va.localeCompare(vb, 'fr') * -triStats.sens;
+    return (va - vb) * triStats.sens || (b.manches_gagnees - b.manches_perdues) - (a.manches_gagnees - a.manches_perdues) || a.nom.localeCompare(b.nom, 'fr');
+  });
+  const mi = monInscription();
+  const entete = COLONNES_STATS.map(([cle, lib, , titre]) => {
+    const actif = cle === triStats.cle;
+    return `<th scope="col"${cle === 'nom' ? ' class="ts-nom"' : ''} aria-sort="${actif ? (triStats.sens < 0 ? 'descending' : 'ascending') : 'none'}"><button type="button" data-tri="${cle}"${titre ? ` title="${titre}"` : ''}>${lib}${actif ? (triStats.sens < 0 ? ' ▾' : ' ▴') : ''}</button></th>`;
+  }).join('');
+  const corps = lignes.map((l) => {
+    const moiIci = mi && l.entry_id === mi.id;
+    return `
+      <tr class="${moiIci ? 'p-moi' : ''}">
+        <th scope="row" class="ts-nom">${esc(l.nom)}${moiIci ? ' <span class="t-moi">Vous</span>' : ''}${l.forfaits ? `<small>${l.forfaits} forfait${l.forfaits > 1 ? 's' : ''}</small>` : ''}</th>
+        <td>${l.matchs}</td>
+        <td class="s-gagne">${l.victoires}</td>
+        <td class="s-perdu">${l.defaites}</td>
+        <td><span class="s-gagne">${l.manches_gagnees}</span>-<span class="s-perdu">${l.manches_perdues}</span></td>
+        <td class="ts-fort">${virguleT(l.moyenne)}</td>
+        <td>${l.double === null ? '–' : `${virguleT(l.double)} %`}</td>
+        <td>${l.nb_180}</td>
+        <td>${l.meilleur_finish ?? '–'}</td>
+      </tr>`;
+  }).join('');
+  return `
+    <p class="t-legende">Touchez un titre de colonne pour trier. Matchs terminés et joués du tournoi (les forfaits ne comptent pas comme matchs joués). Moyenne et double : calculés sur les volées saisies dans le scorer.</p>
+    <div class="p-tableau-cadre ts-cadre">
+      <table class="p-tableau ts-tableau">
+        <thead><tr>${entete}</tr></thead>
+        <tbody>${corps}</tbody>
+      </table>
+    </div>`;
+}
+
+function brancherStats() {
+  zone.querySelectorAll('[data-tri]').forEach((b) => b.addEventListener('click', () => {
+    const cle = b.dataset.tri;
+    triStats = triStats.cle === cle ? { cle, sens: -triStats.sens } : { cle, sens: cle === 'nom' ? 1 : -1 };
+    zone.querySelector('.t-panneau').innerHTML = vueStats();
+    brancherStats();
+  }));
+}
+
 // ---------- Infos ----------
 
 function vueInfos() {
@@ -518,6 +610,7 @@ function brancher() {
     onglet = b.dataset.onglet;
     afficher();
   }));
+  if (onglet === 'stats') brancherStats();
   // Dans l'arbre, toucher un match ouvre sa fiche dans l'onglet Matchs
   zone.querySelectorAll('.a-case .m-carte, .a-petite .m-carte').forEach((c) => {
     c.setAttribute('role', 'button');

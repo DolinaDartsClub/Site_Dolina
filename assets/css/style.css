@@ -948,3 +948,12 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .c-tableau summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--gris-clair); min-height: 32px; display: flex; align-items: center; }
 .c-cadre { max-width: 920px; }
 .s-gagne { color: var(--orange); } .s-perdu { color: var(--gris); }
+/* Stats d'un tournoi */
+.ts-tableau th, .ts-tableau td { white-space: nowrap; }
+.ts-tableau thead button { padding: 4px 2px; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+.ts-tableau thead th[aria-sort="descending"] button, .ts-tableau thead th[aria-sort="ascending"] button { color: var(--orange); }
+.ts-tableau .ts-nom { position: sticky; left: 0; z-index: 1; background: var(--carte); text-align: left; min-width: 130px; }
+.ts-tableau tr.p-moi .ts-nom { background: #2a1c0c; }
+.ts-tableau tbody .ts-nom small { display: block; font-size: 11px; color: var(--gris); font-weight: 500; }
+.ts-fort { font-family: var(--police-titre); font-size: 18px; font-weight: 700; }
+.ts-cadre { border-radius: var(--rayon); border: 1px solid var(--bord); background: var(--carte); }
