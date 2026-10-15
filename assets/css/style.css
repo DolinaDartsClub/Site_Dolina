@@ -790,3 +790,90 @@ img { max-width: 100%; display: block; }
 .t-recap dt { font-size: 13px; color: var(--gris); font-weight: 600; }
 .t-recap dd { margin: 0; font-size: 15px; }
 @media (max-width: 480px) { .t-recap { grid-template-columns: 1fr; gap: 2px; } .t-recap dd { margin-bottom: 10px; } }
+
+/* ---------- Tournoi lancé : matchs, poules, arbre ---------- */
+.t-legende { margin: 0 0 12px; font-size: 13px; color: var(--gris-clair); }
+.t-compte--moi { background: var(--orange); color: var(--noir); }
+.t-poule-mini { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--bord-fort); font-size: 11px; font-weight: 700; color: var(--gris-clair); white-space: nowrap; }
+.m-liste { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.m-groupe { margin-bottom: 18px; }
+.m-groupe__titre { margin: 0 0 8px; font-size: 15px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--gris-clair); }
+.m-groupe--moi .m-groupe__titre { color: var(--orange); }
+.m-carte { display: grid; gap: 2px; padding: 8px 10px 10px; border-radius: 12px; background: var(--carte); border: 1px solid var(--bord); min-width: 0; }
+.m-carte--moi { border: 2px solid var(--orange); background: linear-gradient(0deg, var(--orange-fond), var(--orange-fond)), var(--carte); }
+.m-carte--live { box-shadow: inset 3px 0 0 var(--blanc); }
+.m-carte--bye { opacity: 0.6; }
+.m-carte--repere { animation: repere 1.6s ease 2; }
+@keyframes repere { 50% { box-shadow: 0 0 0 4px var(--orange); } }
+.m-carte__haut { display: flex; align-items: center; gap: 6px; min-height: 22px; margin-bottom: 2px; }
+.m-carte__no { font-family: var(--police-titre); font-size: 14px; font-weight: 700; color: var(--gris); }
+.m-carte__libelle { flex: 1; min-width: 0; font-size: 12px; color: var(--gris-clair); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-moi { padding: 1px 7px; border-radius: 999px; background: var(--orange); color: var(--noir); font-size: 10px; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
+.m-statut { font-size: 10px; font-weight: 800; text-transform: uppercase; white-space: nowrap; color: var(--gris); }
+.m-statut--pret { color: #7fdc9a; }
+.m-statut--live { color: var(--blanc); }
+.m-statut--live::before { content: '● '; color: var(--orange); }
+.m-joueur { display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 2px 6px; border-radius: 8px; }
+.m-joueur:nth-of-type(2) { border-bottom: 1px solid #262626; border-radius: 8px 8px 0 0; }
+.m-joueur__seed { min-width: 18px; font-size: 11px; color: var(--gris); text-align: center; }
+.m-joueur__nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.m-joueur__score { min-width: 22px; font-family: var(--police-titre); font-size: 20px; font-weight: 700; text-align: right; color: var(--gris-clair); }
+.m-joueur--gagnant .m-joueur__nom { color: var(--blanc); }
+.m-joueur--gagnant .m-joueur__score { color: var(--orange); }
+.m-joueur--perdant .m-joueur__nom { color: var(--gris); font-weight: 500; }
+.m-joueur--vide .m-joueur__nom { color: var(--gris); font-weight: 500; font-style: italic; }
+.m-joueur--moi .m-joueur__nom::after { content: ' (vous)'; color: var(--orange); font-weight: 700; font-style: normal; }
+.m-carte__actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.m-carte__actions:empty { display: none; }
+.m-carte__actions .bouton small { font-size: 11px; font-weight: 500; margin-left: 4px; }
+
+/* Poules */
+.p-poules { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.p-poule { display: grid; gap: 10px; padding: 12px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); min-width: 0; }
+.p-poule--moi { border-color: var(--orange); }
+.p-poule__haut { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.p-poule__haut h3 { margin: 0; font-family: var(--police-titre); font-size: 22px; text-transform: uppercase; }
+.p-poule__info { margin-left: auto; font-size: 12px; color: var(--gris); }
+.p-tableau-cadre { overflow-x: auto; }
+.p-tableau { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+.p-tableau th, .p-tableau td { padding: 7px 5px; text-align: center; border-bottom: 1px solid #262626; }
+.p-tableau thead th { font-size: 11px; font-weight: 700; color: var(--gris); text-transform: uppercase; }
+.p-tableau .p-nom { text-align: left; font-weight: 600; width: 100%; }
+.p-tableau .p-nom small { display: block; font-size: 11px; font-weight: 500; color: var(--gris); }
+.p-rang { color: var(--gris); font-family: var(--police-titre); font-size: 16px; }
+.p-points { font-family: var(--police-titre); font-size: 18px; font-weight: 700; }
+.p-qualif .p-rang { color: var(--orange); box-shadow: inset 3px 0 0 var(--orange); }
+.p-moi { background: var(--orange-fond); }
+.p-moi .p-nom { color: var(--orange); }
+.p-matchs summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--gris-clair); min-height: 32px; display: flex; align-items: center; }
+.p-journee { margin: 10px 0 6px; font-size: 12px; text-transform: uppercase; color: var(--gris); letter-spacing: 0.4px; }
+.p-matchs .m-liste { grid-template-columns: 1fr; }
+
+/* Arbre */
+.a-cadre { overflow-x: auto; padding-bottom: 8px; margin: 0 -4px; }
+.a-arbre { display: grid; grid-template-columns: repeat(var(--tours), minmax(220px, 1fr)); gap: 14px; min-width: calc(var(--tours) * 234px); padding: 0 4px; }
+.a-tour { display: flex; flex-direction: column; min-width: 0; }
+.a-tour__titre { margin: 0 0 8px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gris-clair); text-align: center; }
+.a-tour__matchs { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 10px; }
+.a-case { position: relative; }
+.a-case .m-carte { cursor: pointer; }
+.a-tour:not(:last-child) .a-case::after { content: ''; position: absolute; right: -14px; top: 50%; width: 14px; border-top: 2px solid var(--bord-fort); }
+.a-petite { margin-top: 18px; }
+.a-petite .m-carte { cursor: pointer; }
+.m-carte--compacte { padding: 6px 8px 8px; }
+.m-carte--compacte .m-joueur { min-height: 28px; }
+
+/* Accueil : tournois en cours */
+.tournois-accueil { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.ta-carte { display: grid; gap: 6px; padding: 14px; border-radius: 14px; background: var(--carte); border: 1px solid var(--bord); border-left: 4px solid var(--orange); color: var(--blanc); text-decoration: none; }
+a.ta-carte:hover { border-color: var(--bord-fort); border-left-color: var(--orange); }
+.ta-carte__haut { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ta-carte__phase { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--orange); letter-spacing: 0.3px; }
+.ta-carte__nom { font-size: 18px; }
+.ta-carte__info { font-size: 13px; color: var(--gris-clair); }
+.ta-carte__prive { font-size: 12px; color: var(--gris); }
+/* Le contenu large (arbre) défile dans son cadre sans élargir la page */
+#tournoi { min-width: 0; }
+.t-panneau { min-width: 0; }
+.p-poules { align-items: start; }
+.p-poule { align-content: start; }

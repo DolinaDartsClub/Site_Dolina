@@ -134,3 +134,66 @@ export function choisirMembre({ titre = 'Choisir un membre', exclure = new Set()
     chargerMembres().then((liste) => { membres = liste; afficher(); });
   });
 }
+
+// ---------------------------------------------------------------------
+// Classement d'une poule (règles du club)
+//   3 points par victoire, 1 point par défaite.
+//   Égalité de points : le plus de manches gagnées ;
+//   puis le résultat des matchs entre les joueurs à égalité.
+//   matchs : matchs de la poule (status 'done' comptés)
+// ---------------------------------------------------------------------
+export const POINTS_VICTOIRE = 3;
+export const POINTS_DEFAITE = 1;
+
+export function classementPoule(idsInscrits, matchs) {
+  const lignes = new Map(idsInscrits.map((id) => [id, { id, joues: 0, victoires: 0, defaites: 0, pour: 0, contre: 0, points: 0, critere: '' }]));
+  const joues = matchs.filter((m) => m.status === 'done' && m.winner_entry);
+  for (const m of joues) {
+    const a = lignes.get(m.entry_a);
+    const b = lignes.get(m.entry_b);
+    if (!a || !b) continue;
+    const la = m.legs_a ?? m.score_a ?? 0;
+    const lb = m.legs_b ?? m.score_b ?? 0;
+    a.joues += 1; b.joues += 1;
+    a.pour += la; a.contre += lb;
+    b.pour += lb; b.contre += la;
+    const [g, p] = m.winner_entry === m.entry_a ? [a, b] : [b, a];
+    g.victoires += 1; g.points += POINTS_VICTOIRE;
+    p.defaites += 1; p.points += m.forfeit ? 0 : POINTS_DEFAITE;
+  }
+  const liste = [...lignes.values()];
+
+  // Points puis manches gagnées
+  liste.sort((x, y) => y.points - x.points || y.pour - x.pour);
+
+  // Groupes encore à égalité : matchs entre eux
+  const resultat = [];
+  for (let i = 0; i < liste.length;) {
+    let j = i + 1;
+    while (j < liste.length && liste[j].points === liste[i].points && liste[j].pour === liste[i].pour) j += 1;
+    const groupe = liste.slice(i, j);
+    if (groupe.length > 1 && groupe.some((x) => x.joues > 0)) {
+      const ids = new Set(groupe.map((x) => x.id));
+      const entre = Object.fromEntries(groupe.map((x) => [x.id, 0]));
+      for (const m of joues) {
+        if (ids.has(m.entry_a) && ids.has(m.entry_b)) entre[m.winner_entry] += 1;
+      }
+      groupe.sort((x, y) => entre[y.id] - entre[x.id]);
+      const departages = new Set(groupe.map((x) => entre[x.id])).size > 1;
+      groupe.forEach((x) => { x.critere = departages ? 'Départagé par le match entre eux' : 'Égalité parfaite'; });
+    }
+    resultat.push(...groupe);
+    i = j;
+  }
+  resultat.forEach((x, i) => { x.rang = i + 1; });
+  return resultat;
+}
+
+// Nom d'un tour de l'arbre selon le nombre de matchs de ce tour
+export function nomTour(nbMatchs, troisieme = false) {
+  if (troisieme) return 'Match pour la 3e place';
+  return { 1: 'Finale', 2: 'Demi-finales', 4: 'Quarts de finale', 8: 'Huitièmes de finale', 16: 'Seizièmes de finale', 32: 'Trente-deuxièmes' }[nbMatchs] || `Tour de ${nbMatchs * 2}`;
+}
+
+export const LETTRES = 'ABCDEFGHIJKLMNOP';
+export const lettrePoule = (n) => LETTRES[(n || 1) - 1] || String(n);
