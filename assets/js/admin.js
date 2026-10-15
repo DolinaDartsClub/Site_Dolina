@@ -6,7 +6,7 @@
 //  Les droits sont vérifiés par la base : un non-admin ne peut rien modifier.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, dateFr } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur } from './app.js?v=__VERSION__';
 import { initActus } from './admin-actus.js?v=__VERSION__';
 
 const zoneMessage = document.getElementById('message');
@@ -30,7 +30,7 @@ const STATUT_CLASSE = { pending: 'statut--attente', active: 'statut--ok', refuse
 const EQUIPE = { pending: 'En attente', accepted: 'Membre', refused: 'Refusé' };
 const EQUIPE_CLASSE = { pending: 'statut--attente', accepted: 'statut--ok', refused: 'statut--refus' };
 
-const nomComplet = (p) => `${p.first_name} ${p.last_name}`;
+const nomComplet = (p) => nomCompletJoueur(p);
 const prive = (p) => (Array.isArray(p.profile_private) ? p.profile_private[0] : p.profile_private) || {};
 const nomEquipe = (id) => equipes.find((t) => t.id === id)?.name || '?';
 
@@ -74,7 +74,7 @@ function afficherInscriptions() {
         const demandes = (p.team_members || []).map((m) => esc(nomEquipe(m.team_id))).join(', ') || 'Aucune équipe';
         return `
           <article class="carte-info">
-            <h2>${esc(nomComplet(p))}${p.nickname ? ` « ${esc(p.nickname)} »` : ''}</h2>
+            <h2>${esc(nomComplet(p))}</h2>
             <span class="match__format">Inscrit le ${esc(dateFr(p.created_at))}</span>
             <dl class="infos">
               <dt>Email</dt><dd>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : '—'}</dd>

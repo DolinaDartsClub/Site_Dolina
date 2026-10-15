@@ -4,7 +4,7 @@
 //  (profil modifiable, photo et suppression du compte : étape 7)
 // =====================================================================
 
-import { supabase, esc, profilConnecte, message, erreurFr } from './app.js?v=__VERSION__';
+import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche } from './app.js?v=__VERSION__';
 
 const zone = document.getElementById('contenu');
 const boutonDeco = document.getElementById('deconnexion');
@@ -37,7 +37,7 @@ async function afficher() {
   const [{ data: equipes }, { data: mesRattachements }, { data: detail }, { data: prive }] = await Promise.all([
     supabase.from('teams').select('id, name, captain_id').order('sort_order'),
     supabase.from('team_members').select('team_id, status').eq('profile_id', profil.id),
-    supabase.from('profiles').select('nickname, hand, dart_weight, dart_brand').eq('id', profil.id).maybeSingle(),
+    supabase.from('profiles').select('nickname, use_nickname, hand, dart_weight, dart_brand').eq('id', profil.id).maybeSingle(),
     supabase.from('profile_private').select('phone').eq('id', profil.id).maybeSingle(),
   ]);
   const p = detail || {};
@@ -94,7 +94,7 @@ async function afficher() {
         const valide = p.status === 'active';
         return `
           <div class="ligne-equipe">
-            <span class="ligne-equipe__nom">${esc(p.first_name)} ${esc(p.last_name)}${p.nickname ? ` « ${esc(p.nickname)} »` : ''}</span>
+            <span class="ligne-equipe__nom">${nomCompletHtml(p)}</span>
             ${valide ? '<span class="statut statut--attente">Veut intégrer l\'équipe</span>' : '<span class="statut statut--attente">Compte pas encore validé</span>'}
             <span class="ligne-equipe__actions">
               <button type="button" class="bouton bouton--petit bouton--plein" data-action="cap-accepter" data-id="${d.profile_id}" ${valide ? '' : 'disabled title="Un admin doit d\'abord valider ce compte"'}>Accepter</button>
@@ -144,7 +144,8 @@ async function afficher() {
     <div class="message" id="message-general" role="alert" hidden></div>
     ${blocAdmin}
     <div class="carte-info">
-      <h2>${esc(nom)}${profil.nickname ? ` « ${esc(profil.nickname)} »` : ''}</h2>
+      <h2>${profil.first_name ? nomCompletHtml(profil) : esc(nom)}</h2>
+      ${profil.first_name ? `<span class="match__format">Nom affiché sur le site : <strong>${esc(nomAffiche(profil))}</strong></span>` : ''}
       <span class="match__format">${esc(profil.email)}</span>
       <span class="statut ${classe}">${libelle}</span>
       ${estAdmin ? '<span class="statut statut--ok">Administrateur</span>' : ''}
@@ -156,6 +157,7 @@ async function afficher() {
       <form class="repli__contenu" id="form-profil" novalidate>
         <div class="message" id="message-profil" role="alert" hidden></div>
         <label class="champ">Surnom<input name="nickname" type="text" maxlength="40" value="${esc(p.nickname || '')}"></label>
+        <label class="case case--simple"><input type="checkbox" name="use_nickname" ${p.use_nickname ? 'checked' : ''}>Utiliser mon surnom sur l'ensemble du site (matchs, score en direct, classements). Mon nom complet reste visible sur ma fiche.</label>
         <label class="champ">Téléphone<input name="phone" type="tel" maxlength="30" value="${esc(prive?.phone || '')}">
           <small>Visible uniquement par vous et les admins du club.</small></label>
         <div class="deux-colonnes">
@@ -221,6 +223,7 @@ function brancherProfil() {
     const [r1, r2] = await Promise.all([
       supabase.from('profiles').update({
         nickname: f.nickname.value.trim() || null,
+        use_nickname: f.use_nickname.checked && !!f.nickname.value.trim(),
         hand: f.hand.value || null,
         dart_weight: poids ? Number(poids) : null,
         dart_brand: f.dart_brand.value.trim() || null,

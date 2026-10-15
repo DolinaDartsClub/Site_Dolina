@@ -72,6 +72,25 @@ export function etatPartie(game, sides, visits) {
   return etat;
 }
 
+// Nom affiché sur le site : le surnom si le joueur l'a choisi, sinon « Prénom Nom »
+export function nomAffiche(p) {
+  if (!p) return '';
+  return p.use_nickname && p.nickname?.trim() ? p.nickname.trim() : `${p.first_name} ${p.last_name}`;
+}
+
+// Nom complet « Prénom Surnom Nom » (ex. Tony Big Tonz Al Kassis), sur la fiche du joueur
+export function nomComplet(p) {
+  if (!p) return '';
+  return [p.first_name, p.nickname?.trim(), p.last_name].filter(Boolean).join(' ');
+}
+
+// Même chose en HTML, avec le surnom mis en valeur
+export function nomCompletHtml(p) {
+  if (!p) return '';
+  const surnom = p.nickname?.trim() ? ` <span class="surnom">${esc(p.nickname.trim())}</span>` : '';
+  return `${esc(p.first_name)}${surnom} ${esc(p.last_name)}`;
+}
+
 // Adresse publique d'une image d'actualité stockée dans Supabase
 export function urlImage(chemin) {
   return chemin ? `${SUPABASE_URL}/storage/v1/object/public/public-images/${chemin}` : '';
@@ -110,7 +129,7 @@ export async function profilConnecte() {
   if (!session) return null;
   const { data } = await supabase
     .from('profiles')
-    .select('id, first_name, last_name, nickname, status, role')
+    .select('id, first_name, last_name, nickname, use_nickname, status, role')
     .eq('id', session.user.id)
     .maybeSingle();
   return data ? { ...data, email: session.user.email } : { id: session.user.id, email: session.user.email, status: 'pending' };
