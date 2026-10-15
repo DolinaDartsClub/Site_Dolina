@@ -9,6 +9,7 @@
 import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur } from './app.js?v=__VERSION__';
 import { initActus } from './admin-actus.js?v=__VERSION__';
 import { initDemandes } from './admin-demandes.js?v=__VERSION__';
+import { initSauvegarde } from './admin-sauvegarde.js?v=__VERSION__';
 
 const zoneMessage = document.getElementById('message');
 const vues = {
@@ -17,6 +18,7 @@ const vues = {
   equipes: document.getElementById('vue-equipes'),
   actus: document.getElementById('vue-actus'),
   demandes: document.getElementById('vue-demandes'),
+  sauvegarde: document.getElementById('vue-sauvegarde'),
 };
 const listeMembres = document.getElementById('liste-membres');
 const listeEquipes = document.getElementById('liste-equipes');
@@ -312,7 +314,7 @@ async function init() {
   document.getElementById('onglets').hidden = false;
   const depart = location.hash.slice(1);
   if (vues[depart]) document.querySelector(`[data-onglet="${depart}"]`).click();
-  await Promise.all([charger(), initActus(moi), initDemandes(document.getElementById('message'))]);
+  await Promise.all([charger(), initActus(moi), initDemandes(document.getElementById('message')), initSauvegarde(document.getElementById('message'))]);
 }
 
 init();

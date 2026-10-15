@@ -1025,3 +1025,15 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .pr-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .pr-actions { margin-bottom: 22px; }
 .pr-grille { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+
+/* ---------- Admin : sauvegarde et place utilisée ---------- */
+.sv-jauge { display: grid; gap: 6px; padding: 12px 14px; margin-bottom: 10px; border: 1px solid var(--bord); border-radius: 12px; background: var(--carte); }
+.sv-jauge__haut { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 14px; }
+.sv-jauge__haut span { color: var(--gris-clair); }
+.sv-jauge__barre { height: 10px; border-radius: 999px; background: #2e2e2e; overflow: hidden; }
+.sv-jauge__barre span { display: block; height: 100%; border-radius: 999px; background: var(--orange); }
+.sv-jauge--attention .sv-jauge__barre span { background: #e0b020; }
+.sv-jauge--alerte .sv-jauge__barre span { background: var(--erreur); }
+.sv-etat { padding: 12px 14px; margin-bottom: 10px; border-radius: 12px; border: 1px solid var(--bord); font-size: 15px; }
+.sv-etat--retard { border-color: #5a3a14; background: var(--orange-fond); color: #ffd2a6; }
+.sv-aide { margin: 0 0 12px; font-size: 14px; color: var(--gris-clair); line-height: 1.45; }

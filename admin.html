@@ -37,6 +37,7 @@
     <button type="button" class="onglet" data-onglet="equipes" aria-selected="false">Équipes</button>
     <button type="button" class="onglet" data-onglet="actus" aria-selected="false">Actualités</button>
     <button type="button" class="onglet" data-onglet="demandes" aria-selected="false">Demandes <span class="compteur" id="nb-demandes" hidden>0</span></button>
+    <button type="button" class="onglet" data-onglet="sauvegarde" aria-selected="false">Sauvegarde <span class="compteur" id="nb-sauvegarde" hidden>!</span></button>
   </nav>
 
   <section id="vue-inscriptions" class="section" aria-live="polite">
@@ -56,6 +57,10 @@
   </section>
 
   <section id="vue-demandes" class="section" hidden aria-live="polite">
+    <p class="vide">Chargement…</p>
+  </section>
+
+  <section id="vue-sauvegarde" class="section" hidden aria-live="polite">
     <p class="vide">Chargement…</p>
   </section>
 
