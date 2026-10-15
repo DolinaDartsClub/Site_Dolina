@@ -5,16 +5,12 @@
 // =====================================================================
 
 import { supabase, esc, profilConnecte, nomAffiche, nomCompletHtml, avatar, dateFr } from './app.js?v=__VERSION__';
+import { debutSaison, nomSaison, resumeSaison } from './profil-commun.js?v=__VERSION__';
 
 const zone = document.getElementById('profil');
 const idDemande = new URLSearchParams(location.search).get('id');
 const virgule = (n, d = 1) => (n === null || n === undefined || !Number.isFinite(n) ? '–' : n.toFixed(d).replace('.', ','));
 const fmtDate = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
-
-function debutSaison(d = new Date()) {
-  const annee = d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1;
-  return new Date(annee, 8, 1);
-}
 
 async function init() {
   const moi = await profilConnecte();
@@ -26,6 +22,8 @@ async function init() {
   }
   const id = idDemande || moi.id;
   const soi = id === moi.id;
+  // Mon propre profil : la page de référence est « Mon compte »
+  if (soi) { location.replace('compte.html'); return; }
   const saison = debutSaison();
   const [rp, rs, rg] = await Promise.all([
     supabase.from('profiles')
@@ -49,21 +47,7 @@ async function init() {
 
   // Résumé de la saison
   const s = rs.data;
-  let resume = '<p class="vide">Statistiques indisponibles pour le moment.</p>';
-  if (s && s.parties) {
-    const moy = s.flechettes ? (s.points / s.flechettes) * 3 : null;
-    const dbl = s.flechettes_double ? (s.finishs / s.flechettes_double) * 100 : null;
-    const tuile = (t, v, d = '', principale = false) => `<div class="s-tuile${principale ? ' s-tuile--principale' : ''}"><span class="s-tuile__titre">${t}</span><span class="s-tuile__valeur">${v}</span>${d ? `<span class="s-tuile__detail">${d}</span>` : ''}</div>`;
-    resume = `<div class="s-grille pr-grille">
-      ${tuile('Moyenne', virgule(moy), `${s.parties} partie${s.parties > 1 ? 's' : ''}`, true)}
-      ${tuile('Victoires – défaites', `<span class="s-gagne">${s.victoires}</span> – <span class="s-perdu">${s.defaites}</span>`)}
-      ${tuile('Réussite au double', dbl === null ? '–' : `${virgule(dbl)} %`)}
-      ${tuile('180', s.nb_180)}
-      ${tuile('Meilleur finish', s.meilleur_finish ?? '–')}
-    </div>`;
-  } else if (s) {
-    resume = '<p class="vide">Aucune partie comptée cette saison.</p>';
-  }
+  const resume = resumeSaison(s);
 
   // Dernières parties
   const parties = rg.data || [];
@@ -115,7 +99,7 @@ async function init() {
       <a class="bouton" href="classement.html">Classement</a>
     </div>
     <section class="section s-section" aria-labelledby="t-saison">
-      <h2 class="section__titre" id="t-saison">Saison ${saison.getFullYear()}-${saison.getFullYear() + 1}</h2>
+      <h2 class="section__titre" id="t-saison">${nomSaison(saison)}</h2>
       ${resume}
     </section>
     <section class="section s-section" aria-labelledby="t-parties">

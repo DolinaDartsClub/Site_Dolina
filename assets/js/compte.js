@@ -4,7 +4,8 @@
 //  profil modifiable, photo de profil
 // =====================================================================
 
-import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche, avatar, DOSSIER_PHOTOS, oublierLienPhoto } from './app.js?v=__VERSION__';
+import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche, avatar, dateFr, DOSSIER_PHOTOS, oublierLienPhoto } from './app.js?v=__VERSION__';
+import { debutSaison, nomSaison, resumeSaison } from './profil-commun.js?v=__VERSION__';
 
 const zone = document.getElementById('contenu');
 const boutonDeco = document.getElementById('deconnexion');
@@ -37,7 +38,7 @@ async function afficher() {
   const [{ data: equipes }, { data: mesRattachements }, { data: detail }, { data: prive }] = await Promise.all([
     supabase.from('teams').select('id, name, captain_id').order('sort_order'),
     supabase.from('team_members').select('team_id, status').eq('profile_id', profil.id),
-    supabase.from('profiles').select('first_name, last_name, nickname, use_nickname, hand, dart_weight, dart_brand, photo_path, photo_consent').eq('id', profil.id).maybeSingle(),
+    supabase.from('profiles').select('first_name, last_name, nickname, use_nickname, hand, dart_weight, dart_brand, photo_path, photo_consent, created_at').eq('id', profil.id).maybeSingle(),
     supabase.from('profile_private').select('phone').eq('id', profil.id).maybeSingle(),
   ]);
   const p = detail || {};
@@ -57,6 +58,13 @@ async function afficher() {
       .eq('status', 'pending')
       .order('requested_at');
     demandes = data || [];
+  }
+
+  // Résumé de ma saison (membres validés)
+  let resume = '';
+  if (estActif) {
+    const { data: st } = await supabase.rpc('stats_joueur', { p_profile: profil.id, p_debut: debutSaison().toISOString(), p_fin: null, p_variant: null });
+    resume = resumeSaison(st);
   }
 
   // Admin : nombre d'inscriptions à valider
@@ -118,7 +126,8 @@ async function afficher() {
     const [c, l] = STATUTS_EQUIPE[m.status];
     return `
       <div class="ligne-equipe">
-        <span class="ligne-equipe__nom">${esc(t.name)}${capitaine ? ' <span class="statut statut--ok">Capitaine</span>' : ''}</span>
+        <span class="ligne-equipe__nom">${esc(t.name)}${capitaine ? ' <span class="statut statut--ok">Capitaine</span>' : ''}
+          ${m.status === 'accepted' ? '<span class="lien-bientot" title="La page de chaque équipe arrive dans une prochaine étape">Page de l\'équipe · bientôt</span>' : ''}</span>
         <span class="statut ${c}">${l}</span>
         <span class="ligne-equipe__actions">${action}</span>
       </div>`;
@@ -139,42 +148,65 @@ async function afficher() {
       </div>
     </details>` : '';
 
+  const equipesAcceptees = mesEquipes.filter((t) => rattachements.find((x) => x.team_id === t.id)?.status === 'accepted');
+  const blocPhoto = `
+        <section class="photo-profil" id="bloc-photo" aria-labelledby="t-photo">
+          <h3 id="t-photo" class="donnees__titre">Ma photo</h3>
+          <div class="message" id="message-photo" role="alert" hidden></div>
+          <div class="photo-profil__actions">
+            <input type="file" id="champ-photo" class="visuellement-cache" accept="image/jpeg,image/png,image/webp">
+            <label for="champ-photo" class="bouton bouton--petit${p.photo_consent ? '' : ' bouton--inactif'}" id="btn-choisir-photo" ${p.photo_consent ? '' : 'aria-disabled="true"'}>${p.photo_path ? 'Changer ma photo' : 'Ajouter une photo'}</label>
+            ${p.photo_path ? '<button type="button" class="bouton bouton--petit bouton--danger" id="btn-retirer-photo">Retirer ma photo</button>' : ''}
+          </div>
+          <label class="case case--simple"><input type="checkbox" id="accord-photo" ${p.photo_consent ? 'checked' : ''}>J'accepte que ma photo soit visible des membres connectés du club (jamais des visiteurs).</label>
+          <small class="match__format">La photo est recadrée en carré et réduite automatiquement. Décocher la case retire votre photo.</small>
+        </section>`;
+
   zone.innerHTML = `
-    <h1>Mon compte</h1>
     <div class="message" id="message-general" role="alert" hidden></div>
-    ${blocAdmin}
-    <div class="carte-info">
-      <h2>${profil.first_name ? nomCompletHtml(profil) : esc(nom)}</h2>
-      ${profil.first_name ? `<span class="match__format">Nom affiché sur le site : <strong>${esc(nomAffiche(profil))}</strong></span>` : ''}
-      <span class="match__format">${esc(profil.email)}</span>
-      <span class="statut ${classe}">${libelle}</span>
-      ${estAdmin ? '<span class="statut statut--ok">Administrateur</span>' : ''}
-      ${explication}
-      ${materiel ? `<span class="match__format">${esc(materiel)}</span>` : ''}
-    </div>
-    <div class="carte-info photo-profil" id="bloc-photo">
-      <h2>Ma photo</h2>
-      <div class="message" id="message-photo" role="alert" hidden></div>
-      <div class="photo-profil__ligne">
-        ${avatar({ ...p, id: profil.id }, 'avatar--grand')}
-        <div class="photo-profil__actions">
-          <input type="file" id="champ-photo" class="visuellement-cache" accept="image/jpeg,image/png,image/webp">
-          <label for="champ-photo" class="bouton bouton--petit${p.photo_consent ? '' : ' bouton--inactif'}" id="btn-choisir-photo" ${p.photo_consent ? '' : 'aria-disabled="true"'}>${p.photo_path ? 'Changer ma photo' : 'Ajouter une photo'}</label>
-          ${p.photo_path ? '<button type="button" class="bouton bouton--petit bouton--danger" id="btn-retirer-photo">Retirer ma photo</button>' : ''}
+    <section class="carte-info cp-profil" aria-label="Mon profil">
+      <div class="pr-entete cp-entete">
+        <button type="button" class="cp-photo" id="btn-photo-entete" aria-label="${p.photo_path ? 'Changer ma photo' : 'Ajouter une photo'}" title="${p.photo_path ? 'Changer ma photo' : 'Ajouter une photo'}">
+          ${avatar({ ...p, id: profil.id }, 'avatar--profil')}
+          <span class="cp-photo__badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
+        </button>
+        <div class="pr-identite">
+          <h1 class="pr-nom">${profil.first_name ? nomCompletHtml({ ...profil, ...p }) : esc(nom)}</h1>
+          ${p.use_nickname && p.nickname ? `<p class="pr-sous">Affiché sur le site : <strong>${esc(nomAffiche({ ...profil, ...p }))}</strong></p>` : ''}
+          <div class="pr-badges">
+            ${estActif ? (equipesAcceptees.length ? equipesAcceptees.map((t) => `<span class="t-role t-role--joueur">${esc(t.name)}</span>`).join('') : '<span class="t-role">Sans équipe</span>') : `<span class="statut ${classe}">${libelle}</span>`}
+            ${estAdmin ? '<span class="t-role">Administrateur</span>' : ''}
+          </div>
+          ${materiel ? `<p class="pr-sous">${esc(materiel)}</p>` : ''}
+          <p class="pr-sous">${esc(profil.email)}${p.created_at ? ` · ${estActif ? 'membre depuis' : 'inscrit'} le ${esc(dateFr(p.created_at))}` : ''}</p>
         </div>
       </div>
-      <label class="case case--simple"><input type="checkbox" id="accord-photo" ${p.photo_consent ? 'checked' : ''}>J'accepte que ma photo soit visible des membres connectés du club (jamais des visiteurs).</label>
-      <small class="match__format">La photo est recadrée en carré et réduite automatiquement. Décocher la case retire votre photo.</small>
+      ${explication}
+      ${estActif ? `<div class="actions cp-actions">
+        <a class="bouton" href="mes-parties.html">Mes parties</a>
+        <a class="bouton" href="stats.html">Mes stats</a>
+        <a class="bouton" href="classement.html">Classement</a>
+      </div>` : ''}
+    </section>
+    ${blocAdmin}
+    ${estActif ? `<section class="section s-section cp-saison" aria-labelledby="t-saison">
+      <div class="cp-saison__titre"><h2 class="section__titre" id="t-saison">Ma ${nomSaison().toLowerCase()}</h2><a href="stats.html">Toutes mes stats →</a></div>
+      ${resume}
+    </section>` : ''}
+    ${blocCapitaine}
+    <div class="carte-info">
+      <h2>${mesEquipes.length > 1 ? 'Mes équipes' : 'Mon équipe'}</h2>
+      ${!mesEquipes.length ? '<p class="intro" style="margin:0">Vous n\'êtes dans aucune équipe : vous avez accès à tout le site, sauf aux espaces équipe.</p>'
+        : (aucuneEquipe ? '<p class="intro" style="margin:0">En attente de la réponse du capitaine.</p>' : '')}
+      ${lignesEquipes}
+      ${blocRejoindre}
     </div>
-    ${profil.status === 'active' ? `<div class="actions">
-      <a class="bouton bouton--plein" href="mes-parties.html">Mes parties</a>
-      <a class="bouton" href="stats.html">Mes stats</a>
-      <a class="bouton" href="profil.html">Mon profil</a>
-      <a class="bouton" href="jouer.html">Nouvelle partie</a>
-    </div>` : ''}
     <details class="carte-info repli" id="bloc-profil">
-      <summary>Modifier mon profil</summary>
-      <form class="repli__contenu" id="form-profil" novalidate>
+      <summary>Modifier mon profil et ma photo</summary>
+      <div class="repli__contenu">
+        ${blocPhoto}
+      <form class="cp-form" id="form-profil" novalidate>
+        <h3 class="donnees__titre">Mes informations</h3>
         <div class="message" id="message-profil" role="alert" hidden></div>
         <label class="champ">Surnom<input name="nickname" type="text" maxlength="40" value="${esc(p.nickname || '')}"></label>
         <label class="case case--simple"><input type="checkbox" name="use_nickname" ${p.use_nickname ? 'checked' : ''}>Utiliser mon surnom sur l'ensemble du site (matchs, score en direct, classements). Mon nom complet reste visible sur ma fiche.</label>
@@ -194,15 +226,8 @@ async function afficher() {
         <p class="match__format" style="margin:0">Pour corriger votre nom ou prénom, demandez à un admin du club.</p>
         <button class="bouton bouton--plein" type="submit">Enregistrer mon profil</button>
       </form>
+      </div>
     </details>
-    ${blocCapitaine}
-    <div class="carte-info">
-      <h2>${mesEquipes.length > 1 ? 'Mes équipes' : 'Mon équipe'}</h2>
-      ${!mesEquipes.length ? '<p class="intro" style="margin:0">Vous n\'êtes dans aucune équipe : vous avez accès à tout le site, sauf aux espaces équipe.</p>'
-        : (aucuneEquipe ? '<p class="intro" style="margin:0">En attente de la réponse du capitaine.</p>' : '')}
-      ${lignesEquipes}
-      ${blocRejoindre}
-    </div>
     <details class="carte-info repli" id="bloc-mdp">
       <summary>Changer mon mot de passe</summary>
       <form class="repli__contenu" id="form-mdp" novalidate>
@@ -235,6 +260,11 @@ async function afficher() {
   brancherProfil();
   brancherPhoto(p);
   brancherDonnees(p);
+  // Toucher la photo en haut : ouvre « Modifier mon profil et ma photo » sur la partie photo
+  document.getElementById('btn-photo-entete').addEventListener('click', () => {
+    document.getElementById('bloc-profil').open = true;
+    document.getElementById('bloc-photo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
 }
 
 // ---------- Mes données (RGPD) et suppression du compte ----------
@@ -300,6 +330,7 @@ function brancherPhoto(p) {
   async function terminer(texte) {
     if (ancien) oublierLienPhoto(ancien);
     await afficher();
+    document.getElementById('bloc-profil').open = true;
     message(document.getElementById('message-photo'), texte, 'ok');
   }
 

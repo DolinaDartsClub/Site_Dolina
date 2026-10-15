@@ -1104,3 +1104,19 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .cl-duo .avatar--mini { margin-right: 0; }
 .cl-duo .avatar--mini + .avatar--mini { margin-left: -9px; }
 .aj-membre .avatar--mini, .t-inscrit .avatar--mini { margin-right: 0; }
+
+/* ---------- Mon compte : profil en tête ---------- */
+.cp-profil { gap: 14px; }
+.cp-entete { margin-bottom: 0; }
+.cp-photo { position: relative; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 50%; flex-shrink: 0; }
+.cp-photo:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+.cp-photo__badge { position: absolute; right: 2px; bottom: 2px; z-index: 2; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--orange); color: var(--noir); border: 3px solid var(--carte); }
+.cp-photo__badge svg { width: 17px; height: 17px; }
+.cp-actions { margin: 0; }
+.cp-profil .intro { margin: 0; }
+.cp-saison__titre { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.cp-saison__titre a { font-size: 14px; font-weight: 600; }
+.cp-form { display: grid; gap: 14px; }
+#bloc-profil .photo-profil { display: grid; gap: 10px; padding-bottom: 16px; border-bottom: 1px solid var(--bord); }
+.lien-bientot { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; border: 1px dashed var(--bord-fort); color: var(--gris); font-size: 11px; font-weight: 600; white-space: nowrap; vertical-align: middle; }
+details.carte-info:not([open]) { gap: 0; }

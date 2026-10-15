@@ -55,6 +55,7 @@ const FICHIERS = [
   'assets/js/classement.js',
   'assets/js/face-a-face.js',
   'assets/js/profil.js',
+  'assets/js/profil-commun.js',
   'assets/js/mes-donnees.js',
   'assets/js/admin-demandes.js',
   'assets/js/admin-sauvegarde.js',
