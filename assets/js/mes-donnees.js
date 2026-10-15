@@ -69,7 +69,7 @@ function afficher(d) {
       <h1>Mes données</h1>
       <p class="intro">Voici toutes les informations que le site du Dolina Darts Club garde sur vous, au ${esc(heure(d.date_export))}.</p>
       <div class="actions md-actions">
-        <button type="button" class="bouton bouton--plein" id="btn-imprimer">Imprimer ou enregistrer en PDF</button>
+        <a class="bouton bouton--plein" id="btn-imprimer" href="mes-donnees.html?imprimer=1" target="_blank" rel="noopener">Imprimer ou enregistrer en PDF</a>
         <button type="button" class="bouton" id="btn-json">Télécharger le fichier de données</button>
         <a class="bouton" href="compte.html">Retour à mon compte</a>
       </div>
@@ -121,7 +121,6 @@ function afficher(d) {
 
     <p class="md-note">Pour corriger une information, utilisez « Modifier mon profil » dans Mon compte, ou écrivez à dolinadartsclub@gmail.com. Vous pouvez aussi supprimer votre compte depuis Mon compte.</p>`;
 
-  document.getElementById('btn-imprimer').addEventListener('click', () => window.print());
   document.getElementById('btn-json').addEventListener('click', telechargerJson);
 }
 
@@ -148,6 +147,11 @@ async function init() {
   }
   brut = data;
   afficher(data);
+  // Ouverte dans un nouvel onglet pour l'impression : la fenêtre d'impression s'ouvre seule
+  if (new URLSearchParams(location.search).has('imprimer')) {
+    document.title = `Mes données Dolina Darts Club – ${new Date().toLocaleDateString('fr-FR')}`;
+    setTimeout(() => window.print(), 600);
+  }
 }
 
 init();

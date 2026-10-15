@@ -2,7 +2,7 @@
 //  Tournois : éléments communs aux pages Tournois, Créer et Tournoi
 // =====================================================================
 
-import { supabase, esc, nomAffiche } from './app.js?v=__VERSION__';
+import { supabase, esc, nomAffiche, avatar } from './app.js?v=__VERSION__';
 
 export const STATUTS = {
   draft: { libelle: 'En préparation', classe: 'prep', aide: 'Inscriptions fermées' },
@@ -117,7 +117,7 @@ export function choisirMembre({ titre = 'Choisir un membre', exclure = new Set()
       zone.innerHTML = liste.length
         ? liste.map((m) => `
           <button type="button" class="ligne-membre" data-membre="${m.id}">
-            <span class="ligne-membre__initiale" aria-hidden="true">${esc((m.first_name || '?').charAt(0))}</span>
+            ${avatar(m, 'avatar--liste')}
             <span class="ligne-membre__texte"><strong>${esc(nomAffiche(m))}</strong><small>${esc(m.use_nickname ? `${m.first_name} ${m.last_name}` : (m.nickname || ''))}</small></span>
             <span class="ligne-membre__plus" aria-hidden="true">+</span>
           </button>`).join('')

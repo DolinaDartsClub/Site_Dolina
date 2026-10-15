@@ -1095,3 +1095,12 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .md-partie__contre small, .md-partie__info { color: var(--gris-clair); font-size: 14px; font-weight: 400; }
 @media (min-width: 900px) { .md-parties { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media print { .md-partie { border-color: #ccc !important; } .md-partie__info, .md-partie__contre small { color: #444 !important; } }
+
+/* Pastilles photo dans les listes */
+.avatar--liste { width: 40px; height: 40px; font-size: 15px; border-width: 1px; }
+.avatar--mini { width: 28px; height: 28px; font-size: 11px; border-width: 1px; vertical-align: middle; margin-right: 8px; }
+.ts-nom .avatar--mini { margin-right: 8px; }
+.cl-duo { display: inline-flex; margin-right: 8px; vertical-align: middle; }
+.cl-duo .avatar--mini { margin-right: 0; }
+.cl-duo .avatar--mini + .avatar--mini { margin-left: -9px; }
+.aj-membre .avatar--mini, .t-inscrit .avatar--mini { margin-right: 0; }

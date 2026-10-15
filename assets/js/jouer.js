@@ -2,7 +2,7 @@
 //  Jouer : création d'un match X01 et reprise des parties en cours
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie, supprimerPartie } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie, supprimerPartie, avatar } from './app.js?v=__VERSION__';
 
 const MAX_JOUEURS = 4;
 const DUREE_REPRISE_H = 24;
@@ -201,7 +201,7 @@ document.addEventListener('keydown', (e) => {
 async function chargerMembres() {
   const { data } = await supabase
     .from('profiles')
-    .select('id, first_name, last_name, nickname, use_nickname, team_members!team_members_profile_id_fkey(status, teams(name))')
+    .select('id, first_name, last_name, nickname, use_nickname, photo_path, team_members!team_members_profile_id_fkey(status, teams(name))')
     .eq('status', 'active')
     .order('last_name');
   membres = data || [];
@@ -225,7 +225,7 @@ function afficherMembres() {
     const equipes = (m.team_members || []).filter((t) => t.status === 'accepted').map((t) => t.teams?.name).filter(Boolean).join(', ');
     return `
       <button type="button" class="ligne-membre" data-membre="${m.id}">
-        <span class="ligne-membre__initiale" aria-hidden="true">${esc((m.first_name || '?').charAt(0))}</span>
+        ${avatar(m, 'avatar--liste')}
         <span class="ligne-membre__texte"><strong>${esc(nomAffiche(m))}</strong><small>${esc(m.use_nickname ? `${m.first_name} ${m.last_name}` : (m.nickname || ''))}${equipes ? ` · ${esc(equipes)}` : ''}</small></span>
         <span class="ligne-membre__plus" aria-hidden="true">+</span>
       </button>`;

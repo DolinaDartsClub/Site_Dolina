@@ -5,7 +5,7 @@
 //  organisateur, participant, ou spectateur (tournoi lancé à matchs publics).
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie, avatar } from './app.js?v=__VERSION__';
 import { chargerMembres } from './tournoi-commun.js?v=__VERSION__';
 import {
   badgeStatut, resumeFormat, estMoi, choisirMembre, STATUTS,
@@ -27,6 +27,8 @@ let parId = new Map();
 let onglet = null;
 let enCours = false;        // une action est en cours (anti double clic)
 
+let photosMembres = new Map();
+
 async function init() {
   moi = await profilConnecte();
   const p = new URLSearchParams(location.search);
@@ -34,6 +36,8 @@ async function init() {
   if (p.get('inscrit')) message(zoneMsg, 'Inscription enregistrée. Bienvenue dans le tournoi !', 'ok');
   if (p.get('modifie')) message(zoneMsg, 'Paramètres enregistrés.', 'ok');
   if (p.get('nouveau') || p.get('inscrit') || p.get('modifie')) history.replaceState(null, '', `tournoi.html?id=${encodeURIComponent(id)}`);
+  // Photos des membres (visibles des membres validés uniquement)
+  if (moi?.status === 'active') photosMembres = new Map((await chargerMembres()).map((m) => [m.id, m]));
   await charger();
 }
 
@@ -225,6 +229,7 @@ function vueParticipants() {
     return `
       <li class="t-inscrit${moiIci ? ' t-inscrit--moi' : ''}">
         <span class="t-inscrit__num">${i + 1}</span>
+        ${photosMembres.has(e.profile_id) ? avatar(photosMembres.get(e.profile_id), 'avatar--mini') : ''}
         <span class="t-inscrit__nom"><strong>${moi && e.profile_id ? `<a href="profil.html?id=${e.profile_id}">${esc(e.nom)}</a>` : esc(e.nom)}</strong>${e.detail ? `<small>${esc(e.detail)}</small>` : ''}</span>
         ${e.pool_no && t.format === 'pools' ? `<span class="t-poule-mini">Poule ${lettrePoule(e.pool_no)}</span>` : ''}
         ${moiIci ? '<span class="t-moi">Vous</span>' : ''}
@@ -1052,6 +1057,7 @@ function afficherMembresAjout() {
     ? liste.map((m) => `
       <label class="aj-membre${cochesAjout.has(m.id) ? ' aj-membre--coche' : ''}">
         <input type="checkbox" value="${m.id}"${cochesAjout.has(m.id) ? ' checked' : ''}>
+        ${avatar(m, 'avatar--mini')}
         <span><strong>${esc(nomAffiche(m))}</strong>${m.use_nickname ? `<small>${esc(`${m.first_name} ${m.last_name}`)}</small>` : (m.nickname ? `<small>${esc(m.nickname)}</small>` : '')}</span>
       </label>`).join('')
     : `<p class="vide">${q ? 'Aucun membre ne correspond : ajoutez-le comme invité ci-dessous.' : 'Tous les membres sont déjà inscrits.'}</p>`;

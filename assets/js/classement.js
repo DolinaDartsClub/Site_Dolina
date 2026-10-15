@@ -4,7 +4,7 @@
 //  Ordre officiel : matchs gagnés, manches gagnées, réussite au double, moyenne.
 // =====================================================================
 
-import { supabase, esc, profilConnecte, message, erreurFr } from './app.js?v=__VERSION__';
+import { supabase, esc, profilConnecte, message, erreurFr, avatar } from './app.js?v=__VERSION__';
 
 const zone = document.getElementById('classement');
 const zoneMsg = document.getElementById('message');
@@ -13,6 +13,7 @@ let vue = 'joueurs';
 let moi = null;
 let donnees = null;
 let tri = { cle: 'rang', sens: 1 };
+const profils = new Map(); // id -> profil (pour les photos)
 
 const virgule = (n, d = 1) => (n === null || n === undefined || !Number.isFinite(n) ? '–' : n.toFixed(d).replace('.', ','));
 
@@ -66,6 +67,13 @@ async function charger() {
     pct: l.matchs ? (l.victoires / l.matchs) * 100 : null,
     classe: l.classe ?? (l.manches_jouees >= data.seuil),
   }));
+  // Photos : profils des joueurs affichés (membres seulement)
+  const ids = [...new Set(liste.flatMap((l) => (l.profile_id ? [l.profile_id] : (l.cle || '').split('|')))
+    .filter((x) => /^[0-9a-f-]{36}$/.test(x) && !profils.has(x)))];
+  if (ids.length) {
+    const { data: pr } = await supabase.from('profiles').select('id, first_name, last_name, nickname, use_nickname, photo_path').in('id', ids);
+    (pr || []).forEach((x) => profils.set(x.id, x));
+  }
   // Ordre officiel : matchs gagnés, manches gagnées, réussite au double, moyenne
   const officiel = (a, b) => b.victoires - a.victoires || b.manches_gagnees - a.manches_gagnees
     || (b.double ?? -1) - (a.double ?? -1) || (b.moyenne ?? -1) - (a.moyenne ?? -1);
@@ -102,11 +110,19 @@ function trier(liste) {
   });
 }
 
+// Pastille(s) du joueur ou des deux joueurs de la doublette (invité : initiales)
+function pastilles(l) {
+  if (l.profile_id) return avatar(profils.get(l.profile_id) || { first_name: l.nom, last_name: '', use_nickname: true, nickname: l.nom }, 'avatar--mini');
+  const membres = (l.cle || '').split('|');
+  const noms = (l.nom || '').split(' & ');
+  return `<span class="cl-duo">${membres.map((c, i) => avatar(profils.get(c) || { use_nickname: true, nickname: noms[i] || '?' }, 'avatar--mini')).join('')}</span>`;
+}
+
 function ligne(l) {
   const mien = moi && (l.profile_id === moi.id || (l.cle || '').split('|').includes(moi.id));
   const cellules = {
     rang: `<td class="cl-rang">${l.rang ?? '–'}</td>`,
-    nom: `<th scope="row" class="ts-nom">${l.profile_id ? `<a href="profil.html?id=${encodeURIComponent(l.profile_id)}">${esc(l.nom)}</a>` : `<a href="face-a-face.html?mode=doublettes&a=${encodeURIComponent(l.cle)}" title="Face-à-face de cette doublette">${esc(l.nom)}</a>`}${mien ? ' <span class="t-moi">Vous</span>' : ''}</th>`,
+    nom: `<th scope="row" class="ts-nom">${pastilles(l)}${l.profile_id ? `<a href="profil.html?id=${encodeURIComponent(l.profile_id)}">${esc(l.nom)}</a>` : `<a href="face-a-face.html?mode=doublettes&a=${encodeURIComponent(l.cle)}" title="Face-à-face de cette doublette">${esc(l.nom)}</a>`}${mien ? ' <span class="t-moi">Vous</span>' : ''}</th>`,
     equipes: `<td class="cl-equipe">${esc(l.equipes || '')}</td>`,
     matchs: `<td>${l.matchs}</td>`,
     victoires: `<td class="s-gagne ts-fort">${l.victoires}</td>`,
