@@ -61,7 +61,7 @@ form.addEventListener('submit', async (e) => {
   message(zoneMessage, '');
 
   const email = f.email.value.trim().toLowerCase();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password: f.password.value,
     options: {
@@ -85,6 +85,13 @@ form.addEventListener('submit', async (e) => {
 
   if (error) {
     message(zoneMessage, erreurFr(error));
+    return;
+  }
+
+  // Si la confirmation par email est désactivée dans Supabase,
+  // le compte est connecté tout de suite : on va directement à « Mon compte »
+  if (data?.session) {
+    location.replace('compte.html');
     return;
   }
 
