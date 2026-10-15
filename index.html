@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dolina Darts Club – Club de fléchettes depuis 1984</title>
+  <meta name="description" content="Actualités, résultats et matchs en direct du Dolina Darts Club, club de fléchettes steel tip à Boulogne-Billancourt et Meudon.">
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:title" content="Dolina Darts Club">
+  <meta property="og:description" content="Actualités, résultats et matchs en direct du club.">
+  <meta property="og:image" content="assets/img/icon-512.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script type="module" src="assets/js/accueil.js"></script>
+</head>
+<body>
+
+<header class="entete">
+  <a class="entete__marque" href="./">
+    <img class="entete__logo" src="assets/img/logo.png" alt="Logo du Dolina Darts Club">
+    <span class="entete__titres">
+      <span class="entete__nom">Dolina Darts Club</span>
+      <span class="entete__sous">Depuis 1984</span>
+    </span>
+  </a>
+  <nav class="nav-haut" aria-label="Navigation principale">
+    <a href="./" aria-current="page">Accueil</a>
+    <span class="bientot" title="Bientôt disponible">Jouer</span>
+    <span class="bientot" title="Bientôt disponible">Mes stats</span>
+    <span class="bientot" title="Bientôt disponible">Club</span>
+  </nav>
+  <a class="bouton" href="bientot.html">Connexion</a>
+</header>
+
+<main class="page page--accueil">
+
+  <section class="section section--matchs" aria-labelledby="titre-matchs">
+    <h1 class="section__titre" id="titre-matchs">
+      <span class="pastille" aria-hidden="true"></span>Matchs en cours
+      <span class="section__aide">En direct</span>
+    </h1>
+    <div class="matchs" id="matchs" aria-live="polite">
+      <p class="vide">Chargement…</p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="titre-actus">
+    <h2 class="section__titre" id="titre-actus">Actualités</h2>
+    <div class="articles" id="articles">
+      <p class="vide">Chargement…</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pied">
+  <span>© Dolina Darts Club</span>
+  <a href="mentions-legales.html">Mentions légales et confidentialité</a>
+</footer>
+
+<nav class="nav-bas" aria-label="Navigation principale">
+  <a href="./" aria-current="page">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
+    Accueil
+  </a>
+  <span class="bientot">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+    Jouer <small>bientôt</small>
+  </span>
+  <span class="bientot">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+    Mes stats <small>bientôt</small>
+  </span>
+  <span class="bientot">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7M17 4a4 4 0 0 1 0 8M22 21c0-3-2-6-5-6.5"/></svg>
+    Club <small>bientôt</small>
+  </span>
+</nav>
+
+</body>
+</html>

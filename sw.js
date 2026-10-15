@@ -1,0 +1,53 @@
+// =====================================================================
+//  Service worker : rend le site installable et garde une copie des
+//  fichiers du site pour un chargement rapide.
+//  Les données (scores, actualités) viennent toujours du réseau.
+//  À chaque mise à jour du site, augmenter le numéro de VERSION.
+// =====================================================================
+
+const VERSION = 'dolina-v1';
+const FICHIERS = [
+  './',
+  'index.html',
+  'live.html',
+  'bientot.html',
+  'mentions-legales.html',
+  'assets/css/style.css',
+  'assets/js/app.js',
+  'assets/js/config.js',
+  'assets/js/accueil.js',
+  'assets/js/live.js',
+  'assets/img/logo.png',
+  'assets/img/favicon.png',
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(caches.open(VERSION).then((cache) => cache.addAll(FICHIERS)));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cles) => Promise.all(cles.filter((c) => c !== VERSION).map((c) => caches.delete(c))))
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  // Seuls les fichiers du site lui-même passent par le cache
+  if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
+
+  // Réseau d'abord (toujours la dernière version), copie locale si hors ligne
+  event.respondWith(
+    fetch(event.request)
+      .then((reponse) => {
+        if (reponse.ok) {
+          const copie = reponse.clone();
+          caches.open(VERSION).then((cache) => cache.put(event.request, copie));
+        }
+        return reponse;
+      })
+      .catch(() => caches.match(event.request))
+  );
+});

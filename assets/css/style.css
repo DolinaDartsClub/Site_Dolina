@@ -1,0 +1,232 @@
+/* =====================================================================
+   Dolina Darts Club — feuille de style commune
+   Charte : noir mat, orange du logo, gris de la cible, blanc.
+   ===================================================================== */
+
+:root {
+  --noir: #141414;
+  --noir-2: #1a1a1a;
+  --carte: #1e1e1e;
+  --bord: #2e2e2e;
+  --bord-fort: #3a3a3a;
+  --orange: #f57a00;
+  --orange-clair: #ff9a33;
+  --orange-fond: #2a1a0a;
+  --gris: #929292;
+  --gris-clair: #b8b8b8;
+  --blanc: #f8f8f8;
+  --erreur: #ff8a80;
+
+  --police: 'Barlow', system-ui, sans-serif;
+  --police-titre: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+
+  --rayon: 12px;
+  --gouttiere: 16px;
+  --barre-bas: 68px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--noir);
+  color: var(--blanc);
+  font-family: var(--police);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+a { color: var(--orange); text-decoration: none; }
+a:hover { color: var(--orange-clair); }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid var(--blanc);
+  outline-offset: 2px;
+}
+
+img { max-width: 100%; display: block; }
+
+.visuellement-cache {
+  position: absolute !important; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ---------- En-tête ---------- */
+
+.entete {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px var(--gouttiere);
+  background: rgba(20, 20, 20, 0.96);
+  border-bottom: 1px solid #2a2a2a;
+}
+.entete__marque { display: flex; align-items: center; gap: 12px; color: var(--blanc); flex-grow: 1; min-width: 0; }
+.entete__marque:hover { color: var(--blanc); }
+.entete__logo { width: 40px; height: 52px; object-fit: contain; }
+.entete__titres { display: flex; flex-direction: column; min-width: 0; }
+.entete__nom {
+  font-family: var(--police-titre); font-weight: 700; font-size: 21px;
+  text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.entete__sous { font-size: 13px; color: var(--gris); }
+
+.bouton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 16px; border-radius: 10px;
+  font: inherit; font-weight: 600; font-size: 15px; cursor: pointer;
+  border: 1px solid var(--orange); background: transparent; color: var(--orange);
+}
+.bouton:hover { color: var(--orange-clair); border-color: var(--orange-clair); }
+.bouton--plein { background: var(--orange); color: var(--noir); }
+.bouton--plein:hover { background: var(--orange-clair); color: var(--noir); }
+
+/* ---------- Navigation ---------- */
+
+.nav-haut { display: none; gap: 4px; }
+.nav-haut a, .nav-haut span {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px;
+  border-radius: 8px; color: var(--gris-clair); font-weight: 600;
+}
+.nav-haut a[aria-current="page"] { color: var(--orange); }
+.nav-haut a:hover { color: var(--blanc); }
+
+.nav-bas {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: var(--noir-2); border-top: 1px solid #2a2a2a;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-bas a, .nav-bas span {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 0 12px; color: var(--gris); font-size: 12px; font-weight: 600;
+}
+.nav-bas a[aria-current="page"] { color: var(--orange); }
+.nav-bas svg { width: 24px; height: 24px; }
+.bientot { opacity: 0.5; }
+.bientot small { font-size: 10px; font-weight: 500; }
+
+/* ---------- Mise en page ---------- */
+
+.page {
+  width: 100%; max-width: 1180px; margin: 0 auto;
+  padding: 20px var(--gouttiere) calc(var(--barre-bas) + 32px);
+  display: grid; gap: 32px;
+}
+
+.section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.section__titre {
+  margin: 0; display: flex; align-items: center; gap: 8px;
+  font-family: var(--police-titre); font-weight: 700; font-size: 24px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.section__titre .pastille { width: 10px; height: 10px; border-radius: 50%; background: var(--orange); }
+.section__aide { margin-left: auto; font-family: var(--police); font-size: 13px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--gris); }
+
+.vide {
+  padding: 18px; border-radius: var(--rayon); border: 1px dashed var(--bord-fort);
+  color: var(--gris-clair); font-size: 15px;
+}
+
+/* ---------- Matchs en cours ---------- */
+
+.matchs { display: grid; gap: 12px; }
+.match {
+  display: flex; flex-direction: column; gap: 10px; padding: 16px;
+  background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); color: var(--blanc);
+}
+.match:hover { border-color: var(--orange); color: var(--blanc); }
+.match__format { font-size: 13px; color: var(--gris); }
+.match__ligne { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
+.match__camp { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.match__camp--droite { align-items: flex-end; text-align: right; }
+.match__nom { font-weight: 600; font-size: 16px; overflow-wrap: anywhere; }
+.match__reste { font-size: 13px; color: var(--gris); }
+.match__score { font-family: var(--police-titre); font-weight: 700; font-size: 34px; color: var(--orange); white-space: nowrap; }
+.match__lien { font-size: 14px; font-weight: 600; color: var(--orange); }
+
+/* ---------- Actualités ---------- */
+
+.articles { display: grid; gap: 20px; }
+.article { display: flex; flex-direction: column; gap: 8px; padding-bottom: 18px; border-bottom: 1px solid #2a2a2a; }
+.article__image { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; background: #242424; }
+.article__titre { margin: 0; font-size: 19px; font-weight: 600; }
+.article__meta { font-size: 13px; color: var(--gris); }
+.article__texte { margin: 0; color: #dcdcdc; white-space: pre-line; }
+.etiquette {
+  align-self: flex-start; padding: 3px 8px; border-radius: 4px;
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+  border: 1px solid var(--orange); color: var(--orange);
+}
+.etiquette--resultat { background: var(--orange); color: var(--noir); }
+.etiquette--vie_club, .etiquette--evenement { border-color: var(--gris); color: #d0d0d0; }
+
+/* ---------- Pied de page ---------- */
+
+.pied {
+  max-width: 1180px; margin: 0 auto;
+  padding: 0 var(--gouttiere) calc(var(--barre-bas) + 24px);
+  display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13px; color: var(--gris);
+}
+.pied a { color: var(--gris-clair); }
+
+/* ---------- Pages de texte ---------- */
+
+.texte { max-width: 760px; }
+.texte h1 { font-family: var(--police-titre); font-size: 32px; text-transform: uppercase; margin: 0 0 8px; }
+.texte h2 { font-size: 20px; margin: 28px 0 8px; }
+.texte p, .texte li { color: #dcdcdc; }
+
+/* ---------- Score en direct ---------- */
+
+.live { display: grid; gap: 20px; }
+.live__camps { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.live__camp {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 12px;
+  border-radius: var(--rayon); background: var(--carte); border: 2px solid var(--bord); text-align: center;
+}
+.live__camp--actif { border-color: var(--orange); }
+.live__etat { font-size: 12px; font-weight: 700; color: var(--gris); text-transform: uppercase; }
+.live__camp--actif .live__etat { color: var(--orange); }
+.live__nom { font-weight: 600; font-size: 17px; overflow-wrap: anywhere; }
+.live__reste { font-family: var(--police-titre); font-weight: 700; font-size: clamp(56px, 14vw, 96px); line-height: 1; }
+.live__manches { font-size: 14px; color: var(--gris-clair); }
+.live__badge {
+  white-space: nowrap; flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  background: var(--orange-fond); color: var(--orange); font-size: 12px; font-weight: 700;
+}
+.live__badge::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+.live__badge--fini { background: #222; color: var(--gris-clair); }
+.live__badge--fini::before { background: var(--gris); }
+
+.tableau { width: 100%; border-collapse: collapse; font-size: 15px; }
+.tableau th, .tableau td { padding: 10px 6px; border-bottom: 1px solid #2a2a2a; text-align: left; }
+.tableau th { font-size: 12px; color: var(--gris-clair); text-transform: uppercase; font-weight: 600; }
+
+/* ---------- Petits téléphones ---------- */
+
+@media (max-width: 420px) {
+  .entete { gap: 10px; }
+  .entete__nom { font-size: 18px; white-space: normal; line-height: 1.1; }
+  .entete .bouton { padding: 0 12px; }
+}
+
+/* ---------- Grands écrans et paysage ---------- */
+
+@media (min-width: 900px) {
+  :root { --gouttiere: 32px; --barre-bas: 0px; }
+  .nav-bas { display: none; }
+  .nav-haut { display: flex; }
+  .page--accueil { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
+  .page--accueil .section--matchs { position: sticky; top: 96px; }
+  .articles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  /* Téléphone en paysage : en-tête plus compact */
+  .entete { padding-top: 6px; padding-bottom: 6px; }
+  .entete__logo { width: 30px; height: 38px; }
+  .page--accueil { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+}

@@ -1,1 +1,33 @@
-# Site_Dolina
+# Site du Dolina Darts Club
+
+Site web du Dolina Darts Club : actualités, matchs en direct, scorer X01, statistiques et classement.
+
+- **Site** : hébergé gratuitement par GitHub Pages (dossier racine de la branche `main`).
+- **Données, comptes, droits** : Supabase (offre gratuite, région européenne).
+- **Code** : HTML, CSS et JavaScript simples, sans outil de compilation. Chaque fichier peut être lu et modifié directement sur GitHub.
+
+## Organisation des fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `index.html` | Page d'accueil : matchs en cours et actualités |
+| `live.html` | Score en direct d'une partie publique |
+| `mentions-legales.html` | Mentions légales et politique de confidentialité |
+| `bientot.html` | Page d'attente pour les rubriques pas encore ouvertes |
+| `assets/css/style.css` | Charte graphique (noir mat, orange, gris) |
+| `assets/js/config.js` | Adresse et clé **publique** de Supabase |
+| `assets/js/app.js` | Outils communs (connexion à Supabase, calcul du score) |
+| `assets/js/accueil.js`, `assets/js/live.js` | Logique de chaque page |
+| `manifest.webmanifest`, `sw.js` | Installation du site comme une appli (PWA) |
+| `supabase/001_schema.sql` | Création de la base de données et des règles d'accès |
+| `supabase/002_premier_admin.sql` | Désignation du premier administrateur |
+
+## Sécurité
+
+- `config.js` ne contient que la clé **publique** (`sb_publishable_…`), faite pour être visible.
+- La clé **secrète** (`sb_secret_…` ou `service_role`) ne doit **jamais** apparaître dans ce dépôt.
+- Les droits (qui lit, qui écrit) sont contrôlés par la base elle-même (Row Level Security), pas par le site.
+
+## Mettre à jour le site
+
+Après une modification des fichiers du site, augmenter le numéro `VERSION` dans `sw.js` pour que les appareils récupèrent la nouvelle version.
