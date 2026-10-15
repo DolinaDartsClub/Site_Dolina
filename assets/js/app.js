@@ -155,7 +155,7 @@ export function erreurFr(error) {
   if (error?.code === 'P0001' && m) return m;
   if (error?.code === '23505') return 'Cet élément existe déjà (inscription ou nom en double).';
   if (error?.code === '23514') return 'Une valeur saisie n\'est pas valide. Vérifiez le formulaire.';
-  if (error?.code === '42501' || /row-level security/i.test(m)) return 'Vous n\'avez pas les droits pour faire cette action.';
+  if (error?.code === '42501' || /row-level security/i.test(m)) return `Vous n'avez pas les droits pour faire cette action.${m ? ` (Détail : ${m})` : ''}`;
   if (/already registered|already been registered|already exists/i.test(m)) return 'Un compte existe déjà avec cet email. Utilisez « Se connecter » ou « Mot de passe oublié ».';
   if (/invalid login credentials/i.test(m)) return 'Email ou mot de passe incorrect.';
   if (/email not confirmed/i.test(m)) return 'Votre email n\'est pas encore confirmé. Cliquez sur le lien reçu par email (pensez à regarder dans les spams).';

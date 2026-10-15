@@ -279,13 +279,17 @@ function brancherDonnees(p) {
     }
     if (!confirm('Supprimer définitivement votre compte ? Cette action ne peut pas être annulée.')) return;
     b.disabled = true;
+    // La photo est effacée d'abord (le dossier de photos ne s'efface que par le site)
+    if (p.photo_path) {
+      await supabase.storage.from(DOSSIER_PHOTOS).remove([p.photo_path]).catch(() => {});
+      await supabase.from('profiles').update({ photo_path: null }).eq('id', profil.id);
+    }
     const { error } = await supabase.rpc('delete_my_account');
     if (error) {
       b.disabled = false;
       return message(zoneMsg, error.code === 'P0001' ? error.message : erreurFr(error));
     }
-    // Compte supprimé : on efface la photo (si possible) et on ferme la session
-    if (p.photo_path) await supabase.storage.from(DOSSIER_PHOTOS).remove([p.photo_path]).catch(() => {});
+    // Compte supprimé : on ferme la session
     await supabase.auth.signOut().catch(() => {});
     boutonDeco.hidden = true;
     zone.innerHTML = `
