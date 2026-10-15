@@ -35,6 +35,7 @@
     <button type="button" class="onglet" data-onglet="inscriptions" aria-selected="true">Inscriptions <span class="compteur" id="nb-attente">0</span></button>
     <button type="button" class="onglet" data-onglet="membres" aria-selected="false">Membres</button>
     <button type="button" class="onglet" data-onglet="equipes" aria-selected="false">Équipes</button>
+    <button type="button" class="onglet" data-onglet="actus" aria-selected="false">Actualités</button>
   </nav>
 
   <section id="vue-inscriptions" class="section" aria-live="polite">
@@ -51,6 +52,47 @@
 
   <section id="vue-equipes" class="section" hidden>
     <div id="liste-equipes" class="liste-cartes"></div>
+  </section>
+
+  <section id="vue-actus" class="section" hidden>
+    <div id="actus-liste">
+      <button type="button" class="bouton bouton--plein" id="actu-nouvelle">+ Nouvel article</button>
+      <div id="actus-articles" class="liste-cartes" style="margin-top: 16px"></div>
+    </div>
+
+    <form class="carte-info formulaire-actu" id="actu-form" novalidate hidden>
+      <h2 id="actu-titre-form">Nouvel article</h2>
+      <div class="message" id="actu-message" role="alert" hidden></div>
+      <label class="champ">Titre *<input name="title" type="text" maxlength="160" required></label>
+      <label class="champ">Catégorie *
+        <select name="category" required>
+          <option value="annonce">Annonce de match</option>
+          <option value="resultat">Résultat</option>
+          <option value="vie_club">Vie du club</option>
+          <option value="evenement">Événement</option>
+        </select>
+      </label>
+      <label class="champ">Texte
+        <textarea name="body" rows="8" placeholder="Le texte de l'article. Les retours à la ligne sont conservés."></textarea>
+      </label>
+      <div class="champ">
+        <span>Photo ou visuel</span>
+        <div class="apercu-photo" id="actu-apercu" hidden>
+          <img id="actu-apercu-img" alt="Aperçu de la photo">
+          <button type="button" class="bouton bouton--petit bouton--danger" id="actu-retirer-photo">Retirer la photo</button>
+        </div>
+        <input type="file" name="photo" id="actu-photo" class="visuellement-cache" accept="image/jpeg,image/png,image/webp">
+        <label for="actu-photo" class="bouton bouton--petit" style="align-self: flex-start; cursor: pointer">Choisir une photo</label>
+        <small>JPEG, PNG ou WebP. La photo est réduite automatiquement avant l'envoi. Format conseillé : paysage (16:9), comme vos visuels Instagram ou LinkedIn.</small>
+      </div>
+      <p class="match__format" id="actu-statut"></p>
+      <div class="actions">
+        <button type="button" class="bouton bouton--plein" data-actu="publier" id="actu-publier">Publier</button>
+        <button type="button" class="bouton" data-actu="brouillon" id="actu-brouillon">Enregistrer en brouillon</button>
+        <button type="button" class="bouton" data-actu="annuler">Annuler</button>
+      </div>
+      <button type="button" class="lien-discret lien-danger" data-actu="supprimer" id="actu-supprimer" hidden>Supprimer cet article</button>
+    </form>
   </section>
 </main>
 

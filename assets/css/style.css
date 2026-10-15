@@ -52,7 +52,8 @@ img { max-width: 100%; display: block; }
 [hidden] { display: none !important; }
 
 .visuellement-cache {
-  position: absolute !important; width: 1px; height: 1px;
+  position: absolute !important; width: 1px !important; height: 1px !important;
+  min-height: 0 !important; padding: 0 !important; border: 0 !important; margin: -1px !important;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
 }
 
@@ -78,7 +79,7 @@ img { max-width: 100%; display: block; }
 .bouton {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 44px; padding: 0 16px; border-radius: 10px;
-  font: inherit; font-weight: 600; font-size: 15px; cursor: pointer;
+  font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; white-space: nowrap;
   border: 1px solid var(--orange); background: transparent; color: var(--orange);
 }
 .bouton:hover { color: var(--orange-clair); border-color: var(--orange-clair); }
@@ -165,6 +166,17 @@ img { max-width: 100%; display: block; }
 .etiquette--resultat { background: var(--orange); color: var(--noir); }
 .etiquette--vie_club, .etiquette--evenement { border-color: var(--gris); color: #d0d0d0; }
 
+.lien-titre { color: var(--blanc); }
+.lien-titre:hover { color: var(--orange); }
+
+.article-complet { width: 100%; max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.article-complet__image { aspect-ratio: auto; max-height: 520px; object-fit: contain; background: #000; }
+.article-complet__titre { margin: 0; font-family: var(--police-titre); font-weight: 700; font-size: clamp(28px, 6vw, 40px); line-height: 1.1; }
+.article-complet__texte { font-size: 17px; line-height: 1.6; margin-top: 8px; }
+.partage { margin-top: 24px; padding-top: 20px; border-top: 1px solid #2a2a2a; display: flex; flex-direction: column; gap: 12px; }
+.partage__boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+.partage__btn svg { width: 20px; height: 20px; }
+
 /* ---------- Pied de page ---------- */
 
 .pied {
@@ -247,9 +259,9 @@ img { max-width: 100%; display: block; }
 /* ---------- Administration ---------- */
 
 .page--admin { max-width: 860px; }
-.onglets { display: flex; gap: 4px; border-bottom: 1px solid #2a2a2a; overflow-x: auto; }
+.onglets { display: flex; flex-wrap: wrap; gap: 0 4px; border-bottom: 1px solid #2a2a2a; }
 .onglet {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 14px;
+  display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 10px;
   border: 0; border-bottom: 3px solid transparent; background: transparent;
   color: var(--gris); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; white-space: nowrap;
 }
@@ -281,6 +293,27 @@ img { max-width: 100%; display: block; }
 .ligne-equipe__nom { font-weight: 600; }
 .ligne-equipe__actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
 .ligne-equipe__actions:empty { display: none; }
+.champ textarea {
+  width: 100%; min-height: 160px; padding: 12px; border-radius: 8px; resize: vertical;
+  border: 1px solid var(--bord-fort); background: var(--carte); color: var(--blanc);
+  font: inherit; font-size: 16px; font-weight: 400; line-height: 1.5;
+}
+.champ textarea:focus { border-color: var(--orange); outline: none; box-shadow: 0 0 0 2px var(--orange); }
+.champ input[type="file"] { min-height: 0; padding: 10px 0; border: 0; background: transparent; font-size: 15px; }
+.formulaire-actu { gap: 16px; }
+.formulaire-actu .champ input:not([type="file"]), .formulaire-actu .champ select { background: var(--noir); }
+.formulaire-actu .champ textarea { background: var(--noir); }
+.apercu-photo { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.apercu-photo img { width: 100%; max-height: 320px; object-fit: contain; border-radius: 8px; background: #000; }
+.carte-actu { flex-direction: row; gap: 14px; align-items: flex-start; }
+.carte-actu__image { width: 112px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.carte-actu__texte { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.carte-actu .article__titre { font-size: 17px; }
+@media (max-width: 420px) {
+  .carte-actu { flex-direction: column; }
+  .carte-actu__image { width: 100%; }
+}
+
 .alerte {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   padding: 14px 16px; border-radius: var(--rayon); background: var(--orange-fond); border: 1px solid #5a3a14;

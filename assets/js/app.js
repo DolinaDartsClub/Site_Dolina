@@ -72,6 +72,11 @@ export function etatPartie(game, sides, visits) {
   return etat;
 }
 
+// Adresse publique d'une image d'actualité stockée dans Supabase
+export function urlImage(chemin) {
+  return chemin ? `${SUPABASE_URL}/storage/v1/object/public/public-images/${chemin}` : '';
+}
+
 // Adresse de base du site (sert aux liens envoyés par email)
 export const BASE_URL = new URL('./', location.href).href;
 

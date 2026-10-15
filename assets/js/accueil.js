@@ -2,7 +2,7 @@
 //  Page d'accueil : matchs en cours (temps réel) + actualités
 // =====================================================================
 
-import { supabase, esc, dateFr, formatPartie, etatPartie } from './app.js';
+import { supabase, esc, dateFr, formatPartie, etatPartie, urlImage } from './app.js';
 
 const CATEGORIES = {
   annonce: 'Annonce de match',
@@ -113,16 +113,19 @@ async function chargerArticles() {
   }
 
   zone.innerHTML = data.map((a) => {
+    const lien = `article.html?id=${encodeURIComponent(a.id)}`;
     const image = a.image_path
-      ? `<img class="article__image" src="${esc(supabase.storage.from('public-images').getPublicUrl(a.image_path).data.publicUrl)}" alt="" loading="lazy">`
+      ? `<a href="${lien}" tabindex="-1" aria-hidden="true"><img class="article__image" src="${esc(urlImage(a.image_path))}" alt="" loading="lazy"></a>`
       : '';
+    const extrait = a.body && a.body.length > 220 ? `${a.body.slice(0, 220).trim()}…` : a.body;
     return `
       <article class="article">
         ${image}
         <span class="etiquette etiquette--${esc(a.category)}">${esc(CATEGORIES[a.category] || a.category)}</span>
-        <h3 class="article__titre">${esc(a.title)}</h3>
+        <h3 class="article__titre"><a class="lien-titre" href="${lien}">${esc(a.title)}</a></h3>
         <span class="article__meta">${esc(dateFr(a.published_at))}</span>
-        ${a.body ? `<p class="article__texte">${esc(a.body)}</p>` : ''}
+        ${extrait ? `<p class="article__texte">${esc(extrait)}</p>` : ''}
+        <a class="match__lien" href="${lien}">Lire et partager →</a>
       </article>`;
   }).join('');
 }

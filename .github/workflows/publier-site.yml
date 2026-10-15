@@ -1,0 +1,63 @@
+# =====================================================================
+#  Publication du site sur GitHub Pages
+#  - à chaque modification du site (push sur main)
+#  - toutes les 15 minutes, pour créer les aperçus de partage des
+#    nouveaux articles (republie seulement si un article a changé)
+#  - à la demande : onglet Actions › « Publier le site » › Run workflow
+#
+#  Réglage nécessaire une fois : Settings › Pages › Source : « GitHub Actions »
+# =====================================================================
+
+name: Publier le site
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - name: Récupérer les fichiers du site
+        uses: actions/checkout@v6
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Préparer le site et les aperçus de partage
+        id: preparer
+        run: node outils/generer-partage.mjs
+        env:
+          EVENEMENT: ${{ github.event_name }}
+
+      - name: Configurer GitHub Pages
+        if: steps.preparer.outputs.publier == 'true'
+        uses: actions/configure-pages@v6
+
+      - name: Envoyer le site
+        if: steps.preparer.outputs.publier == 'true'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Mettre en ligne
+        if: steps.preparer.outputs.publier == 'true'
+        id: deploiement
+        uses: actions/deploy-pages@v5

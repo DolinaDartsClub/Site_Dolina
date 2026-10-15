@@ -17,7 +17,8 @@ Site web du Dolina Darts Club : actualités, matchs en direct, scorer X01, stati
 | `mot-de-passe-oublie.html` | Mot de passe oublié : demande du lien (ou contact du club tant que les emails sont inactifs) |
 | `mot-de-passe.html` | Choix d'un nouveau mot de passe (lien reçu par email) |
 | `compte.html` | Mon compte : état de validation, équipes, espace capitaine, mot de passe |
-| `admin.html` | Administration : inscriptions, membres, rôles, équipes et capitaines |
+| `admin.html` | Administration : inscriptions, membres, rôles, équipes, capitaines et actualités |
+| `article.html` | Page d'un article, avec les boutons de partage |
 | `bientot.html` | Page d'attente pour les rubriques pas encore ouvertes |
 | `assets/css/style.css` | Charte graphique (noir mat, orange, gris) |
 | `assets/js/config.js` | Adresse et clé **publique** de Supabase |
@@ -29,6 +30,9 @@ Site web du Dolina Darts Club : actualités, matchs en direct, scorer X01, stati
 | `supabase/003_correctif_parties.sql` | Correctif : lien entre parties et joueurs |
 | `supabase/004_reinitialiser_mot_de_passe.sql` | Réinitialiser le mot de passe d'un joueur (provisoire, par un admin) |
 | `supabase/005_admin.sql` | Administration : suppression de compte, toujours un admin, capitaine membre de son équipe |
+| `supabase/006_actualites.sql` | Stockage des images d'actualités (envoi réservé aux admins) |
+| `outils/generer-partage.mjs` | Prépare le site et crée une page d'aperçu de partage par article |
+| `.github/workflows/publier-site.yml` | Publication automatique du site sur GitHub Pages |
 | `supabase/emails/` | Modèles d'emails en français à coller dans Supabase |
 
 ## Sécurité
@@ -40,6 +44,12 @@ Site web du Dolina Darts Club : actualités, matchs en direct, scorer X01, stati
 ## Activer les emails plus tard
 
 Quand l'envoi d'emails fonctionne, passer `EMAILS_ACTIFS` à `true` dans `assets/js/config.js`, puis réactiver « Confirm email » dans Supabase.
+
+## Publication
+
+Le site est publié par GitHub Actions (Settings › Pages › Source : « GitHub Actions ») :
+à chaque modification, et toutes les 15 minutes pour créer les aperçus de partage des nouveaux articles
+(`a/<id>.html` : titre, texte et photo affichés par LinkedIn, WhatsApp et Facebook).
 
 ## Mettre à jour le site
 
