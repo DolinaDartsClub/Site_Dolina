@@ -700,8 +700,8 @@ function basculer() {
 function supprimer() {
   if (!confirm(`Supprimer définitivement le tournoi « ${t.name} » et toutes ses inscriptions ?`)) return;
   action(async () => {
-    const { data, error } = await supabase.from('tournaments').delete().eq('id', t.id).select('id');
-    if (error || !data?.length) return message(zoneMsg, error ? erreurFr(error) : 'Le tournoi n\'a pas pu être supprimé.');
+    const { error } = await supabase.rpc('supprimer_tournoi', { p_tournoi: t.id, p_avec_parties: false });
+    if (error) return message(zoneMsg, erreurFr(error));
     location.href = 'tournois.html';
   });
 }

@@ -59,6 +59,7 @@ const FICHIERS = [
   'assets/js/mes-donnees.js',
   'assets/js/admin-demandes.js',
   'assets/js/admin-sauvegarde.js',
+  'assets/js/admin-tournois.js',
   'assets/js/tournoi.js',
   'assets/js/tournoi-creer.js',
   'assets/img/logo.png',
