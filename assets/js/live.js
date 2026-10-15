@@ -2,7 +2,7 @@
 //  Score en direct d'une partie publique (accessible sans compte)
 // =====================================================================
 
-import { supabase, esc, formatPartie, etatPartie } from './app.js';
+import { supabase, esc, formatPartie, etatPartie } from './app.js?v=__VERSION__';
 
 const id = new URLSearchParams(location.search).get('id');
 const zone = document.getElementById('live');

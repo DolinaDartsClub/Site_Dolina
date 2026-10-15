@@ -2,7 +2,7 @@
 //  Choix d'un nouveau mot de passe (après le lien reçu par email)
 // =====================================================================
 
-import { supabase, erreurFr, message } from './app.js';
+import { supabase, erreurFr, message } from './app.js?v=__VERSION__';
 
 const form = document.getElementById('formulaire');
 const zoneMessage = document.getElementById('message');

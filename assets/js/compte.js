@@ -4,7 +4,7 @@
 //  (profil modifiable, photo et suppression du compte : étape 7)
 // =====================================================================
 
-import { supabase, esc, profilConnecte, message, erreurFr } from './app.js';
+import { supabase, esc, profilConnecte, message, erreurFr } from './app.js?v=__VERSION__';
 
 const zone = document.getElementById('contenu');
 const boutonDeco = document.getElementById('deconnexion');

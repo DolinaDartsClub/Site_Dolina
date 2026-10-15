@@ -2,7 +2,7 @@
 //  Page d'accueil : matchs en cours (temps réel) + actualités
 // =====================================================================
 
-import { supabase, esc, dateFr, formatPartie, etatPartie, urlImage } from './app.js';
+import { supabase, esc, dateFr, formatPartie, etatPartie, urlImage } from './app.js?v=__VERSION__';
 
 const CATEGORIES = {
   annonce: 'Annonce de match',

@@ -4,8 +4,8 @@
 //  - Emails pas encore actifs : on explique comment contacter le club.
 // =====================================================================
 
-import { supabase, esc, erreurFr, message, BASE_URL } from './app.js';
-import { EMAILS_ACTIFS, EMAIL_CLUB } from './config.js';
+import { supabase, esc, erreurFr, message, BASE_URL } from './app.js?v=__VERSION__';
+import { EMAILS_ACTIFS, EMAIL_CLUB } from './config.js?v=__VERSION__';
 
 const form = document.getElementById('formulaire');
 const zoneMessage = document.getElementById('message');

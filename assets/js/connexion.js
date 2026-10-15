@@ -3,7 +3,7 @@
 //  (« Mot de passe oublié ? » ouvre la page mot-de-passe-oublie.html)
 // =====================================================================
 
-import { supabase, erreurFr, message } from './app.js';
+import { supabase, erreurFr, message } from './app.js?v=__VERSION__';
 
 const form = document.getElementById('formulaire');
 const zoneMessage = document.getElementById('message');

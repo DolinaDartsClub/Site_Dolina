@@ -3,7 +3,7 @@
 //  Rédiger, illustrer, publier, dépublier et supprimer les articles.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, dateFr, urlImage } from './app.js';
+import { supabase, esc, message, erreurFr, dateFr, urlImage } from './app.js?v=__VERSION__';
 
 const CATEGORIES = { annonce: 'Annonce de match', resultat: 'Résultat', vie_club: 'Vie du club', evenement: 'Événement' };
 const BUCKET = 'public-images';

@@ -53,4 +53,4 @@ Le site est publié par GitHub Actions (Settings › Pages › Source : « GitHu
 
 ## Mettre à jour le site
 
-Après une modification des fichiers du site, augmenter le numéro `VERSION` dans `sw.js` pour que les appareils récupèrent la nouvelle version.
+Les fichiers JS et CSS sont appelés avec `?v=__VERSION__` : à chaque publication, GitHub Actions remplace ce mot par un numéro unique, ce qui oblige les navigateurs à recharger les fichiers modifiés. Garder ce suffixe sur tout nouveau fichier.

@@ -6,8 +6,8 @@
 //  Les droits sont vérifiés par la base : un non-admin ne peut rien modifier.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, dateFr } from './app.js';
-import { initActus } from './admin-actus.js';
+import { supabase, esc, message, erreurFr, profilConnecte, dateFr } from './app.js?v=__VERSION__';
+import { initActus } from './admin-actus.js?v=__VERSION__';
 
 const zoneMessage = document.getElementById('message');
 const vues = {

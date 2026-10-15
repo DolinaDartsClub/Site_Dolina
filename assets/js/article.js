@@ -5,7 +5,7 @@
 //  tant qu'elle n'existe pas encore, on partage le lien de cette page.
 // =====================================================================
 
-import { supabase, esc, dateFr, urlImage, BASE_URL } from './app.js';
+import { supabase, esc, dateFr, urlImage, BASE_URL } from './app.js?v=__VERSION__';
 
 const CATEGORIES = { annonce: 'Annonce de match', resultat: 'Résultat', vie_club: 'Vie du club', evenement: 'Événement' };
 const zone = document.getElementById('article');

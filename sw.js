@@ -2,10 +2,10 @@
 //  Service worker : rend le site installable et garde une copie des
 //  fichiers du site pour un chargement rapide.
 //  Les données (scores, actualités) viennent toujours du réseau.
-//  À chaque mise à jour du site, augmenter le numéro de VERSION.
+//  __VERSION__ est remplacé automatiquement à chaque publication (GitHub Actions).
 // =====================================================================
 
-const VERSION = 'dolina-v9';
+const VERSION = 'dolina-__VERSION__';
 const FICHIERS = [
   './',
   'index.html',

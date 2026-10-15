@@ -4,7 +4,7 @@
 //  puis le capitaine de chaque équipe choisie valide l'intégration.
 // =====================================================================
 
-import { supabase, esc, erreurFr, message, BASE_URL } from './app.js';
+import { supabase, esc, erreurFr, message, BASE_URL } from './app.js?v=__VERSION__';
 
 const form = document.getElementById('formulaire');
 const zoneMessage = document.getElementById('message');

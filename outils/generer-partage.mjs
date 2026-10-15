@@ -77,6 +77,22 @@ for (const nom of await readdir(RACINE)) {
 }
 await writeFile(join(SORTIE, '.nojekyll'), '');
 
+// Numéro de version unique à chaque publication : oblige les navigateurs à
+// recharger les fichiers modifiés (sinon ils peuvent mélanger ancienne et nouvelle version)
+const VERSION = (process.env.GITHUB_SHA || String(Date.now())).slice(0, 8);
+async function tamponner(dossier) {
+  for (const entree of await readdir(dossier, { withFileTypes: true })) {
+    const chemin = join(dossier, entree.name);
+    if (entree.isDirectory()) await tamponner(chemin);
+    else if (/\.(html|js)$/.test(entree.name)) {
+      const contenu = await readFile(chemin, 'utf8');
+      if (contenu.includes('__VERSION__')) await writeFile(chemin, contenu.replaceAll('__VERSION__', VERSION));
+    }
+  }
+}
+await tamponner(SORTIE);
+console.log(`Version des fichiers : ${VERSION}`);
+
 // ---------- 4. Pages d'aperçu ----------
 
 await mkdir(join(SORTIE, 'a'), { recursive: true });
