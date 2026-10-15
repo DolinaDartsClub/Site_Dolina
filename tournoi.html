@@ -63,6 +63,32 @@
   </div>
 </div>
 
+<!-- Corriger le score (organisateur) -->
+<div class="fenetre" id="fen-corriger" role="dialog" aria-modal="true" aria-labelledby="t-corriger" hidden>
+  <form class="fenetre__boite" id="form-corriger" novalidate>
+    <h2 id="t-corriger">Corriger le score</h2>
+    <p class="match__format" id="corriger-match" style="margin:0"></p>
+    <table class="t-correction">
+      <thead><tr><th></th><th id="corriger-unite">Manches gagnées</th><th data-sets>Manches gagnées</th></tr></thead>
+      <tbody>
+        <tr><th scope="row" id="corriger-nom-a"></th>
+          <td><input type="number" inputmode="numeric" name="score_a" min="0" max="99" aria-label="Score du premier joueur"></td>
+          <td data-sets><input type="number" inputmode="numeric" name="legs_a" min="0" max="99" aria-label="Manches du premier joueur"></td></tr>
+        <tr><th scope="row" id="corriger-nom-b"></th>
+          <td><input type="number" inputmode="numeric" name="score_b" min="0" max="99" aria-label="Score du second joueur"></td>
+          <td data-sets><input type="number" inputmode="numeric" name="legs_b" min="0" max="99" aria-label="Manches du second joueur"></td></tr>
+      </tbody>
+    </table>
+    <p class="resume-format" id="corriger-vainqueur"></p>
+    <p class="match__format" style="margin:0">La partie enregistrée n'est pas rejouée ; seul le résultat du tournoi change (et le classement de la poule).</p>
+    <p class="t-erreur" id="erreur-corriger" role="alert"></p>
+    <div class="actions">
+      <button type="button" class="bouton" data-fermer>Annuler</button>
+      <button type="submit" class="bouton bouton--plein">Enregistrer la correction</button>
+    </div>
+  </form>
+</div>
+
 <!-- Forfait (organisateur) -->
 <div class="fenetre" id="fen-forfait" role="dialog" aria-modal="true" aria-labelledby="t-forfait" hidden>
   <div class="fenetre__boite">

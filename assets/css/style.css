@@ -896,3 +896,13 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .t-podium__titre { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--gris-clair); letter-spacing: 0.4px; }
 .t-podium__place strong { font-size: 18px; overflow-wrap: anywhere; }
 .mp-carte__ctx--tournoi { color: var(--orange); text-decoration: none; }
+.m-carte__note--gris { color: var(--gris); font-weight: 600; }
+.a-tour__format { margin: -4px 0 8px; font-size: 12px; color: var(--gris); text-align: center; }
+.a-tour__modifier { margin-left: 4px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--orange); background: none; color: var(--orange); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.t-correction { width: 100%; border-collapse: collapse; }
+.t-correction th, .t-correction td { padding: 6px 4px; text-align: left; }
+.t-correction thead th { font-size: 11px; text-transform: uppercase; color: var(--gris); }
+.t-correction tbody th { font-weight: 600; overflow-wrap: anywhere; }
+.t-correction input { width: 72px; min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--bord-fort); background: var(--noir); color: var(--blanc); font-family: var(--police-titre); font-size: 22px; font-weight: 700; }
+.t-correction input:focus { border-color: var(--orange); outline: none; box-shadow: 0 0 0 2px var(--orange); }
+.t-alerte { color: var(--orange); font-weight: 700; }

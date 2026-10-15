@@ -318,14 +318,23 @@ function boutonMatch(m) {
   }
   if (orga) {
     if (m.status === 'ready' || m.status === 'live') boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-forfait="${m.id}">Forfait…</button>`);
+    if (m.status === 'done') boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-corriger="${m.id}">Corriger le score</button>`);
     if (m.status === 'done' || m.status === 'live') boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-reinit="${m.id}">Remettre à jouer</button>`);
   }
   return boutons.join('');
 }
 
+// Format du match : le sien (fixé par tour) ou celui de la phase
+function formatMatch(m) {
+  return m.format || (m.phase === 'pool' ? t.pool_format : t.final_format);
+}
+
 function etatPartieMatch(m) {
-  if (m.status === 'live' && m.game_status === 'finished') return '<p class="m-carte__note">Partie terminée : résultat à valider.</p>';
-  return '';
+  const notes = [];
+  if (m.status === 'live' && m.game_status === 'finished') notes.push('<p class="m-carte__note">Partie terminée : résultat à valider.</p>');
+  if (m.corrected_at) notes.push('<p class="m-carte__note m-carte__note--gris">Score corrigé par l\'organisateur</p>');
+  if (m.format && m.status !== 'done' && m.status !== 'bye') notes.push(`<p class="m-carte__note m-carte__note--gris">${esc(formatPartie(m.format))}</p>`);
+  return notes.join('');
 }
 
 function carteMatch(m, { avecLibelle = true, compacte = false } = {}) {
@@ -401,6 +410,17 @@ function vuePoules() {
 
 // ---------- Arbre ----------
 
+// Sous le titre d'un tour : son format, et le bouton « Format » pour l'organisateur
+function enteteTour(r, duTour, petite) {
+  const tous = [...duTour, ...(petite ? [petite] : [])];
+  const reels = tous.filter((m) => m.status !== 'bye');
+  if (!reels.length) return '';
+  const formats = [...new Set(reels.map((m) => JSON.stringify(formatMatch(m) || null)))];
+  const libelle = formats.length === 1 && formatMatch(reels[0]) ? formatPartie(formatMatch(reels[0])) : 'Formats variés';
+  const modifiable = role === 'organisateur' && t.status === 'running' && reels.some((m) => (m.status === 'waiting' || m.status === 'ready') && !m.game_id);
+  return `<p class="a-tour__format">${esc(libelle.replace(/^\d+ · |^Score libre \d+ · /, ''))}${modifiable ? ` <button type="button" class="a-tour__modifier" data-format-tour="${r}" aria-label="Changer le format des matchs de ce tour">Modifier</button>` : ''}</p>`;
+}
+
 function vueArbre() {
   const finals = matchs.filter((m) => m.phase === 'final');
   if (!finals.length) {
@@ -418,6 +438,7 @@ function vueArbre() {
     colonnes.push(`
       <div class="a-tour">
         <h3 class="a-tour__titre">${esc(nomTour(duTour.length))}</h3>
+        ${enteteTour(r, duTour, petite)}
         <div class="a-tour__matchs">
           ${duTour.map((m) => `<div class="a-case">${carteMatch(m, { avecLibelle: false, compacte: true })}</div>`).join('')}
         </div>
@@ -541,6 +562,8 @@ function brancher() {
   zone.querySelectorAll('[data-lancer]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirBull(b.dataset.lancer); }));
   zone.querySelectorAll('[data-valider]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); valider(b.dataset.valider, b); }));
   zone.querySelectorAll('[data-forfait]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirForfait(b.dataset.forfait); }));
+  zone.querySelectorAll('[data-corriger]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirCorrection(b.dataset.corriger); }));
+  zone.querySelectorAll('[data-format-tour]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirLancement('tour', Number(b.dataset.formatTour)); }));
   zone.querySelectorAll('[data-reinit]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); reinitialiser(b.dataset.reinit); }));
 }
 
@@ -615,10 +638,12 @@ function annulerLancement() {
 
 const choixLancement = { variant: '501' };
 
-let modeLancement = 'tournoi';     // 'tournoi' (tirage) ou 'finale' (phase finale après les poules)
+let modeLancement = 'tournoi';     // 'tournoi' (tirage), 'finale' (après les poules) ou 'tour' (format d'un tour)
+let tourChoisi = null;
 
-function ouvrirLancement(mode = 'tournoi') {
+function ouvrirLancement(mode = 'tournoi', tour = null) {
   modeLancement = mode;
+  tourChoisi = tour;
   const f = document.getElementById('form-lancer');
   f.reset();
   choixLancement.variant = t.pool_format?.variant && mode === 'finale' ? t.pool_format.variant : '501';
@@ -629,6 +654,27 @@ function ouvrirLancement(mode = 'tournoi') {
   blocPoules.hidden = t.format !== 'pools' || mode === 'finale';
   document.getElementById('t-lancer').textContent = mode === 'finale' ? 'Lancer la phase finale' : 'Lancer le tournoi';
   f.querySelector('[type=submit]').textContent = mode === 'finale' ? 'Créer l\'arbre final' : 'Lancer et tirer au sort';
+  if (mode === 'tour') {
+    const duTour = matchs.filter((m) => m.phase === 'final' && m.round_no === tour);
+    const nb = duTour.filter((m) => !m.is_third_place).length;
+    const actuel = formatMatch(duTour.find((m) => m.status !== 'bye') || duTour[0]) || t.final_format;
+    if (actuel) {
+      choixLancement.variant = actuel.variant;
+      majVariant();
+      f.elements.start_score.value = actuel.start_score || 1001;
+      f.elements.legs_kind.value = actuel.legs_kind;
+      f.elements.legs_n.value = actuel.legs_n;
+      f.elements.sets_kind.value = actuel.sets_kind || '';
+      f.elements.sets_n.value = actuel.sets_n || 3;
+    }
+    document.getElementById('t-lancer').textContent = `Format : ${nomTour(nb)}`;
+    f.querySelector('[type=submit]').textContent = 'Appliquer à ce tour';
+    document.getElementById('erreur-lancer').textContent = '';
+    document.getElementById('lancer-intro').textContent = `Nombre de manches (ou de sets) pour gagner un match de ce tour${duTour.some((m) => m.is_third_place) ? ', match pour la 3e place compris' : ''}. Seuls les matchs pas encore commencés changent.`;
+    majResumeLancement();
+    fenLancer.hidden = false;
+    return;
+  }
   if (mode === 'finale') {
     const q = t.pool_qualifiers * t.pools_count;
     document.getElementById('erreur-lancer').textContent = '';
@@ -709,7 +755,9 @@ document.getElementById('form-lancer').addEventListener('submit', (e) => {
   action(async () => {
     bouton.disabled = true;
     let error;
-    if (modeLancement === 'finale') {
+    if (modeLancement === 'tour') {
+      ({ error } = await supabase.rpc('definir_format_tour', { p_tournoi: t.id, p_tour: tourChoisi, p_format: format }));
+    } else if (modeLancement === 'finale') {
       ({ error } = await supabase.rpc('lancer_phase_finale', { p_tournoi: t.id, p_format: format }));
     } else {
       const params = { p_tournoi: t.id, p_format: format };
@@ -719,9 +767,9 @@ document.getElementById('form-lancer').addEventListener('submit', (e) => {
     bouton.disabled = false;
     if (error) { erreur.textContent = erreurFr(error); return; }
     fenLancer.hidden = true;
-    message(zoneMsg, modeLancement === 'finale' ? 'Phase finale lancée : l\'arbre est créé avec les qualifiés.'
+    message(zoneMsg, modeLancement === 'tour' ? `Format appliqué : ${formatPartie(format)}.` : modeLancement === 'finale' ? 'Phase finale lancée : l\'arbre est créé avec les qualifiés.'
       : (t.format === 'pools' ? 'Tournoi lancé : les poules sont tirées au sort.' : 'Tournoi lancé : l\'arbre est tiré au sort.'), 'ok');
-    onglet = modeLancement === 'finale' ? 'arbre' : (t.format === 'pools' ? 'poules' : 'arbre');
+    onglet = modeLancement === 'finale' || modeLancement === 'tour' ? 'arbre' : (t.format === 'pools' ? 'poules' : 'arbre');
     await charger();
   });
 });
@@ -792,6 +840,69 @@ document.getElementById('forfait-choix').addEventListener('click', (e) => {
 });
 fenForfait.addEventListener('click', (e) => { if (e.target === fenForfait || e.target.closest('[data-fermer]')) fenForfait.hidden = true; });
 
+// ---------- Corriger le score (organisateur) ----------
+
+const fenCorriger = document.getElementById('fen-corriger');
+
+function ouvrirCorrection(idMatch) {
+  matchChoisi = matchs.find((m) => m.id === idMatch);
+  if (!matchChoisi) return;
+  const m = matchChoisi;
+  const f = formatMatch(m) || {};
+  const sets = !!f.sets_n;
+  const form = document.getElementById('form-corriger');
+  document.getElementById('corriger-match').textContent = `M${m.match_no} · ${libelleMatch(m)}${f.variant ? ` · ${formatPartie(f)}` : ''}`;
+  document.getElementById('corriger-unite').textContent = sets ? 'Sets gagnés' : 'Manches gagnées';
+  form.querySelectorAll('[data-sets]').forEach((el) => { el.hidden = !sets; });
+  document.getElementById('corriger-nom-a').textContent = nomEntree(m.entry_a);
+  document.getElementById('corriger-nom-b').textContent = nomEntree(m.entry_b);
+  form.elements.score_a.value = m.score_a ?? '';
+  form.elements.score_b.value = m.score_b ?? '';
+  form.elements.legs_a.value = m.legs_a ?? '';
+  form.elements.legs_b.value = m.legs_b ?? '';
+  document.getElementById('erreur-corriger').textContent = '';
+  majVainqueurCorrection();
+  fenCorriger.hidden = false;
+}
+
+function majVainqueurCorrection() {
+  const f = document.getElementById('form-corriger').elements;
+  const a = Number(f.score_a.value);
+  const b = Number(f.score_b.value);
+  const zone = document.getElementById('corriger-vainqueur');
+  if (f.score_a.value === '' || f.score_b.value === '' || a === b) {
+    zone.textContent = 'Saisissez deux scores différents.';
+    return;
+  }
+  const v = a > b ? matchChoisi.entry_a : matchChoisi.entry_b;
+  const change = v !== matchChoisi.winner_entry;
+  zone.innerHTML = `Vainqueur : <strong>${esc(nomEntree(v))}</strong>${change ? ' — <span class="t-alerte">le vainqueur change</span> : il remplacera l\'autre joueur dans le match suivant (possible seulement si ce match n\'a pas commencé).' : ' (inchangé)'}`;
+}
+
+document.getElementById('form-corriger').addEventListener('input', majVainqueurCorrection);
+fenCorriger.addEventListener('click', (e) => { if (e.target === fenCorriger || e.target.closest('[data-fermer]')) fenCorriger.hidden = true; });
+
+document.getElementById('form-corriger').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const f = e.target.elements;
+  const erreur = document.getElementById('erreur-corriger');
+  const sets = !!(formatMatch(matchChoisi) || {}).sets_n;
+  if (f.score_a.value === '' || f.score_b.value === '') { erreur.textContent = 'Indiquez le score de chaque joueur.'; return; }
+  if (Number(f.score_a.value) === Number(f.score_b.value)) { erreur.textContent = 'Il faut un vainqueur : les deux scores ne peuvent pas être égaux.'; return; }
+  const params = { p_match: matchChoisi.id, p_score_a: Number(f.score_a.value), p_score_b: Number(f.score_b.value) };
+  if (sets) { params.p_legs_a = f.legs_a.value === '' ? null : Number(f.legs_a.value); params.p_legs_b = f.legs_b.value === '' ? null : Number(f.legs_b.value); }
+  const bouton = e.target.querySelector('[type=submit]');
+  action(async () => {
+    bouton.disabled = true;
+    const { error } = await supabase.rpc('corriger_score_match', params);
+    bouton.disabled = false;
+    if (error) { erreur.textContent = erreurFr(error); return; }
+    fenCorriger.hidden = true;
+    message(zoneMsg, `Score de M${matchChoisi.match_no} corrigé.`, 'ok');
+    await charger();
+  });
+});
+
 function reinitialiser(idMatch) {
   const m = matchs.find((x) => x.id === idMatch);
   if (!m) return;
@@ -850,7 +961,7 @@ fenAjout.addEventListener('click', (e) => {
   if (e.target === fenAjout || e.target.closest('[data-fermer]')) fenAjout.hidden = true;
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { fenAjout.hidden = true; fenLancer.hidden = true; fenBull.hidden = true; fenForfait.hidden = true; }
+  if (e.key === 'Escape') { fenAjout.hidden = true; fenLancer.hidden = true; fenBull.hidden = true; fenForfait.hidden = true; fenCorriger.hidden = true; }
 });
 
 document.getElementById('form-ajout').addEventListener('submit', (e) => {
