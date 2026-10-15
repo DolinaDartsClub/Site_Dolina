@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mes stats – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/stats.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom" id="titre-page">Mes stats</span>
+      <span class="entete__sous">Dolina Darts Club</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page">
+  <div id="acces" hidden></div>
+  <div id="contenu" hidden>
+    <div class="mp-entete">
+      <h1 class="section__titre" id="titre-stats">Mes stats</h1>
+      <a class="bouton bouton--petit" href="mes-parties.html" id="lien-parties">Mes parties</a>
+    </div>
+    <div class="mp-filtres">
+      <div class="mp-filtre" role="group" aria-label="Période" data-filtre="periode">
+        <button type="button" data-valeur="mois">Ce mois</button>
+        <button type="button" data-valeur="saison" aria-pressed="true" id="btn-saison">Saison</button>
+        <button type="button" data-valeur="tout">Depuis le début</button>
+      </div>
+      <div class="mp-filtre" role="group" aria-label="Jeu" data-filtre="jeu">
+        <button type="button" data-valeur="" aria-pressed="true">301 et 501</button>
+        <button type="button" data-valeur="301">301</button>
+        <button type="button" data-valeur="501">501</button>
+      </div>
+    </div>
+    <div id="stats" aria-live="polite"><p class="vide">Chargement…</p></div>
+    <p class="t-legende" style="margin-top:16px">Comptent : les parties terminées en 301 et 501, en individuel (matchs de tournoi et parties contre un invité compris). Une partie seul compte pour les moyennes, pas pour le bilan. Les doublettes ont leurs propres stats.</p>
+  </div>
+</main>
+
+</body>
+</html>

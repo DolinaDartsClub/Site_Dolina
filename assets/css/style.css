@@ -919,3 +919,31 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .demande__message { margin: 0; white-space: pre-line; padding: 10px 12px; border-radius: 10px; background: var(--noir); }
 .demande textarea { background: var(--noir); }
 .demande textarea { min-height: 64px; height: 64px; }
+
+/* =====================================================================
+   Statistiques
+   ===================================================================== */
+.s-grille { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.s-grille--haut { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 8px; }
+.s-grille--petite { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.s-section { gap: 12px; }
+.s-tuile { display: grid; gap: 2px; align-content: start; padding: 14px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); }
+.s-tuile__titre { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--gris-clair); }
+.s-tuile__valeur { font-family: var(--police-titre); font-size: 34px; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.s-tuile__detail { font-size: 12px; color: var(--gris); }
+.s-tuile--principale { border-color: var(--orange); background: var(--orange-fond); }
+.s-tuile--principale .s-tuile__valeur { font-size: 48px; color: var(--orange); }
+.c-cadre { position: relative; padding: 8px 4px 0; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); }
+.c-svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.c-grille { stroke: #2a2a2a; stroke-width: 1; }
+.c-axe { fill: var(--gris); font-size: 12px; font-family: var(--police); }
+.c-ligne { fill: none; stroke: var(--orange); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.c-point { fill: var(--orange); stroke: var(--carte); stroke-width: 2; }
+.c-point--dernier { fill: var(--blanc); stroke: var(--orange); }
+.c-valeur { fill: var(--blanc); font-size: 13px; font-weight: 700; font-family: var(--police); }
+.c-repere { stroke: var(--gris); stroke-width: 1; stroke-dasharray: 3 3; }
+.c-info { position: absolute; transform: translate(-50%, calc(-100% - 12px)); display: grid; gap: 1px; padding: 6px 10px; border-radius: 8px; background: var(--noir); border: 1px solid var(--bord-fort); font-size: 12px; color: var(--gris-clair); white-space: nowrap; pointer-events: none; text-align: center; }
+.c-info strong { font-family: var(--police-titre); font-size: 18px; color: var(--blanc); }
+.c-tableau { margin-top: 8px; }
+.c-tableau summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--gris-clair); min-height: 32px; display: flex; align-items: center; }
+.c-cadre { max-width: 920px; }
