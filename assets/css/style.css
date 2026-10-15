@@ -199,7 +199,18 @@ img { max-width: 100%; display: block; }
 .mdp__oeil {
   position: absolute; top: 50%; right: 2px; transform: translateY(-50%);
   width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
-  border: 0; background: transparent; color: var(--gris-clair); cursor: pointer; border-radius: 8px;
+  border: 0; background: transparent; color: var(--gris); cursor: pointer; border-radius: 8px;
+}
+
+/* Champs pré-remplis par le navigateur : on garde le fond sombre de la charte
+   (sinon Chrome/Edge les colorent en bleu clair et l'œil gris devient invisible) */
+.champ input:-webkit-autofill,
+.champ input:-webkit-autofill:hover,
+.champ input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--carte) inset;
+  -webkit-text-fill-color: var(--blanc);
+  caret-color: var(--blanc);
+  transition: background-color 9999s;
 }
 .mdp__oeil:hover { color: var(--orange); }
 .mdp__oeil svg { width: 22px; height: 22px; }
