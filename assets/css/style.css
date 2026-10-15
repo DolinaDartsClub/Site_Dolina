@@ -194,6 +194,15 @@ img { max-width: 100%; display: block; }
 }
 .champ input:focus, .champ select:focus { border-color: var(--orange); outline: none; box-shadow: 0 0 0 2px var(--orange); }
 .champ small { font-weight: 400; color: var(--gris); }
+.mdp { position: relative; display: block; }
+.mdp input { padding-right: 52px; }
+.mdp__oeil {
+  position: absolute; top: 50%; right: 2px; transform: translateY(-50%);
+  width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+  border: 0; background: transparent; color: var(--gris-clair); cursor: pointer; border-radius: 8px;
+}
+.mdp__oeil:hover { color: var(--orange); }
+.mdp__oeil svg { width: 22px; height: 22px; }
 .deux-colonnes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .choix { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px; }
 .choix legend { font-size: 14px; font-weight: 600; margin-bottom: 8px; }

@@ -111,6 +111,36 @@ export async function profilConnecte() {
   return data ? { ...data, email: session.user.email } : { id: session.user.id, email: session.user.email, status: 'pending' };
 }
 
+// Bouton « œil » sur chaque champ de mot de passe, pour afficher ou masquer la saisie
+const OEIL_OUVERT = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const OEIL_BARRE = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.9 0 3.6-.6 5-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+
+function ajouterOeils(racine) {
+  racine.querySelectorAll('input[type="password"]:not([data-oeil])').forEach((champ) => {
+    champ.dataset.oeil = '1';
+    const enveloppe = document.createElement('span');
+    enveloppe.className = 'mdp';
+    champ.parentNode.insertBefore(enveloppe, champ);
+    enveloppe.appendChild(champ);
+
+    const bouton = document.createElement('button');
+    bouton.type = 'button';
+    bouton.className = 'mdp__oeil';
+    bouton.setAttribute('aria-label', 'Afficher le mot de passe');
+    bouton.innerHTML = OEIL_OUVERT;
+    bouton.addEventListener('click', () => {
+      const visible = champ.type === 'text';
+      champ.type = visible ? 'password' : 'text';
+      bouton.innerHTML = visible ? OEIL_OUVERT : OEIL_BARRE;
+      bouton.setAttribute('aria-label', visible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+    });
+    enveloppe.appendChild(bouton);
+  });
+}
+ajouterOeils(document);
+// Les formulaires ajoutés plus tard (ex. « Mon compte ») reçoivent aussi l'œil
+new MutationObserver(() => ajouterOeils(document)).observe(document.body, { childList: true, subtree: true });
+
 // En-tête : « Connexion » devient « Mon compte » quand on est connecté
 async function brancherEntete() {
   const lien = document.getElementById('lien-compte');
