@@ -48,47 +48,112 @@ function nomCamp(side) {
   return joueurs.join(' / ') || (s?.is_bot ? 'Dartbot' : '—');
 }
 
+// Manche affichée dans le tableau (null = manche en cours)
+let mancheChoisie = null;
+
 function afficher() {
   const sides = [...game.game_sides].sort((a, b) => a.side - b.side);
-  const etat = etatPartie(game, sides, visits);
+  const ordre = [...visits].sort((a, b) => a.id - b.id);
+  const etat = etatPartie(game, sides, ordre);
   const fini = game.status !== 'live';
 
   format.textContent = formatPartie(game) + ' · finish double';
   badge.textContent = fini ? (game.status === 'finished' ? 'TERMINÉ' : 'INTERROMPU') : 'EN DIRECT';
   badge.className = 'live__badge' + (fini ? ' live__badge--fini' : '');
 
-  // Camp au lancer (calculé par le moteur X01, alternance comprise)
   const actif = fini ? null : etat.auLancer;
 
-  const camps = sides.map((s) => {
+  // Liste des manches jouées (set, manche), dans l'ordre
+  const manches = [];
+  for (const v of ordre) {
+    const cle = `${v.set_no}-${v.leg_no}`;
+    if (!manches.find((m) => m.cle === cle)) manches.push({ cle, set: v.set_no, leg: v.leg_no });
+  }
+  const cleCourante = `${etat.setCourant}-${etat.mancheCourante}`;
+  if (!fini && !manches.find((m) => m.cle === cleCourante)) manches.push({ cle: cleCourante, set: etat.setCourant, leg: etat.mancheCourante });
+  const cleVue = mancheChoisie && manches.find((m) => m.cle === mancheChoisie) ? mancheChoisie : manches.at(-1)?.cle;
+  const vue = manches.find((m) => m.cle === cleVue);
+  const libelle = (m) => (game.sets_n ? `S${m.set} · M${m.leg}` : `Manche ${m.leg}`);
+
+  // Volées de la manche affichée, par camp
+  const parCamp = Object.fromEntries(sides.map((s) => [s.side, []]));
+  for (const v of ordre) if (vue && v.set_no === vue.set && v.leg_no === vue.leg && parCamp[v.side]) parCamp[v.side].push(v);
+  const nbLignes = Math.max(0, ...Object.values(parCamp).map((l) => l.length));
+  const enCours = vue && vue.cle === cleCourante && !fini;
+
+  const joueur = (v) => {
+    if (game.mode !== 'double' || !v.player_id) return '';
+    const p = game.game_players.find((x) => x.id === v.player_id);
+    return p ? `<small class="ardoise__qui">${esc(p.display_name)}</small>` : '';
+  };
+  const cellule = (v) => {
+    if (!v) return '<td class="ardoise__volee"></td><td class="ardoise__reste"></td>';
+    const apres = v.is_bust ? v.remaining_before : v.remaining_before - v.score;
+    const classe = v.is_checkout ? ' ardoise--finish' : (v.is_bust ? ' ardoise--bust' : (v.score >= 100 ? ' ardoise--ton' : ''));
+    return `<td class="ardoise__volee${classe}">${v.is_bust ? 'Bust' : v.score}${joueur(v)}</td>`
+      + `<td class="ardoise__reste${v.is_checkout ? ' ardoise--finish' : ''}">${v.is_checkout ? `✓ ${v.darts_used}<small>fl.</small>` : apres}</td>`;
+  };
+
+  const entetes = sides.map((s) => {
     const gagnant = fini && game.winner_side === s.side;
+    const st = etat.stats[s.side];
+    const moy = st && st.flechettes ? (Math.round((st.points / st.flechettes) * 30) / 10).toString().replace('.', ',') : '–';
     return `
-      <div class="live__camp${s.side === actif ? ' live__camp--actif' : ''}">
+      <th colspan="2" class="ardoise__camp${s.side === actif ? ' ardoise__camp--actif' : ''}${gagnant ? ' ardoise__camp--gagnant' : ''}">
         <span class="live__etat">${gagnant ? 'Vainqueur' : (s.side === actif ? 'Au lancer' : '&nbsp;')}</span>
-        <span class="live__nom">${esc(nomCamp(s.side))}</span>
-        <span class="live__reste">${etat.reste[s.side]}</span>
-        <span class="live__manches">Manches : ${etat.manches[s.side]}${game.sets_n ? ` · Sets : ${etat.sets[s.side]}` : ''}</span>
-      </div>`;
+        ${nomArdoise(s.side)}
+        <span class="ardoise__gros">${enCours || !vue ? etat.reste[s.side] : (parCamp[s.side].some((v) => v.is_checkout) ? '✓' : (parCamp[s.side].length ? cellApres(parCamp[s.side].at(-1)) : game.start_score))}</span>
+        <span class="ardoise__score">${game.sets_n ? `Sets <b>${etat.sets[s.side]}</b> · ` : ''}Manches <b>${etat.manches[s.side]}</b></span>
+        <span class="ardoise__moy">Moy. ${moy}</span>
+      </th>`;
   }).join('');
 
-  // Volées de la manche en cours
-  const enCours = etat.historique;
-  const lignes = enCours.slice(-12).reverse().map((v) => `
-    <tr>
-      <td>${esc(nomCamp(v.side))}</td>
-      <td>${v.is_bust ? 'Bust' : v.score}${v.is_checkout ? ' · Game shot' : ''}</td>
-      <td>${v.is_bust ? v.remaining_before : v.remaining_before - v.score}</td>
-    </tr>`).join('');
+  const sousEntetes = sides.map(() => '<th>Volée</th><th>Reste</th>').join('');
+  const depart = sides.map(() => `<td class="ardoise__volee"></td><td class="ardoise__reste ardoise__depart">${game.start_score}</td>`).join('');
+  let corps = '';
+  for (let i = 0; i < nbLignes; i++) {
+    corps += `<tr><th class="ardoise__no">${i + 1}</th>${sides.map((s) => cellule(parCamp[s.side][i])).join('')}</tr>`;
+  }
+
+  const onglets = manches.length > 1
+    ? `<div class="ardoise__onglets" role="group" aria-label="Choisir la manche">${manches.map((m) => `<button type="button" class="ardoise__onglet" aria-pressed="${m.cle === cleVue}" data-manche="${m.cle}">${libelle(m)}</button>`).join('')}</div>`
+    : '';
 
   zone.innerHTML = `
-    <div class="live__camps">${camps}</div>
-    <section class="section">
-      <h2 class="section__titre">${game.sets_n ? `Set ${etat.setCourant} · ` : ''}Manche ${etat.mancheCourante}</h2>
-      ${lignes
-        ? `<table class="tableau"><thead><tr><th>Joueur</th><th>Volée</th><th>Reste</th></tr></thead><tbody>${lignes}</tbody></table>`
-        : '<p class="vide">La manche commence.</p>'}
-    </section>
-    <p class="match__format">Le score se met à jour automatiquement à chaque volée saisie.</p>`;
+    <p class="match__format live__format">${esc(formatPartie(game))} · finish double</p>
+    ${onglets}
+    <div class="ardoise-cadre">
+      <table class="ardoise ardoise--${sides.length}">
+        <thead>
+          <tr><th class="ardoise__no"></th>${entetes}</tr>
+          <tr class="ardoise__sous"><th class="ardoise__no">#</th>${sousEntetes}</tr>
+        </thead>
+        <tbody>
+          <tr><th class="ardoise__no"></th>${depart}</tr>
+          ${corps}
+        </tbody>
+      </table>
+    </div>
+    <p class="match__format">${vue ? `${libelle(vue)}${enCours ? ' en cours' : ''} · ` : ''}Le score se met à jour automatiquement à chaque volée saisie.</p>`;
+
+  zone.querySelectorAll('[data-manche]').forEach((b) => b.addEventListener('click', () => {
+    mancheChoisie = b.dataset.manche === manches.at(-1).cle ? null : b.dataset.manche;
+    afficher();
+  }));
+}
+
+// En double : nom de l'équipe, puis les deux joueurs en petit
+function nomArdoise(side) {
+  const s = game.game_sides.find((x) => x.side === side);
+  const joueurs = game.game_players.filter((p) => p.side === side).sort((a, b) => a.throw_order - b.throw_order).map((p) => p.display_name);
+  if (game.mode === 'double') {
+    return `<span class="ardoise__nom">${esc(s?.name || joueurs.join(' / '))}</span><span class="ardoise__joueurs">${esc(joueurs.join(' · '))}</span>`;
+  }
+  return `<span class="ardoise__nom">${esc(nomCamp(side))}</span>`;
+}
+
+function cellApres(v) {
+  return v.is_bust ? v.remaining_before : v.remaining_before - v.score;
 }
 
 // Temps réel : nouvelles volées, corrections, fin de partie

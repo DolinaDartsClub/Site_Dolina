@@ -531,3 +531,56 @@ img { max-width: 100%; display: block; }
 @media (max-width: 480px) {
   .scorer__camps .camp__badge { display: none; }
 }
+
+/* =====================================================================
+   Match en direct : ardoise avec une colonne par joueur
+   ===================================================================== */
+.ardoise__onglets { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.ardoise__onglet {
+  flex-shrink: 0; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--bord-fort); background: var(--carte);
+  color: var(--gris-clair); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.ardoise__onglet[aria-pressed="true"] { background: var(--orange); border-color: var(--orange); color: var(--noir); }
+.ardoise-cadre { overflow-x: auto; border-radius: 14px; border: 1px solid var(--bord); background: var(--carte); }
+.ardoise { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
+.ardoise th, .ardoise td { padding: 6px 4px; text-align: center; }
+.ardoise__no { width: 28px; color: var(--gris); font-size: 12px; font-weight: 600; }
+.ardoise__camp { vertical-align: top; padding: 12px 6px 10px !important; border-left: 1px solid var(--bord); border-top: 3px solid transparent; }
+.ardoise__camp--actif { border-top-color: var(--orange); background: rgba(245, 122, 0, 0.06); }
+.ardoise__camp--gagnant { border-top-color: var(--orange); background: var(--orange-fond); }
+.ardoise__camp--gagnant .live__etat { color: var(--orange); }
+.ardoise__camp--actif .live__etat { color: var(--orange); }
+.ardoise__camp > span { display: block; }
+.ardoise__nom { font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ardoise__gros { font-family: var(--police-titre); font-weight: 700; font-size: clamp(44px, 12vw, 84px); line-height: 1; margin: 4px 0; }
+.ardoise--3 .ardoise__gros, .ardoise--4 .ardoise__gros { font-size: clamp(40px, 8vw, 64px); }
+.ardoise__score { font-size: 13px; color: var(--gris-clair); }
+.ardoise__score b { color: var(--orange); font-size: 15px; }
+.ardoise__moy { font-size: 12px; color: var(--gris); margin-top: 2px; }
+.ardoise__sous th { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--gris); border-bottom: 1px solid var(--bord-fort); }
+.ardoise__sous th:nth-child(even), .ardoise td.ardoise__volee { border-left: 1px solid var(--bord); }
+.ardoise tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.025); }
+.ardoise__volee { font-family: var(--police-titre); font-weight: 700; font-size: 20px; }
+.ardoise__reste { font-family: var(--police-titre); font-weight: 600; font-size: 20px; color: var(--gris-clair); }
+.ardoise__depart { color: var(--gris); font-size: 16px; }
+.ardoise__qui { display: block; font-family: var(--police); font-weight: 500; font-size: 10px; color: var(--gris); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ardoise--ton { color: var(--orange); }
+.ardoise--bust { color: var(--gris); font-size: 15px; }
+.ardoise--finish { color: var(--noir) !important; background: var(--orange); }
+.ardoise__reste.ardoise--finish small { font-size: 11px; margin-left: 1px; }
+.ardoise__joueurs { font-size: 12px; color: var(--gris-clair); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 3 ou 4 joueurs sur téléphone : tout tient dans l'écran */
+@media (max-width: 600px) {
+  .ardoise--3 .ardoise__no, .ardoise--4 .ardoise__no { width: 20px; font-size: 10px; }
+  .ardoise--3 th, .ardoise--3 td, .ardoise--4 th, .ardoise--4 td { padding: 5px 1px; }
+  .ardoise--3 .ardoise__camp, .ardoise--4 .ardoise__camp { padding: 10px 3px 8px !important; }
+  .ardoise--3 .ardoise__nom, .ardoise--4 .ardoise__nom { font-size: 13px; }
+  .ardoise--4 .ardoise__gros { font-size: 30px; }
+  .ardoise--3 .ardoise__gros { font-size: 38px; }
+  .ardoise--3 .ardoise__volee, .ardoise--3 .ardoise__reste { font-size: 17px; }
+  .ardoise--4 .ardoise__volee, .ardoise--4 .ardoise__reste { font-size: 15px; }
+  .ardoise--4 .ardoise__score, .ardoise--4 .ardoise__moy, .ardoise--4 .live__etat { font-size: 10px; }
+  .ardoise--4 .ardoise__score b { font-size: 12px; }
+  .ardoise--3 .ardoise__sous th, .ardoise--4 .ardoise__sous th { font-size: 9px; letter-spacing: -0.2px; }
+}
+@media (min-width: 700px) { .live__format { display: none; } }
