@@ -1043,3 +1043,4 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .photo-profil__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .photo-profil__actions label { cursor: pointer; }
 .bouton--inactif { opacity: .45; }
+.donnees__titre { margin: 10px 0 0; font-size: 16px; }

@@ -214,12 +214,71 @@ async function afficher() {
         <button class="bouton bouton--plein" type="submit">Enregistrer le nouveau mot de passe</button>
       </form>
     </details>
+    <details class="carte-info repli" id="bloc-donnees">
+      <summary>Mes données et suppression du compte</summary>
+      <div class="repli__contenu">
+        <div class="message" id="message-donnees" role="alert" hidden></div>
+        <p class="match__format" style="margin:0">Téléchargez toutes les données du site qui vous concernent : profil, coordonnées, équipes, parties et volées, tournois.</p>
+        <button type="button" class="bouton bouton--petit" id="btn-mes-donnees" style="align-self:flex-start">Télécharger mes données</button>
+        <h3 class="donnees__titre">Supprimer mon compte</h3>
+        <p class="match__format" style="margin:0">Votre profil, vos coordonnées, votre photo et vos parties jouées seul ou contre des invités sont effacés.
+          Dans les parties contre d'autres membres et dans les tournois, vous apparaîtrez comme « Ancien joueur » pour que leurs résultats restent justes.
+          <strong>Cette action est définitive.</strong></p>
+        <label class="champ">Pour confirmer, tapez SUPPRIMER<input type="text" id="confirmer-suppression" autocomplete="off" autocapitalize="characters"></label>
+        <button type="button" class="bouton bouton--petit bouton--danger" id="btn-supprimer-compte" style="align-self:flex-start">Supprimer définitivement mon compte</button>
+      </div>
+    </details>
     <p><a href="./">← Retour à l'accueil</a></p>`;
 
   messageGeneral = document.getElementById('message-general');
   brancherChangementMotDePasse(profil.email);
   brancherProfil();
   brancherPhoto(p);
+  brancherDonnees(p);
+}
+
+// ---------- Mes données (RGPD) et suppression du compte ----------
+
+function brancherDonnees(p) {
+  const zoneMsg = document.getElementById('message-donnees');
+
+  document.getElementById('btn-mes-donnees').addEventListener('click', async (e) => {
+    const b = e.currentTarget;
+    b.disabled = true;
+    const { data, error } = await supabase.rpc('mes_donnees');
+    b.disabled = false;
+    if (error) return message(zoneMsg, erreurFr(error));
+    const lien = document.createElement('a');
+    lien.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    lien.download = `mes-donnees-dolina-${new Date().toLocaleDateString('fr-CA')}.json`;
+    document.body.appendChild(lien);
+    lien.click();
+    lien.remove();
+    setTimeout(() => URL.revokeObjectURL(lien.href), 10000);
+    message(zoneMsg, 'Vos données ont été téléchargées.', 'ok');
+  });
+
+  document.getElementById('btn-supprimer-compte').addEventListener('click', async (e) => {
+    const b = e.currentTarget;
+    if (document.getElementById('confirmer-suppression').value.trim().toUpperCase() !== 'SUPPRIMER') {
+      return message(zoneMsg, 'Tapez SUPPRIMER dans la case pour confirmer.');
+    }
+    if (!confirm('Supprimer définitivement votre compte ? Cette action ne peut pas être annulée.')) return;
+    b.disabled = true;
+    const { error } = await supabase.rpc('delete_my_account');
+    if (error) {
+      b.disabled = false;
+      return message(zoneMsg, error.code === 'P0001' ? error.message : erreurFr(error));
+    }
+    // Compte supprimé : on efface la photo (si possible) et on ferme la session
+    if (p.photo_path) await supabase.storage.from(DOSSIER_PHOTOS).remove([p.photo_path]).catch(() => {});
+    await supabase.auth.signOut().catch(() => {});
+    boutonDeco.hidden = true;
+    zone.innerHTML = `
+      <h1>Compte supprimé</h1>
+      <p class="intro">Votre compte et vos données personnelles ont été effacés. Merci d'avoir joué avec le Dolina Darts Club !</p>
+      <p><a class="bouton bouton--plein" href="./">Retour à l'accueil</a></p>`;
+  });
 }
 
 // ---------- Photo de profil ----------

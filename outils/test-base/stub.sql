@@ -14,3 +14,4 @@ alter table storage.objects add column if not exists metadata jsonb, add column 
 create function storage.foldername(name text) returns text[] language sql immutable as $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
 grant usage on schema storage to anon, authenticated; grant all on storage.objects to authenticated; grant select on storage.objects to anon;
 grant execute on function storage.foldername(text) to anon, authenticated;
+alter table auth.users add column if not exists created_at timestamptz default now();

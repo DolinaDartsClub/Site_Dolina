@@ -265,8 +265,9 @@ async function executer(action, el) {
       res = await supabase.from('teams').update({ captain_id: el.value || null }).eq('id', team);
       break;
     case 'supprimer':
-      if (!confirm(`Supprimer définitivement le compte de ${nomComplet(p)} ?\n\nSon profil, ses statistiques et ses parties en solo seront effacés. Dans les parties jouées contre d'autres membres, il apparaîtra comme « Ancien joueur ». Cette action est irréversible.`)) return;
+      if (!confirm(`Supprimer définitivement le compte de ${nomComplet(p)} ?\n\nSon profil, sa photo et ses parties jouées seul ou contre des invités seront effacés. Dans les parties contre d'autres membres et dans les tournois, il apparaîtra comme « Ancien joueur ». Cette action est irréversible.`)) return;
       res = await supabase.rpc('admin_delete_account', { p_user: id });
+      if (!res.error && p.photo_path) await supabase.storage.from(DOSSIER_PHOTOS).remove([p.photo_path]);
       break;
     default:
       return;
