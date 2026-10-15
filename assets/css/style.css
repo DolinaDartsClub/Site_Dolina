@@ -947,3 +947,4 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .c-tableau { margin-top: 8px; }
 .c-tableau summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--gris-clair); min-height: 32px; display: flex; align-items: center; }
 .c-cadre { max-width: 920px; }
+.s-gagne { color: var(--orange); } .s-perdu { color: var(--gris); }

@@ -102,8 +102,8 @@ function afficher(s) {
     <section class="section s-section" aria-labelledby="t-bilan">
       <h2 class="section__titre" id="t-bilan">Bilan</h2>
       <div class="s-grille">
-        ${tuile('Victoires – défaites', `${s.victoires} – ${s.defaites}`, pctVictoires === null ? 'Aucun match contre un adversaire' : `${virgule(pctVictoires, 0)} % de victoires · ${s.parties_bilan} match${s.parties_bilan > 1 ? 's' : ''}`)}
-        ${tuile('Manches gagnées – perdues', `${s.manches_gagnees} – ${s.manches_perdues}`)}
+        ${tuile('Victoires – défaites', `<span class="s-gagne">${s.victoires}</span> – <span class="s-perdu">${s.defaites}</span>`, pctVictoires === null ? 'Aucun match contre un adversaire' : `${virgule(pctVictoires, 0)} % de victoires · ${s.parties_bilan} match${s.parties_bilan > 1 ? 's' : ''}`)}
+        ${tuile('Manches gagnées – perdues', `<span class="s-gagne">${s.manches_gagnees}</span> – <span class="s-perdu">${s.manches_perdues}</span>`)}
       </div>
     </section>
 
