@@ -607,3 +607,62 @@ img { max-width: 100%; display: block; }
   .tableau-score--4 thead th { font-size: 8px; }
   .plaques--2 .plaque__nom { font-size: 15px; }
 }
+
+/* Scorer à 3 ou 4 joueurs : détail du joueur au lancer, résumé des autres */
+.scorer--nombreux .scorer__camps { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.scorer--nombreux .camp__reste { font-size: clamp(56px, 16vw, 120px); }
+.camp__volees { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; min-height: 26px; }
+.camp__volees span { padding: 2px 8px; border-radius: 6px; background: #262626; font-family: var(--police-titre); font-weight: 700; font-size: 16px; }
+.camp__volees span.ton { color: var(--orange); }
+.camp__volees span.bust { color: var(--gris); font-size: 13px; }
+.camp__volees em { font-size: 12px; color: var(--gris); font-style: normal; align-self: center; }
+.mini-camps { display: grid; gap: 4px; }
+.mini-camp { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 10px; background: var(--carte); border: 1px solid var(--bord); }
+.mini-camp--gagnant { border-color: var(--orange); }
+.mini-camp__nom { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-camp__nom i { color: var(--gris); font-style: normal; font-size: 11px; }
+.mini-camp__suivant { margin-left: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--orange); }
+.mini-camp__manches { font-size: 12px; color: var(--gris); }
+.mini-camp__manches b { color: var(--orange); }
+.mini-camp__reste { font-family: var(--police-titre); font-size: 28px; min-width: 52px; text-align: right; }
+@media (orientation: landscape) and (min-width: 700px) {
+  .scorer--nombreux .scorer__camps { grid-template-rows: 1fr auto; }
+  .scorer--nombreux .camp__reste { font-size: clamp(80px, 12vw, 160px); }
+  .mini-camp__reste { font-size: 34px; }
+}
+
+/* Match en direct à 3 ou 4 joueurs : une seule colonne de volées, au choix */
+.plaque[data-camp] { cursor: pointer; }
+.plaque--vu:not(.plaque--actif) .plaque__nom { box-shadow: inset 0 -3px 0 var(--orange); color: var(--blanc); }
+.tablette__detail { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; padding: 8px 12px 0; font-size: 14px; color: var(--gris-clair); }
+.tablette__detail b { color: var(--blanc); }
+.tablette__detail small { font-size: 12px; color: var(--gris); }
+.tableau-score--solo .ts__no { width: 44px; }
+.tableau-score--solo .ts__volee { font-size: 28px; }
+.tableau-score--solo .ts__reste { font-size: 24px; }
+
+/* Récapitulatif */
+.recap-section { display: grid; gap: 12px; }
+.recap-cadre { overflow-x: auto; border-radius: 14px; border: 1px solid var(--bord); background: var(--carte); }
+.recap { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.recap th, .recap td { padding: 8px 8px; text-align: center; border-bottom: 1px solid #262626; }
+.recap tbody tr:last-child th, .recap tbody tr:last-child td { border-bottom: 0; }
+.recap tbody th { text-align: left; font-size: 13px; font-weight: 600; color: var(--gris-clair); white-space: nowrap; }
+.recap thead th { font-size: 14px; font-weight: 700; color: var(--blanc); vertical-align: bottom; }
+.recap thead th small { display: block; font-size: 10px; text-transform: uppercase; color: var(--orange); }
+.recap td { font-family: var(--police-titre); font-weight: 700; font-size: 20px; }
+.recap td small { display: block; font-family: var(--police); font-size: 11px; font-weight: 500; color: var(--gris); }
+.recap--top { color: var(--orange); }
+.recap--4 thead th, .recap--3 thead th { font-size: 12px; }
+.recap--4 td { font-size: 17px; }
+@media (max-width: 480px) { .recap--4 th, .recap--4 td { padding: 7px 3px; } .recap--4 tbody th { font-size: 11px; white-space: normal; } }
+.recap-manches { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.recap-manche { display: grid; gap: 8px; padding: 12px; border-radius: 14px; background: var(--carte); border: 1px solid var(--bord); }
+.recap-manche header { display: flex; flex-direction: column; gap: 2px; }
+.recap-manche header strong { font-family: var(--police-titre); font-size: 18px; text-transform: uppercase; }
+.recap-manche header span { font-size: 13px; color: var(--gris-clair); }
+.recap--manche th, .recap--manche td { padding: 5px 6px; }
+.recap--manche thead th { font-size: 11px; color: var(--gris); text-transform: uppercase; }
+.recap--manche td { font-size: 17px; }
+.recap--manche tr.recap--vainqueur th, .recap--manche tr.recap--vainqueur td { color: var(--orange); }
+.recap-manche .bouton { justify-self: start; }

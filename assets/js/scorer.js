@@ -77,28 +77,7 @@ function rafraichir() {
   const titreManche = `${game.sets_n ? `Set ${etat.set} · ` : ''}Manche ${etat.manche}`;
   $('titre-manche').textContent = etat.gagnant ? 'Partie terminée' : titreManche;
 
-  $('camps').innerHTML = camps.map((s) => {
-    const st = etat.stats[s];
-    const actif = etat.auLancer === s;
-    const moy = moyenne(st);
-    const lanceur = game.mode === 'double' && joueursCamps[s].length > 1
-      ? joueursCamps[s][etat.voleesTotal[s] % joueursCamps[s].length] : null;
-    return `
-      <article class="camp${actif ? ' camp--actif' : ''}${etat.gagnant === s ? ' camp--gagnant' : ''}">
-        <div class="camp__entete">
-          <span class="camp__nom">${esc(nomsCamps[s])}</span>
-          ${actif ? '<span class="camp__badge">Au lancer</span>' : (etat.debutManche === s && !etat.gagnant ? '<span class="camp__debut" title="A commencé la manche">●</span>' : '')}
-        </div>
-        ${lanceur ? `<span class="camp__lanceur">${actif ? 'Lance : ' : 'Prochain : '}${esc(lanceur)}</span>` : ''}
-        <span class="camp__reste">${etat.reste[s]}</span>
-        <div class="camp__stats">
-          <span><small>Manches</small><b class="orange">${etat.manches[s]}</b></span>
-          ${game.sets_n ? `<span><small>Sets</small><b class="orange">${etat.sets[s]}</b></span>` : ''}
-          <span><small>Moyenne</small><b>${moy === null ? '–' : moy.toLocaleString('fr-FR')}</b></span>
-          <span><small>Dernière</small><b>${st.derniere ?? '–'}</b></span>
-        </div>
-      </article>`;
-  }).join('');
+  $('camps').innerHTML = camps.length > 2 ? campsNombreux() : camps.map((s) => carteCamp(s)).join('');
 
   const reste = etat.auLancer ? etat.reste[etat.auLancer] : null;
   const sugg = reste !== null ? suggestionFinish(reste) : null;
@@ -107,6 +86,48 @@ function rafraichir() {
   $('saisie').textContent = saisie || '0';
 
   if (etat.gagnant && game.status !== 'abandoned') afficherFin();
+}
+
+// Carte complète d'un camp
+function carteCamp(s, volees = false) {
+  const st = etat.stats[s];
+  const actif = etat.auLancer === s;
+  const moy = moyenne(st);
+  const lanceur = game.mode === 'double' && joueursCamps[s].length > 1
+    ? joueursCamps[s][etat.voleesTotal[s] % joueursCamps[s].length] : null;
+  const detail = volees ? etat.historique.filter((v) => v.side === s) : [];
+  return `
+    <article class="camp${actif ? ' camp--actif' : ''}${etat.gagnant === s ? ' camp--gagnant' : ''}">
+      <div class="camp__entete">
+        <span class="camp__nom">${esc(nomsCamps[s])}</span>
+        ${actif ? '<span class="camp__badge">Au lancer</span>' : (etat.debutManche === s && !etat.gagnant ? '<span class="camp__debut" title="A commencé la manche">●</span>' : '')}
+      </div>
+      ${lanceur ? `<span class="camp__lanceur">${actif ? 'Lance : ' : 'Prochain : '}${esc(lanceur)}</span>` : ''}
+      <span class="camp__reste">${etat.reste[s]}</span>
+      <div class="camp__stats">
+        <span><small>Manches</small><b class="orange">${etat.manches[s]}</b></span>
+        ${game.sets_n ? `<span><small>Sets</small><b class="orange">${etat.sets[s]}</b></span>` : ''}
+        <span><small>Moyenne</small><b>${moy === null ? '–' : moy.toLocaleString('fr-FR')}</b></span>
+        <span><small>Dernière</small><b>${st.derniere ?? '–'}</b></span>
+      </div>
+      ${volees ? `<div class="camp__volees">${detail.length
+        ? detail.map((v) => `<span class="${v.is_bust ? 'bust' : (v.score >= 100 ? 'ton' : '')}">${v.is_bust ? 'Bust' : v.score}</span>`).join('')
+        : '<em>Première volée de la manche</em>'}</div>` : ''}
+    </article>`;
+}
+
+// 3 ou 4 joueurs : le détail du joueur au lancer, les autres en résumé
+function campsNombreux() {
+  const focus = etat.auLancer || etat.gagnant || camps[0];
+  const i = camps.indexOf(focus);
+  const autres = [...camps.slice(i + 1), ...camps.slice(0, i)];
+  const lignes = autres.map((s, k) => `
+    <div class="mini-camp${etat.gagnant === s ? ' mini-camp--gagnant' : ''}">
+      <span class="mini-camp__nom">${etat.debutManche === s && !etat.gagnant ? '<i title="A commencé la manche">●</i> ' : ''}${esc(nomsCamps[s])}${k === 0 && etat.auLancer ? ' <span class="mini-camp__suivant">Suivant</span>' : ''}</span>
+      <span class="mini-camp__manches">M <b>${etat.manches[s]}</b>${game.sets_n ? ` · S <b>${etat.sets[s]}</b>` : ''}</span>
+      <b class="mini-camp__reste">${etat.reste[s]}</b>
+    </div>`).join('');
+  return `${carteCamp(focus, true)}<div class="mini-camps">${lignes}</div>`;
 }
 
 function afficherEvenement(texte) {
