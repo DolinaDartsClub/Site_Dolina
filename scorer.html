@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Scorer – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <meta name="robots" content="noindex">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/scorer.js?v=__VERSION__"></script>
+</head>
+<body class="corps-scorer">
+
+<div class="scorer" id="scorer">
+  <header class="scorer__barre">
+    <a class="bouton bouton--icone" href="jouer.html" aria-label="Quitter le scorer (la partie reste reprenable 24 h)" title="Quitter">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </a>
+    <div class="scorer__titre">
+      <strong id="titre-format">Chargement…</strong>
+      <span id="titre-manche"></span>
+    </div>
+    <button type="button" class="bouton bouton--petit bouton--danger" id="btn-abandon">Abandonner</button>
+  </header>
+
+  <section class="scorer__camps" id="camps" aria-live="polite"></section>
+
+  <div class="scorer__infos">
+    <span class="scorer__finish"><span class="match__format">Finish</span> <strong id="finish">—</strong></span>
+    <span class="scorer__evenement" id="evenement" role="status"></span>
+  </div>
+
+  <section class="scorer__saisie" aria-label="Saisie du score">
+    <button type="button" class="bouton-annuler" id="btn-annuler">
+      <svg aria-hidden="true" viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h6"/><rect x="8" y="15" width="9" height="6" rx="2"/><path d="M17 18h9"/><path d="M26 18l6-5v10z"/><path d="M30 7c-4-4-12-4-16 0"/><path d="M14 2v5h5"/></svg>
+      Annuler la dernière volée
+    </button>
+    <div class="ecran-saisie">
+      <span class="ecran-saisie__qui" id="qui">—</span>
+      <span class="ecran-saisie__valeur" id="saisie">0</span>
+      <span class="ecran-saisie__erreur" id="erreur" role="alert"></span>
+    </div>
+    <div class="raccourcis" id="raccourcis"></div>
+    <div class="pave" id="pave"></div>
+  </section>
+</div>
+
+<div class="message" id="message" role="alert" hidden></div>
+
+<!-- Fléchettes utilisées pour finir -->
+<div class="fenetre" id="fen-finish" role="dialog" aria-modal="true" aria-labelledby="t-finish" hidden>
+  <div class="fenetre__boite fenetre__boite--accent">
+    <h2 id="t-finish" class="titre-game-shot">Game shot !</h2>
+    <p class="intro" style="margin:0">Combien de fléchettes pour finir ?</p>
+    <div class="choix-gros" id="choix-finish"></div>
+    <button type="button" class="bouton" data-annuler-saisie>Corriger la saisie</button>
+  </div>
+</div>
+
+<!-- Fléchettes lancées au double -->
+<div class="fenetre" id="fen-double" role="dialog" aria-modal="true" aria-labelledby="t-double" hidden>
+  <div class="fenetre__boite fenetre__boite--accent">
+    <h2 id="t-double">Combien de fléchettes au double ?</h2>
+    <p class="match__format" id="aide-double" style="margin:0"></p>
+    <div class="choix-gros" id="choix-double"></div>
+    <button type="button" class="bouton" data-annuler-saisie>Corriger la saisie</button>
+  </div>
+</div>
+
+<!-- Fin de partie -->
+<div class="fenetre" id="fen-fin" role="dialog" aria-modal="true" aria-labelledby="t-fin" hidden>
+  <div class="fenetre__boite fenetre__boite--accent centre">
+    <h2 id="t-fin" class="titre-game-shot">Game shot and the match</h2>
+    <p class="fin__gagnant" id="fin-gagnant"></p>
+    <p class="match__format" style="margin:0">La partie est enregistrée dans le compte de chaque membre.</p>
+    <div class="actions" style="justify-content:center">
+      <a class="bouton bouton--plein" href="jouer.html">Nouvelle partie</a>
+      <a class="bouton" id="fin-live" href="#">Voir le résumé</a>
+      <button type="button" class="bouton" id="fin-annuler">Annuler la dernière volée</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

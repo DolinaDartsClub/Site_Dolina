@@ -41,6 +41,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Vérifier les règles du scorer (tests automatiques)
+        run: node outils/test-x01.mjs
+
       - name: Préparer le site et les aperçus de partage
         id: preparer
         run: node outils/generer-partage.mjs

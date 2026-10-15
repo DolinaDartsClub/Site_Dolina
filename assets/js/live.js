@@ -19,7 +19,7 @@ async function charger() {
   }
   const { data, error } = await supabase
     .from('games')
-    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, status, winner_side, game_sides(side, name, is_bot), game_players(id, side, display_name, throw_order)')
+    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, game_sides(side, name, is_bot), game_players(id, side, display_name, throw_order)')
     .eq('id', id)
     .maybeSingle();
 
@@ -32,7 +32,7 @@ async function charger() {
   game = data;
   const res = await supabase
     .from('visits')
-    .select('id, set_no, leg_no, visit_no, side, player_id, score, remaining_before, is_bust, is_checkout')
+    .select('id, set_no, leg_no, visit_no, side, player_id, score, remaining_before, is_bust, is_checkout, darts_used, darts_at_double')
     .eq('game_id', id);
   visits = res.data || [];
   afficher();
@@ -57,13 +57,8 @@ function afficher() {
   badge.textContent = fini ? (game.status === 'finished' ? 'TERMINÉ' : 'INTERROMPU') : 'EN DIRECT';
   badge.className = 'live__badge' + (fini ? ' live__badge--fini' : '');
 
-  // Camp au lancer : celui qui suit le dernier lanceur dans la manche en cours
-  const ordreCamps = sides.map((s) => s.side);
-  let actif = null;
-  if (!fini && etat.dernier && !etat.dernier.is_checkout) {
-    const i = ordreCamps.indexOf(etat.dernier.side);
-    actif = ordreCamps[(i + 1) % ordreCamps.length];
-  }
+  // Camp au lancer (calculé par le moteur X01, alternance comprise)
+  const actif = fini ? null : etat.auLancer;
 
   const camps = sides.map((s) => {
     const gagnant = fini && game.winner_side === s.side;
@@ -77,9 +72,7 @@ function afficher() {
   }).join('');
 
   // Volées de la manche en cours
-  const enCours = visits
-    .filter((v) => v.set_no === etat.setCourant && v.leg_no === etat.mancheCourante)
-    .sort((a, b) => a.visit_no - b.visit_no || a.id - b.id);
+  const enCours = etat.historique;
   const lignes = enCours.slice(-12).reverse().map((v) => `
     <tr>
       <td>${esc(nomCamp(v.side))}</td>

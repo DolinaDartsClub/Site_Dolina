@@ -17,7 +17,7 @@ async function chargerMatchs() {
   const zone = document.getElementById('matchs');
   const { data: games, error } = await supabase
     .from('games')
-    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, game_sides(side, name, is_bot), game_players(side, display_name, throw_order)')
+    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, game_sides(side, name, is_bot), game_players(side, display_name, throw_order)')
     .eq('status', 'live')
     .eq('visibility', 'public')
     .order('created_at', { ascending: false })
@@ -34,7 +34,7 @@ async function chargerMatchs() {
 
   const { data: visits } = await supabase
     .from('visits')
-    .select('id, game_id, set_no, leg_no, visit_no, side, score, remaining_before, is_bust, is_checkout')
+    .select('id, game_id, set_no, leg_no, visit_no, side, score, remaining_before, is_bust, is_checkout, darts_used, darts_at_double')
     .in('game_id', games.map((g) => g.id));
 
   zone.innerHTML = games.map((g) => carteMatch(g, (visits || []).filter((v) => v.game_id === g.id))).join('');

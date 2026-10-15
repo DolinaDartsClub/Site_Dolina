@@ -395,3 +395,139 @@ img { max-width: 100%; display: block; }
 
 /* Surnom mis en valeur dans le nom complet « Prénom Surnom Nom » */
 .surnom { color: var(--orange); }
+
+/* =====================================================================
+   Jouer : création d'un match
+   ===================================================================== */
+
+.page--jouer { max-width: 720px; }
+.formulaire-jeu { display: flex; flex-direction: column; gap: 18px; }
+.bloc-choix { margin: 0; padding: 16px; border: 1px solid var(--bord); border-radius: var(--rayon); background: var(--carte); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.bloc-choix legend { padding: 0 6px; font-size: 13px; font-weight: 700; color: var(--gris-clair); text-transform: uppercase; letter-spacing: 0.5px; }
+.pastilles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.pastille-choix {
+  min-height: 48px; border-radius: 10px; border: 1px solid var(--bord-fort); background: var(--noir);
+  color: var(--blanc); font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; line-height: 1.1;
+}
+.pastille-choix[aria-pressed="true"] { background: var(--orange); border-color: var(--orange); color: var(--noir); }
+.pastille-choix[disabled] { opacity: 0.45; cursor: not-allowed; }
+.pastille-choix small { display: block; font-size: 11px; font-weight: 500; }
+.ligne-format { display: grid; grid-template-columns: 76px minmax(0, 1fr) 76px; gap: 8px; align-items: center; }
+.ligne-format__nom { font-weight: 600; }
+.ligne-format select, .ligne-format input {
+  min-height: 46px; border-radius: 8px; border: 1px solid var(--bord-fort); background: var(--noir);
+  color: var(--blanc); font: inherit; font-size: 16px; padding: 0 10px; width: 100%;
+}
+.ligne-format input { text-align: center; font-family: var(--police-titre); font-weight: 700; font-size: 22px; }
+.resume-format { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--noir); color: var(--orange); font-weight: 600; }
+.bloc-choix .champ input { background: var(--noir); }
+.puces { display: flex; flex-wrap: wrap; gap: 8px; }
+.puce { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 4px 0 12px; border-radius: 999px; background: #2a2a2a; font-size: 15px; }
+.puce small { color: var(--gris); }
+.puce__retirer { width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--gris-clair); font-size: 15px; cursor: pointer; }
+.puce__retirer:hover { color: var(--erreur); }
+.visibilite { flex-direction: row; align-items: center; justify-content: space-between; }
+
+.fenetre { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.fenetre__boite { width: 100%; max-width: 480px; max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 16px; background: var(--carte); border: 1px solid var(--bord-fort); }
+.fenetre__boite h2 { margin: 0; font-size: 20px; }
+.fenetre__boite--pleine { max-width: 560px; height: min(640px, 100%); }
+.fenetre__boite--accent { border: 2px solid var(--orange); }
+.fenetre__entete { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fenetre .champ input { background: var(--noir); }
+.liste-membres { display: flex; flex-direction: column; overflow-y: auto; }
+.ligne-membre {
+  display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 6px 4px; border: 0; border-bottom: 1px solid #2a2a2a;
+  background: transparent; color: var(--blanc); font: inherit; text-align: left; cursor: pointer;
+}
+.ligne-membre:hover { background: #242424; }
+.ligne-membre__initiale { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: #2a2a2a; color: var(--orange); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.ligne-membre__texte { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; }
+.ligne-membre__texte small { color: var(--gris); }
+.ligne-membre__plus { font-size: 24px; color: var(--orange); }
+.liste-bull { display: flex; flex-direction: column; gap: 10px; }
+
+/* =====================================================================
+   Scorer : portrait (téléphone) et paysage (tablette)
+   ===================================================================== */
+
+.corps-scorer { min-height: 100dvh; }
+.scorer {
+  min-height: 100dvh; display: grid; gap: 12px; padding: 12px;
+  grid-template-areas: "barre" "camps" "infos" "saisie";
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto auto 1fr;
+}
+.scorer--fige .scorer__saisie { opacity: 0.4; pointer-events: none; }
+.scorer__barre { grid-area: barre; display: flex; align-items: center; gap: 10px; }
+.scorer__titre { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; }
+.scorer__titre strong { font-family: var(--police-titre); font-size: 18px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scorer__titre span { font-size: 13px; color: var(--gris); }
+
+.scorer__camps { grid-area: camps; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.camp { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 14px; background: var(--carte); border: 3px solid var(--bord); min-width: 0; }
+.camp--actif { border-color: var(--orange); }
+.camp--gagnant { border-color: var(--orange); background: var(--orange-fond); }
+.camp__entete { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 28px; }
+.camp__nom { font-weight: 700; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.camp__badge { padding: 3px 8px; flex-shrink: 0; border-radius: 999px; background: var(--orange); color: var(--noir); font-size: 11px; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
+.camp__debut { color: var(--gris); font-size: 12px; }
+.camp__lanceur { font-size: 13px; color: var(--gris-clair); }
+.camp__reste { font-family: var(--police-titre); font-weight: 700; font-size: clamp(56px, 16vw, 120px); line-height: 0.95; text-align: center; }
+.scorer--nombreux .camp__reste { font-size: clamp(44px, 11vw, 84px); }
+.camp__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; text-align: center; }
+.camp__stats span { display: flex; flex-direction: column; }
+.camp__stats small { font-size: 10px; color: var(--gris); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.camp__stats b { font-family: var(--police-titre); font-size: 19px; }
+@media (min-width: 700px) { .camp__stats small { font-size: 11px; } .camp__stats b { font-size: 22px; } }
+.orange { color: var(--orange); }
+
+.scorer__infos { grid-area: infos; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; min-height: 48px; padding: 8px 14px; border-radius: 12px; background: var(--carte); }
+.scorer__finish strong { font-family: var(--police-titre); font-size: 24px; color: var(--orange); letter-spacing: 0.5px; }
+.scorer__evenement { font-weight: 700; }
+.scorer__evenement.flash { animation: flash 0.6s ease; }
+@keyframes flash { from { color: var(--orange); transform: scale(1.08); } to { color: var(--blanc); transform: none; } }
+
+.scorer__saisie { grid-area: saisie; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.bouton-annuler {
+  display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 56px; border-radius: 12px;
+  border: 2px solid var(--orange); background: var(--orange-fond); color: var(--orange); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer;
+}
+.bouton-annuler svg { width: 40px; height: 28px; }
+.ecran-saisie { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; padding: 8px 14px; border-radius: 12px; background: var(--carte); border: 1px solid var(--bord-fort); }
+.ecran-saisie__qui { font-size: 13px; color: var(--gris); }
+.ecran-saisie__valeur { grid-row: span 2; font-family: var(--police-titre); font-weight: 700; font-size: 48px; line-height: 1; }
+.ecran-saisie__erreur { font-size: 14px; font-weight: 600; color: var(--erreur); min-height: 18px; }
+.raccourcis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.pave { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; flex-grow: 1; }
+.touche {
+  min-height: 54px; border-radius: 10px; border: 1px solid var(--bord-fort); background: var(--carte); color: var(--blanc);
+  font-family: var(--police-titre); font-weight: 700; font-size: 30px; cursor: pointer; touch-action: manipulation;
+}
+.touche:active { background: #2e2e2e; }
+.touche--raccourci { min-height: 44px; font-size: 19px; background: #242424; }
+.touche--effacer { font-family: var(--police); font-size: 16px; background: #242424; }
+.touche--valider { font-family: var(--police); font-size: 19px; background: var(--orange); border-color: var(--orange); color: var(--noir); }
+.choix-gros { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 10px; }
+.touche-choix { min-height: 68px; font-family: var(--police-titre); font-size: 34px; }
+.titre-game-shot { font-family: var(--police-titre); font-size: 32px !important; text-transform: uppercase; color: var(--orange); }
+.fin__gagnant { margin: 0; font-size: 22px; font-weight: 700; }
+.corps-scorer > .message { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 60; }
+
+/* Paysage (tablette ou téléphone couché) : scores à gauche, pavé à droite */
+@media (orientation: landscape) and (min-width: 700px) {
+  .scorer {
+    height: 100dvh; grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+    grid-template-areas: "barre barre" "camps saisie" "infos saisie";
+    grid-template-rows: auto 1fr auto;
+  }
+  .scorer__camps { align-content: stretch; }
+  .camp { justify-content: space-between; }
+  .camp__reste { font-size: clamp(80px, 13vw, 170px); }
+  .scorer--nombreux .camp__reste { font-size: clamp(56px, 8vw, 110px); }
+}
+
+/* Téléphone : le cadre orange et « Volée de … » indiquent qui lance, le badge laisse la place au nom */
+@media (max-width: 480px) {
+  .scorer__camps .camp__badge { display: none; }
+}

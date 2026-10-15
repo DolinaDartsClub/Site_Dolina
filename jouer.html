@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Jouer – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/jouer.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom">Jouer</span>
+      <span class="entete__sous">Dolina Darts Club</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page page--jouer">
+  <div class="message" id="message" role="alert" hidden></div>
+  <div id="acces" hidden></div>
+
+  <section class="section" id="reprendre" hidden>
+    <h2 class="section__titre">Parties à reprendre</h2>
+    <div class="liste-cartes" id="liste-reprendre"></div>
+  </section>
+
+  <form class="formulaire-jeu" id="form-jeu" novalidate hidden>
+    <h1 class="section__titre">Nouveau match</h1>
+
+    <fieldset class="bloc-choix">
+      <legend>Jeu</legend>
+      <div class="pastilles" data-groupe="variant">
+        <button type="button" class="pastille-choix" data-valeur="301">301</button>
+        <button type="button" class="pastille-choix" data-valeur="501" aria-pressed="true">501</button>
+        <button type="button" class="pastille-choix" data-valeur="libre">Score libre</button>
+      </div>
+      <label class="champ" id="champ-libre" hidden>Score de départ
+        <input type="number" inputmode="numeric" name="start_score" min="2" max="9999" value="1001">
+      </label>
+    </fieldset>
+
+    <fieldset class="bloc-choix">
+      <legend>Mode</legend>
+      <div class="pastilles" data-groupe="mode">
+        <button type="button" class="pastille-choix" data-valeur="single" aria-pressed="true">Individuel</button>
+        <button type="button" class="pastille-choix" data-valeur="double">Double 2v2</button>
+        <button type="button" class="pastille-choix" data-valeur="bot" disabled title="Arrive en janvier">Dartbot <small>janvier</small></button>
+      </div>
+    </fieldset>
+
+    <fieldset class="bloc-choix">
+      <legend>Format</legend>
+      <div class="ligne-format">
+        <span class="ligne-format__nom">Manches</span>
+        <select name="legs_kind" aria-label="Type de format des manches">
+          <option value="best_of">Au meilleur de</option>
+          <option value="first_to">Premier à</option>
+        </select>
+        <input type="number" inputmode="numeric" name="legs_n" min="1" max="21" value="3" aria-label="Nombre de manches">
+      </div>
+      <div class="ligne-format">
+        <span class="ligne-format__nom">Sets</span>
+        <select name="sets_kind" aria-label="Sets">
+          <option value="">Sans sets</option>
+          <option value="best_of">Au meilleur de</option>
+          <option value="first_to">Premier à</option>
+        </select>
+        <input type="number" inputmode="numeric" name="sets_n" min="1" max="15" value="3" aria-label="Nombre de sets" hidden>
+      </div>
+      <p class="resume-format" id="resume-format"></p>
+    </fieldset>
+
+    <fieldset class="bloc-choix">
+      <legend>Joueurs</legend>
+      <div class="puces" id="puces-joueurs"></div>
+      <div class="actions" id="ajout-joueurs">
+        <button type="button" class="bouton bouton--petit" id="btn-membre">+ Membre</button>
+        <button type="button" class="bouton bouton--petit" id="btn-invite">+ Invité</button>
+      </div>
+      <p class="match__format" id="aide-joueurs"></p>
+    </fieldset>
+
+    <fieldset class="bloc-choix" id="bloc-equipes" hidden>
+      <legend>Doublettes</legend>
+      <div class="deux-colonnes">
+        <label class="champ">Nom de l'équipe 1<input type="text" name="team1" maxlength="40" value="Équipe 1"></label>
+        <label class="champ">Nom de l'équipe 2<input type="text" name="team2" maxlength="40" value="Équipe 2"></label>
+      </div>
+      <div id="affectation"></div>
+    </fieldset>
+
+    <div class="bloc-choix visibilite">
+      <div>
+        <strong id="visi-titre">Partie publique</strong>
+        <p class="match__format" id="visi-aide" style="margin:2px 0 0">Visible de tous dans « Matchs en cours »</p>
+      </div>
+      <button type="button" class="bouton bouton--petit bouton--plein" id="btn-visi" aria-pressed="true">Publique</button>
+    </div>
+
+    <button type="submit" class="bouton bouton--plein bouton--large" id="lancer">Tirage au bull et lancer la partie</button>
+  </form>
+</main>
+
+<!-- Choix d'un membre -->
+<div class="fenetre" id="fenetre-membre" role="dialog" aria-modal="true" aria-labelledby="titre-membre" hidden>
+  <div class="fenetre__boite fenetre__boite--pleine">
+    <div class="fenetre__entete">
+      <h2 id="titre-membre">Ajouter un membre</h2>
+      <button type="button" class="bouton bouton--icone" data-fermer aria-label="Fermer">✕</button>
+    </div>
+    <label class="champ"><span class="visuellement-cache">Rechercher un membre</span>
+      <input type="search" id="recherche-membre" placeholder="Nom, prénom ou surnom" autocomplete="off">
+    </label>
+    <div class="liste-membres" id="liste-membres"></div>
+  </div>
+</div>
+
+<!-- Ajout d'un invité -->
+<div class="fenetre" id="fenetre-invite" role="dialog" aria-modal="true" aria-labelledby="titre-invite" hidden>
+  <form class="fenetre__boite" id="form-invite" novalidate>
+    <h2 id="titre-invite">Ajouter un invité</h2>
+    <label class="champ">Nom de l'invité<input type="text" name="nom" maxlength="40" required></label>
+    <p class="match__format" style="margin:0">Profil temporaire, pour ce match uniquement : aucune statistique n'est enregistrée pour l'invité.</p>
+    <div class="actions">
+      <button type="submit" class="bouton bouton--plein">Ajouter</button>
+      <button type="button" class="bouton" data-fermer>Annuler</button>
+    </div>
+  </form>
+</div>
+
+<!-- Tirage au bull -->
+<div class="fenetre" id="fenetre-bull" role="dialog" aria-modal="true" aria-labelledby="titre-bull" hidden>
+  <div class="fenetre__boite">
+    <h2 id="titre-bull">Tirage au bull</h2>
+    <p class="intro" style="margin:0">Chaque joueur (une fléchette par équipe en double) lance vers le bull. Qui est le plus proche ?</p>
+    <div class="liste-bull" id="liste-bull"></div>
+    <button type="button" class="bouton" data-fermer>Annuler</button>
+  </div>
+</div>
+
+</body>
+</html>
