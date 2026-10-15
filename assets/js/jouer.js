@@ -32,6 +32,7 @@ async function init() {
     return;
   }
   form.hidden = false;
+  document.getElementById('lien-mes-parties').hidden = false;
   joueurs = [{ type: 'membre', id: moi.id, nom: nomAffiche(moi) }];
   afficherJoueurs();
   majFormat();

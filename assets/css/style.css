@@ -666,3 +666,37 @@ img { max-width: 100%; display: block; }
 .recap--manche td { font-size: 17px; }
 .recap--manche tr.recap--vainqueur th, .recap--manche tr.recap--vainqueur td { color: var(--orange); }
 .recap-manche .bouton { justify-self: start; }
+
+/* =====================================================================
+   Mes parties
+   ===================================================================== */
+.mp-entete { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.mp-entete .section__titre { margin: 0; }
+.mp-filtres { display: grid; gap: 8px; margin-bottom: 16px; }
+.mp-filtre { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.mp-filtre button {
+  flex-shrink: 0; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--bord-fort); background: var(--carte);
+  color: var(--gris-clair); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.mp-filtre button[aria-pressed="true"] { background: var(--orange); border-color: var(--orange); color: var(--noir); }
+.liste-parties { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.mp-carte { display: grid; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--carte); border: 1px solid var(--bord); border-left: 4px solid var(--bord-fort); }
+.mp-carte--victoire { border-left-color: var(--orange); }
+.mp-carte--live { border-left-color: var(--blanc); }
+.mp-carte__haut { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mp-carte__ctx { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--gris); }
+.mp-carte__date { font-size: 13px; color: var(--gris-clair); flex-grow: 1; }
+.mp-resultat { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; white-space: nowrap; background: #262626; color: var(--gris-clair); }
+.mp-resultat--victoire { background: var(--orange); color: var(--noir); }
+.mp-resultat--live { background: var(--blanc); color: var(--noir); }
+.mp-resultat--abandon { color: var(--gris); }
+.mp-camps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.mp-camps li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 3px 0; }
+.mp-camp__nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gris-clair); }
+.mp-camp--moi .mp-camp__nom { color: var(--blanc); font-weight: 700; }
+.mp-camp__score { font-family: var(--police-titre); font-size: 24px; line-height: 1; color: var(--gris-clair); }
+.mp-camp--gagnant .mp-camp__score { color: var(--orange); }
+.mp-carte__format { margin: 0; font-size: 12px; color: var(--gris); }
+.mp-plus { display: block; margin: 16px auto 0; }
+.lien-mes-parties { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; margin-bottom: 16px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); color: var(--blanc); font-weight: 700; text-decoration: none; }
+.lien-mes-parties span { color: var(--orange); font-size: 20px; }

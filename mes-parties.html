@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mes parties – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/mes-parties.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom">Mes parties</span>
+      <span class="entete__sous">Dolina Darts Club</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page">
+  <div class="message" id="message" role="alert" hidden></div>
+  <div id="acces" hidden></div>
+
+  <div id="contenu" hidden>
+    <div class="mp-entete">
+      <h1 class="section__titre">Mes parties</h1>
+      <a class="bouton bouton--plein bouton--petit" href="jouer.html">+ Nouvelle partie</a>
+    </div>
+
+    <!-- Type de partie : « Tournois » s'ajoutera ici -->
+    <div class="mp-filtres">
+      <div class="mp-filtre" role="group" aria-label="Type" data-filtre="type" id="filtre-type" hidden>
+        <button type="button" data-valeur="" aria-pressed="true">Tout</button>
+        <button type="button" data-valeur="match">Matchs</button>
+      </div>
+      <div class="mp-filtre" role="group" aria-label="Statut" data-filtre="statut">
+        <button type="button" data-valeur="" aria-pressed="true">Toutes</button>
+        <button type="button" data-valeur="finished">Terminées</button>
+        <button type="button" data-valeur="live">En cours</button>
+        <button type="button" data-valeur="abandoned">Abandonnées</button>
+      </div>
+      <div class="mp-filtre" role="group" aria-label="Jeu" data-filtre="jeu">
+        <button type="button" data-valeur="" aria-pressed="true">Tous les jeux</button>
+        <button type="button" data-valeur="301">301</button>
+        <button type="button" data-valeur="501">501</button>
+        <button type="button" data-valeur="libre">Score libre</button>
+      </div>
+    </div>
+
+    <div class="liste-parties" id="liste" aria-live="polite"></div>
+    <button type="button" class="bouton mp-plus" id="plus" hidden>Voir plus de parties</button>
+  </div>
+</main>
+
+</body>
+</html>

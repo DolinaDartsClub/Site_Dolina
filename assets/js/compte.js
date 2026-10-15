@@ -152,6 +152,10 @@ async function afficher() {
       ${explication}
       ${materiel ? `<span class="match__format">${esc(materiel)}</span>` : ''}
     </div>
+    ${profil.status === 'active' ? `<div class="actions">
+      <a class="bouton bouton--plein" href="mes-parties.html">Mes parties</a>
+      <a class="bouton" href="jouer.html">Nouvelle partie</a>
+    </div>` : ''}
     <details class="carte-info repli" id="bloc-profil">
       <summary>Modifier mon profil</summary>
       <form class="repli__contenu" id="form-profil" novalidate>
