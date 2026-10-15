@@ -69,6 +69,9 @@ img { max-width: 100%; display: block; }
 .entete__marque { display: flex; align-items: center; gap: 12px; color: var(--blanc); flex-grow: 1; min-width: 0; }
 .entete__marque:hover { color: var(--blanc); }
 .entete__logo { width: 40px; height: 52px; object-fit: contain; }
+.entete__logo-lien { display: flex; flex-shrink: 0; border-radius: 8px; }
+.entete__logo-lien:hover .entete__logo { transform: scale(1.06); }
+.entete__logo { transition: transform 0.15s; }
 .entete__titres { display: flex; flex-direction: column; min-width: 0; }
 .entete__nom {
   font-family: var(--police-titre); font-weight: 700; font-size: 21px;
