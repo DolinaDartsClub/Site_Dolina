@@ -146,6 +146,21 @@ ajouterOeils(document);
 // Les formulaires ajoutés plus tard (ex. « Mon compte ») reçoivent aussi l'œil
 new MutationObserver(() => ajouterOeils(document)).observe(document.body, { childList: true, subtree: true });
 
+// Bouton « Accueil » bien visible dans l'en-tête de toutes les pages, sauf l'accueil
+function ajouterBoutonAccueil() {
+  const entete = document.querySelector('.entete');
+  const surAccueil = /\/(index\.html)?$/.test(location.pathname);
+  if (!entete || surAccueil || entete.querySelector('.bouton--accueil')) return;
+  const lien = document.createElement('a');
+  lien.href = './';
+  lien.className = 'bouton bouton--plein bouton--accueil';
+  lien.setAttribute('aria-label', 'Retour à l\'accueil du site');
+  lien.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Accueil</span>';
+  const marque = entete.querySelector('.entete__marque');
+  if (marque) marque.after(lien); else entete.prepend(lien);
+}
+ajouterBoutonAccueil();
+
 // En-tête : « Connexion » devient « Mon compte » quand on est connecté
 async function brancherEntete() {
   const lien = document.getElementById('lien-compte');
