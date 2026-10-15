@@ -52,14 +52,14 @@ select _egal(:'T', 'référence : moyenne, 9 premières, double, records', $$
 -- Parties qui comptent / ne comptent pas
 select _partie('501', array[:'T', 'Invité Max'], 'finished', 2, array['1:60 2:180 1:60 2:180 1:60 2:141:f:3:2']);         -- défaite contre un invité : compte
 select _partie('301', array[:'T', :'W', 'Invité Léa'], 'finished', 3, array['1:100 2:100 3:180 1:41 2:41 3:121:f:3:1']);   -- 1v1v1 perdue : compte (défaite)
-select _partie('501', array[:'T'], 'finished', 1, array['1:180 1:180 1:141:f:3:1']);                                        -- seul : moyenne oui, bilan non
+select _partie('501', array[:'T'], 'finished', 1, array['1:180 1:180 1:141:f:3:1']);                                        -- seul : ne compte pas
 select _partie('501', array[:'T', :'W'], 'abandoned', null, array['1:180 2:180']);                                         -- abandonnée : non
 select _partie('libre', array[:'T', :'W'], 'finished', 1, array['1:180 2:180']);                                           -- score libre : non
 select _partie('501', array[:'T', :'W'], 'live', null, array['1:180']);                                                    -- en cours : non
 select _partie('501', array[:'T', 'X', :'W', 'Y'], 'finished', 1, array['1:180 3:60 2:60 4:60'], 'double');                -- double : non (onglet Doublettes)
 select _partie('501', array[:'T', :'W'], 'finished', 1, array['1:180 2:180 1:180 2:180 1:141:f:3:1'], 'single', '2025-03-01'); -- saison précédente
-select _egal(:'T', 'toutes périodes : parties / bilan', $$select format('parties=%s bilan=%s V=%s D=%s', s->>'parties', s->>'parties_bilan', s->>'victoires', s->>'defaites') from stats_joueur('11111111-1111-1111-1111-111111111111') s$$, 'parties=5 bilan=4 V=2 D=2');
-select _egal(:'T', 'saison 2026-2027 (depuis le 1er septembre)', $$select format('parties=%s V=%s', s->>'parties', s->>'victoires') from stats_joueur('11111111-1111-1111-1111-111111111111', '2026-09-01') s$$, 'parties=4 V=1');
+select _egal(:'T', 'toutes périodes : parties / bilan', $$select format('parties=%s bilan=%s V=%s D=%s', s->>'parties', s->>'parties_bilan', s->>'victoires', s->>'defaites') from stats_joueur('11111111-1111-1111-1111-111111111111') s$$, 'parties=4 bilan=4 V=2 D=2');
+select _egal(:'T', 'saison 2026-2027 (depuis le 1er septembre)', $$select format('parties=%s V=%s', s->>'parties', s->>'victoires') from stats_joueur('11111111-1111-1111-1111-111111111111', '2026-09-01') s$$, 'parties=3 V=1');
 select _egal(:'T', 'filtre 301', $$select format('parties=%s D=%s court301=%s', s->>'parties', s->>'defaites', coalesce(s->>'manche_courte_301', 'aucune')) from stats_joueur('11111111-1111-1111-1111-111111111111', null, null, '301') s$$, 'parties=1 D=1 court301=aucune');
 select _t(:'T', 'évolution : une moyenne par partie', $$select json_array_length(s->'evolution')::text from stats_joueur('11111111-1111-1111-1111-111111111111') s$$);
 select _t(:'W', 'Will voit les stats de Tony (membres)', $$select (s->'joueur'->>'nom') from stats_joueur('11111111-1111-1111-1111-111111111111') s$$);

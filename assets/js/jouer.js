@@ -137,7 +137,7 @@ function afficherJoueurs() {
   document.getElementById('ajout-joueurs').hidden = plein;
   document.getElementById('aide-joueurs').textContent = choix.mode === 'double'
     ? `Double 2v2 : ajoutez 4 joueurs (${joueurs.length}/4), puis formez les deux doublettes.`
-    : `De 1 à 4 joueurs. Les statistiques sont enregistrées dans le compte de chaque membre.${joueurs.length === 1 ? ' Seul, la partie compte pour vos moyennes mais pas dans le bilan victoires/défaites.' : ''}`;
+    : `De 1 à 4 joueurs. Les statistiques sont enregistrées dans le compte de chaque membre.${joueurs.length === 1 ? ' Seul (sans adversaire), la partie ne compte pas dans les statistiques ni dans le classement.' : ''}`;
 
   // Doublettes
   const blocEquipes = document.getElementById('bloc-equipes');
