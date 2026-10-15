@@ -45,6 +45,7 @@ export function etatPartie(game, sides, visits) {
     setCourant: e.set,
     mancheCourante: e.manche,
     auLancer: e.auLancer,
+    debutManche: e.debutManche,
     gagnant: e.gagnant,
     historique: e.historique,
     stats: e.stats,

@@ -533,54 +533,77 @@ img { max-width: 100%; display: block; }
 }
 
 /* =====================================================================
-   Match en direct : ardoise avec une colonne par joueur
+   Match en direct : présentation « tablette de score »
    ===================================================================== */
+.live__format { margin: 0; }
+@media (min-width: 700px) { .live__format { display: none; } }
 .ardoise__onglets { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .ardoise__onglet {
   flex-shrink: 0; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--bord-fort); background: var(--carte);
   color: var(--gris-clair); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
 }
 .ardoise__onglet[aria-pressed="true"] { background: var(--orange); border-color: var(--orange); color: var(--noir); }
-.ardoise-cadre { overflow-x: auto; border-radius: 14px; border: 1px solid var(--bord); background: var(--carte); }
-.ardoise { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
-.ardoise th, .ardoise td { padding: 6px 4px; text-align: center; }
-.ardoise__no { width: 28px; color: var(--gris); font-size: 12px; font-weight: 600; }
-.ardoise__camp { vertical-align: top; padding: 12px 6px 10px !important; border-left: 1px solid var(--bord); border-top: 3px solid transparent; }
-.ardoise__camp--actif { border-top-color: var(--orange); background: rgba(245, 122, 0, 0.06); }
-.ardoise__camp--gagnant { border-top-color: var(--orange); background: var(--orange-fond); }
-.ardoise__camp--gagnant .live__etat { color: var(--orange); }
-.ardoise__camp--actif .live__etat { color: var(--orange); }
-.ardoise__camp > span { display: block; }
-.ardoise__nom { font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ardoise__gros { font-family: var(--police-titre); font-weight: 700; font-size: clamp(44px, 12vw, 84px); line-height: 1; margin: 4px 0; }
-.ardoise--3 .ardoise__gros, .ardoise--4 .ardoise__gros { font-size: clamp(40px, 8vw, 64px); }
-.ardoise__score { font-size: 13px; color: var(--gris-clair); }
-.ardoise__score b { color: var(--orange); font-size: 15px; }
-.ardoise__moy { font-size: 12px; color: var(--gris); margin-top: 2px; }
-.ardoise__sous th { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--gris); border-bottom: 1px solid var(--bord-fort); }
-.ardoise__sous th:nth-child(even), .ardoise td.ardoise__volee { border-left: 1px solid var(--bord); }
-.ardoise tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.025); }
-.ardoise__volee { font-family: var(--police-titre); font-weight: 700; font-size: 20px; }
-.ardoise__reste { font-family: var(--police-titre); font-weight: 600; font-size: 20px; color: var(--gris-clair); }
-.ardoise__depart { color: var(--gris); font-size: 16px; }
-.ardoise__qui { display: block; font-family: var(--police); font-weight: 500; font-size: 10px; color: var(--gris); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ardoise--ton { color: var(--orange); }
-.ardoise--bust { color: var(--gris); font-size: 15px; }
-.ardoise--finish { color: var(--noir) !important; background: var(--orange); }
-.ardoise__reste.ardoise--finish small { font-size: 11px; margin-left: 1px; }
-.ardoise__joueurs { font-size: 12px; color: var(--gris-clair); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* 3 ou 4 joueurs sur téléphone : tout tient dans l'écran */
+
+.tablette { border-radius: 16px; overflow: hidden; border: 1px solid var(--bord-fort); background: #0c0c0c; }
+
+/* Plaques des joueurs */
+.plaques { display: grid; gap: 2px; background: var(--bord-fort); border-bottom: 2px solid var(--bord-fort); }
+.plaques--2 { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.plaques--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.plaques--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.plaque { display: flex; flex-direction: column; background: #0c0c0c; min-width: 0; text-align: center; }
+.plaque__nom { padding: 6px 6px 5px; background: #1e1e1e; color: var(--gris-clair); font-weight: 700; font-size: 17px; line-height: 1.15; }
+.plaque__nom span, .plaque__nom small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plaque__nom small { font-size: 11px; font-weight: 500; opacity: 0.85; }
+.plaque__reste { font-family: var(--police-titre); font-weight: 700; font-size: clamp(48px, 14vw, 96px); line-height: 1.05; padding: 4px 4px 0; color: var(--blanc); font-variant-numeric: tabular-nums; }
+.plaque__infos { display: flex; justify-content: center; flex-wrap: wrap; gap: 2px 10px; padding: 2px 4px 8px; font-size: 12px; color: var(--gris); }
+.plaque__infos b { color: var(--orange); }
+.plaque--actif .plaque__nom { background: var(--orange); color: var(--noir); }
+.plaque--actif .plaque__reste { background: var(--blanc); color: var(--noir); }
+.plaque--actif .plaque__infos { background: var(--blanc); color: #555; }
+.plaque--gagnant .plaque__nom { background: var(--orange); color: var(--noir); }
+.plaque__vainqueur { color: var(--orange); font-weight: 800; text-transform: uppercase; }
+.plaques__centre { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px 10px; background: #0c0c0c; min-width: 64px; }
+.plaques__titre { font-size: 10px; font-weight: 700; color: var(--gris); text-transform: uppercase; letter-spacing: 0.5px; }
+.plaques__score { font-family: var(--police-titre); font-weight: 700; font-size: 28px; line-height: 1; padding: 6px 10px; border-radius: 8px; background: var(--orange); color: var(--noir); white-space: nowrap; }
+.plaques__score i { font-style: normal; margin: 0 4px; }
+
+/* Colonnes de volées */
+.tableau-score-cadre { max-height: 60vh; overflow-y: auto; }
+.tableau-score { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
+.tableau-score th, .tableau-score td { padding: 3px 4px; text-align: center; }
+.tableau-score thead th { position: sticky; top: 0; background: #0c0c0c; font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--gris); padding-top: 6px; padding-bottom: 4px; }
+.ts__no { width: 34px; font-family: var(--police-titre); font-size: 15px; font-weight: 600; color: var(--blanc); background: #161616; border-left: 2px solid var(--bord-fort); border-right: 2px solid var(--bord-fort); }
+.tableau-score thead .ts__no { background: #161616; }
+.ts__volee { position: relative; font-family: var(--police-titre); font-weight: 700; font-size: 26px; color: var(--blanc); line-height: 1.15; }
+.ts__volee small { display: block; font-family: var(--police); font-size: 10px; font-weight: 500; color: var(--gris); line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ts__reste { font-family: var(--police-titre); font-weight: 600; font-size: 22px; color: #8a8a8a; }
+.tableau-score:not(.tableau-score--duel) .ts__reste { border-right: 1px solid var(--bord); }
+.ts--ton span { color: var(--orange); }
+.ts--180 span { color: var(--noir); background: var(--orange); padding: 0 6px; border-radius: 6px; }
+.ts--bust span { font-size: 16px; color: var(--gris); }
+.ts--finish span { color: var(--noir); background: var(--orange); padding: 0 6px; border-radius: 6px; }
+.ts--finish-reste { color: var(--orange); font-size: 16px; font-weight: 700; }
+.tableau-score__debut, .tableau-score__fleche { position: absolute; top: 50%; transform: translateY(-50%); font-style: normal; color: var(--orange); }
+.tableau-score__debut { font-size: 10px; }
+.tableau-score__fleche { font-size: 18px; }
+/* Duel : marques côté centre */
+.tableau-score--duel tr > td:nth-child(2) .tableau-score__debut, .tableau-score--duel tr > td:nth-child(2) .tableau-score__fleche { right: 4px; }
+.tableau-score--duel tr > td:nth-child(4) .tableau-score__debut, .tableau-score--duel tr > td:nth-child(4) .tableau-score__fleche { left: 4px; }
+.tableau-score:not(.tableau-score--duel) .tableau-score__debut, .tableau-score:not(.tableau-score--duel) .tableau-score__fleche { left: 3px; }
+
+.tablette__barre { display: flex; justify-content: space-between; gap: 10px; padding: 7px 12px; background: var(--orange); color: var(--noir); font-size: 13px; font-weight: 700; text-transform: uppercase; }
+
+/* 3 ou 4 joueurs sur téléphone */
 @media (max-width: 600px) {
-  .ardoise--3 .ardoise__no, .ardoise--4 .ardoise__no { width: 20px; font-size: 10px; }
-  .ardoise--3 th, .ardoise--3 td, .ardoise--4 th, .ardoise--4 td { padding: 5px 1px; }
-  .ardoise--3 .ardoise__camp, .ardoise--4 .ardoise__camp { padding: 10px 3px 8px !important; }
-  .ardoise--3 .ardoise__nom, .ardoise--4 .ardoise__nom { font-size: 13px; }
-  .ardoise--4 .ardoise__gros { font-size: 30px; }
-  .ardoise--3 .ardoise__gros { font-size: 38px; }
-  .ardoise--3 .ardoise__volee, .ardoise--3 .ardoise__reste { font-size: 17px; }
-  .ardoise--4 .ardoise__volee, .ardoise--4 .ardoise__reste { font-size: 15px; }
-  .ardoise--4 .ardoise__score, .ardoise--4 .ardoise__moy, .ardoise--4 .live__etat { font-size: 10px; }
-  .ardoise--4 .ardoise__score b { font-size: 12px; }
-  .ardoise--3 .ardoise__sous th, .ardoise--4 .ardoise__sous th { font-size: 9px; letter-spacing: -0.2px; }
+  .plaques--3 .plaque__nom, .plaques--4 .plaque__nom { font-size: 13px; }
+  .plaques--3 .plaque__reste { font-size: 40px; }
+  .plaques--4 .plaque__reste { font-size: 32px; }
+  .plaques--4 .plaque__infos { font-size: 10px; gap: 0 6px; }
+  .tableau-score--3 .ts__volee, .tableau-score--4 .ts__volee { font-size: 18px; }
+  .tableau-score--3 .ts__reste, .tableau-score--4 .ts__reste { font-size: 15px; }
+  .tableau-score--3 .ts__no, .tableau-score--4 .ts__no { width: 24px; font-size: 12px; }
+  .tableau-score--3 th, .tableau-score--3 td, .tableau-score--4 th, .tableau-score--4 td { padding: 3px 1px; }
+  .tableau-score--4 thead th { font-size: 8px; }
+  .plaques--2 .plaque__nom { font-size: 15px; }
 }
-@media (min-width: 700px) { .live__format { display: none; } }

@@ -48,22 +48,23 @@ function nomCamp(side) {
   return joueurs.join(' / ') || (s?.is_bot ? 'Dartbot' : '—');
 }
 
-// Manche affichée dans le tableau (null = manche en cours)
+// Manche affichée (null = la plus récente)
 let mancheChoisie = null;
 
+// Présentation inspirée des tablettes de score de compétition :
+// plaques des joueurs en haut (reste en gros), puis une colonne de volées par joueur
 function afficher() {
   const sides = [...game.game_sides].sort((a, b) => a.side - b.side);
   const ordre = [...visits].sort((a, b) => a.id - b.id);
   const etat = etatPartie(game, sides, ordre);
   const fini = game.status !== 'live';
+  const duel = sides.length === 2;
 
   format.textContent = formatPartie(game) + ' · finish double';
   badge.textContent = fini ? (game.status === 'finished' ? 'TERMINÉ' : 'INTERROMPU') : 'EN DIRECT';
   badge.className = 'live__badge' + (fini ? ' live__badge--fini' : '');
 
-  const actif = fini ? null : etat.auLancer;
-
-  // Liste des manches jouées (set, manche), dans l'ordre
+  // Manches jouées, dans l'ordre
   const manches = [];
   for (const v of ordre) {
     const cle = `${v.set_no}-${v.leg_no}`;
@@ -73,68 +74,115 @@ function afficher() {
   if (!fini && !manches.find((m) => m.cle === cleCourante)) manches.push({ cle: cleCourante, set: etat.setCourant, leg: etat.mancheCourante });
   const cleVue = mancheChoisie && manches.find((m) => m.cle === mancheChoisie) ? mancheChoisie : manches.at(-1)?.cle;
   const vue = manches.find((m) => m.cle === cleVue);
-  const libelle = (m) => (game.sets_n ? `S${m.set} · M${m.leg}` : `Manche ${m.leg}`);
+  const enCours = !!vue && vue.cle === cleCourante && !fini;
+  const libelle = (m) => (game.sets_n ? `Set ${m.set} · Manche ${m.leg}` : `Manche ${m.leg}`);
 
   // Volées de la manche affichée, par camp
   const parCamp = Object.fromEntries(sides.map((s) => [s.side, []]));
-  for (const v of ordre) if (vue && v.set_no === vue.set && v.leg_no === vue.leg && parCamp[v.side]) parCamp[v.side].push(v);
-  const nbLignes = Math.max(0, ...Object.values(parCamp).map((l) => l.length));
-  const enCours = vue && vue.cle === cleCourante && !fini;
+  const voleesVue = ordre.filter((v) => vue && v.set_no === vue.set && v.leg_no === vue.leg);
+  voleesVue.forEach((v) => parCamp[v.side]?.push(v));
+  const debutant = enCours ? etat.debutManche : voleesVue[0]?.side;
+  const actif = enCours ? etat.auLancer : null;
+  const ligneActive = actif ? parCamp[actif].length : -1;
+  const nbLignes = Math.max(ligneActive + 1, ...Object.values(parCamp).map((l) => l.length), 1);
 
-  const joueur = (v) => {
-    if (game.mode !== 'double' || !v.player_id) return '';
-    const p = game.game_players.find((x) => x.id === v.player_id);
-    return p ? `<small class="ardoise__qui">${esc(p.display_name)}</small>` : '';
+  // Reste affiché sur la plaque : en direct, ou à la fin de la manche consultée
+  const resteVue = (side) => {
+    if (enCours) return etat.reste[side];
+    const l = parCamp[side];
+    if (!l.length) return game.start_score;
+    const d = l.at(-1);
+    return d.is_checkout ? 0 : (d.is_bust ? d.remaining_before : d.remaining_before - d.score);
   };
-  const cellule = (v) => {
-    if (!v) return '<td class="ardoise__volee"></td><td class="ardoise__reste"></td>';
-    const apres = v.is_bust ? v.remaining_before : v.remaining_before - v.score;
-    const classe = v.is_checkout ? ' ardoise--finish' : (v.is_bust ? ' ardoise--bust' : (v.score >= 100 ? ' ardoise--ton' : ''));
-    return `<td class="ardoise__volee${classe}">${v.is_bust ? 'Bust' : v.score}${joueur(v)}</td>`
-      + `<td class="ardoise__reste${v.is_checkout ? ' ardoise--finish' : ''}">${v.is_checkout ? `✓ ${v.darts_used}<small>fl.</small>` : apres}</td>`;
+  const moy = (side) => {
+    const st = etat.stats[side];
+    return st && st.flechettes ? String(Math.round((st.points / st.flechettes) * 30) / 10).replace('.', ',') : '–';
   };
 
-  const entetes = sides.map((s) => {
-    const gagnant = fini && game.winner_side === s.side;
-    const st = etat.stats[s.side];
-    const moy = st && st.flechettes ? (Math.round((st.points / st.flechettes) * 30) / 10).toString().replace('.', ',') : '–';
+  const plaque = (s) => {
+    const gagnantPartie = fini && game.winner_side === s.side;
+    const gagnantManche = parCamp[s.side].some((v) => v.is_checkout);
+    const classes = ['plaque', s.side === actif ? 'plaque--actif' : '', gagnantPartie ? 'plaque--gagnant' : ''].join(' ');
     return `
-      <th colspan="2" class="ardoise__camp${s.side === actif ? ' ardoise__camp--actif' : ''}${gagnant ? ' ardoise__camp--gagnant' : ''}">
-        <span class="live__etat">${gagnant ? 'Vainqueur' : (s.side === actif ? 'Au lancer' : '&nbsp;')}</span>
-        ${nomArdoise(s.side)}
-        <span class="ardoise__gros">${enCours || !vue ? etat.reste[s.side] : (parCamp[s.side].some((v) => v.is_checkout) ? '✓' : (parCamp[s.side].length ? cellApres(parCamp[s.side].at(-1)) : game.start_score))}</span>
-        <span class="ardoise__score">${game.sets_n ? `Sets <b>${etat.sets[s.side]}</b> · ` : ''}Manches <b>${etat.manches[s.side]}</b></span>
-        <span class="ardoise__moy">Moy. ${moy}</span>
-      </th>`;
-  }).join('');
+      <div class="${classes}">
+        <div class="plaque__nom">${nomPlaque(s.side)}</div>
+        <div class="plaque__reste">${gagnantManche && !enCours ? '✓' : resteVue(s.side)}</div>
+        <div class="plaque__infos">
+          ${duel ? '' : `<span>${game.sets_n ? `S <b>${etat.sets[s.side]}</b> · ` : ''}M <b>${etat.manches[s.side]}</b></span>`}
+          <span>Moy. ${moy(s.side)}</span>
+          ${gagnantPartie ? '<span class="plaque__vainqueur">Vainqueur</span>' : ''}
+        </div>
+      </div>`;
+  };
 
-  const sousEntetes = sides.map(() => '<th>Volée</th><th>Reste</th>').join('');
-  const depart = sides.map(() => `<td class="ardoise__volee"></td><td class="ardoise__reste ardoise__depart">${game.start_score}</td>`).join('');
-  let corps = '';
+  const marque = (side, i) => {
+    let m = '';
+    if (i === 0 && side === debutant) m += '<i class="tableau-score__debut" title="A commencé la manche">●</i>';
+    if (side === actif && i === ligneActive) m += '<i class="tableau-score__fleche" title="Au lancer">▸</i>';
+    return m;
+  };
+  const qui = (v) => {
+    if (game.mode !== 'double' || !v?.player_id) return '';
+    const p = game.game_players.find((x) => x.id === v.player_id);
+    return p ? `<small>${esc(p.display_name)}</small>` : '';
+  };
+  const volee = (side, i) => {
+    const v = parCamp[side][i];
+    if (!v) return `<td class="ts__volee">${marque(side, i)}</td>`;
+    const cl = v.is_checkout ? ' ts--finish' : v.is_bust ? ' ts--bust' : v.score === 180 ? ' ts--180' : v.score >= 100 ? ' ts--ton' : '';
+    return `<td class="ts__volee${cl}">${marque(side, i)}<span>${v.is_bust ? 'Bust' : v.score}</span>${qui(v)}</td>`;
+  };
+  const reste = (side, i) => {
+    const v = parCamp[side][i];
+    if (!v) return '<td class="ts__reste"></td>';
+    if (v.is_checkout) return `<td class="ts__reste ts--finish-reste">✓ ${v.darts_used} fl.</td>`;
+    return `<td class="ts__reste">${v.is_bust ? v.remaining_before : v.remaining_before - v.score}</td>`;
+  };
+
+  let lignes = '';
   for (let i = 0; i < nbLignes; i++) {
-    corps += `<tr><th class="ardoise__no">${i + 1}</th>${sides.map((s) => cellule(parCamp[s.side][i])).join('')}</tr>`;
+    const no = `<th class="ts__no">${(i + 1) * 3}</th>`;
+    if (duel) {
+      const [a, b] = sides.map((s) => s.side);
+      lignes += `<tr>${reste(a, i)}${volee(a, i)}${no}${volee(b, i)}${reste(b, i)}</tr>`;
+    } else {
+      lignes += `<tr>${no}${sides.map((s) => volee(s.side, i) + reste(s.side, i)).join('')}</tr>`;
+    }
   }
+  const tete = duel
+    ? '<tr><th>Reste</th><th>Volée</th><th class="ts__no">Fl.</th><th>Volée</th><th>Reste</th></tr>'
+    : `<tr><th class="ts__no">Fl.</th>${sides.map(() => '<th>Volée</th><th>Reste</th>').join('')}</tr>`;
+
+  const centre = duel ? `
+      <div class="plaques__centre">
+        <span class="plaques__titre">${game.sets_n ? 'Sets' : 'Manches'}</span>
+        <span class="plaques__score">${game.sets_n ? `${etat.sets[sides[0].side]}<i>–</i>${etat.sets[sides[1].side]}` : `${etat.manches[sides[0].side]}<i>–</i>${etat.manches[sides[1].side]}`}</span>
+        ${game.sets_n ? `<span class="plaques__titre">Manches ${etat.manches[sides[0].side]}–${etat.manches[sides[1].side]}</span>` : ''}
+      </div>` : '';
 
   const onglets = manches.length > 1
-    ? `<div class="ardoise__onglets" role="group" aria-label="Choisir la manche">${manches.map((m) => `<button type="button" class="ardoise__onglet" aria-pressed="${m.cle === cleVue}" data-manche="${m.cle}">${libelle(m)}</button>`).join('')}</div>`
+    ? `<div class="ardoise__onglets" role="group" aria-label="Choisir la manche">${manches.map((m) => `<button type="button" class="ardoise__onglet" aria-pressed="${m.cle === cleVue}" data-manche="${m.cle}">${game.sets_n ? `S${m.set} · M${m.leg}` : `Manche ${m.leg}`}</button>`).join('')}</div>`
     : '';
 
   zone.innerHTML = `
     <p class="match__format live__format">${esc(formatPartie(game))} · finish double</p>
-    ${onglets}
-    <div class="ardoise-cadre">
-      <table class="ardoise ardoise--${sides.length}">
-        <thead>
-          <tr><th class="ardoise__no"></th>${entetes}</tr>
-          <tr class="ardoise__sous"><th class="ardoise__no">#</th>${sousEntetes}</tr>
-        </thead>
-        <tbody>
-          <tr><th class="ardoise__no"></th>${depart}</tr>
-          ${corps}
-        </tbody>
-      </table>
+    <div class="tablette">
+      <div class="plaques plaques--${sides.length}">
+        ${duel ? plaque(sides[0]) + centre + plaque(sides[1]) : sides.map(plaque).join('')}
+      </div>
+      <div class="tableau-score-cadre">
+        <table class="tableau-score${duel ? ' tableau-score--duel' : ` tableau-score--${sides.length}`}">
+          <thead>${tete}</thead>
+          <tbody>${lignes}</tbody>
+        </table>
+      </div>
+      <div class="tablette__barre">
+        <span>${vue ? libelle(vue) : ''}</span>
+        <span>${enCours ? 'En cours' : (fini && vue === manches.at(-1) ? 'Partie terminée' : 'Manche terminée')}</span>
+      </div>
     </div>
-    <p class="match__format">${vue ? `${libelle(vue)}${enCours ? ' en cours' : ''} · ` : ''}Le score se met à jour automatiquement à chaque volée saisie.</p>`;
+    ${onglets}
+    <p class="match__format">● a commencé la manche · ▸ au lancer · Le score se met à jour automatiquement.</p>`;
 
   zone.querySelectorAll('[data-manche]').forEach((b) => b.addEventListener('click', () => {
     mancheChoisie = b.dataset.manche === manches.at(-1).cle ? null : b.dataset.manche;
@@ -142,18 +190,14 @@ function afficher() {
   }));
 }
 
-// En double : nom de l'équipe, puis les deux joueurs en petit
-function nomArdoise(side) {
+// Nom sur la plaque ; en double : équipe puis joueurs en petit
+function nomPlaque(side) {
   const s = game.game_sides.find((x) => x.side === side);
   const joueurs = game.game_players.filter((p) => p.side === side).sort((a, b) => a.throw_order - b.throw_order).map((p) => p.display_name);
   if (game.mode === 'double') {
-    return `<span class="ardoise__nom">${esc(s?.name || joueurs.join(' / '))}</span><span class="ardoise__joueurs">${esc(joueurs.join(' · '))}</span>`;
+    return `<span>${esc(s?.name || joueurs.join(' / '))}</span><small>${esc(joueurs.join(' · '))}</small>`;
   }
-  return `<span class="ardoise__nom">${esc(nomCamp(side))}</span>`;
-}
-
-function cellApres(v) {
-  return v.is_bust ? v.remaining_before : v.remaining_before - v.score;
+  return `<span>${esc(nomCamp(side))}</span>`;
 }
 
 // Temps réel : nouvelles volées, corrections, fin de partie
