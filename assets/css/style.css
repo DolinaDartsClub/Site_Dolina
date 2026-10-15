@@ -1037,3 +1037,9 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .sv-etat { padding: 12px 14px; margin-bottom: 10px; border-radius: 12px; border: 1px solid var(--bord); font-size: 15px; }
 .sv-etat--retard { border-color: #5a3a14; background: var(--orange-fond); color: #ffd2a6; }
 .sv-aide { margin: 0 0 12px; font-size: 14px; color: var(--gris-clair); line-height: 1.45; }
+
+/* ---------- Mon compte : photo de profil ---------- */
+.photo-profil__ligne { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.photo-profil__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.photo-profil__actions label { cursor: pointer; }
+.bouton--inactif { opacity: .45; }

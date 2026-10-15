@@ -6,7 +6,7 @@
 //  Les droits sont vérifiés par la base : un non-admin ne peut rien modifier.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur, avatar, DOSSIER_PHOTOS } from './app.js?v=__VERSION__';
 import { initActus } from './admin-actus.js?v=__VERSION__';
 import { initDemandes } from './admin-demandes.js?v=__VERSION__';
 import { initSauvegarde } from './admin-sauvegarde.js?v=__VERSION__';
@@ -44,7 +44,7 @@ async function charger() {
   const [rp, rt] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, first_name, last_name, nickname, status, role, created_at, profile_private(email, phone), team_members!team_members_profile_id_fkey(team_id, status)')
+      .select('id, first_name, last_name, nickname, use_nickname, photo_path, status, role, created_at, profile_private(email, phone), team_members!team_members_profile_id_fkey(team_id, status)')
       .order('last_name'),
     supabase.from('teams').select('id, name, captain_id, sort_order').order('sort_order'),
   ]);
@@ -156,6 +156,8 @@ function afficherMembres() {
             <label class="champ">Nom<input type="text" maxlength="60" value="${esc(p.last_name)}" data-champ="last_name" data-id="${p.id}"></label>
           </div>
           <button type="button" class="bouton bouton--petit" data-action="renommer" data-id="${p.id}" style="align-self:flex-start">Enregistrer le nom</button>
+          ${p.photo_path ? `<div class="photo-profil__ligne">${avatar(p, 'avatar--grand')}
+            <button type="button" class="bouton bouton--petit bouton--danger" data-action="retirer-photo" data-id="${p.id}">Retirer la photo</button></div>` : ''}
           <div class="deux-colonnes">
             <label class="champ">Statut du compte
               <select data-action="statut" data-id="${p.id}" ${estMoi ? 'disabled' : ''}>
@@ -224,6 +226,11 @@ async function executer(action, el) {
       res = await supabase.from('profiles').update({ first_name: prenom, last_name: nom }).eq('id', id);
       break;
     }
+    case 'retirer-photo':
+      if (!confirm(`Retirer la photo de profil de ${nomComplet(p)} ?`)) return;
+      res = await supabase.from('profiles').update({ photo_path: null }).eq('id', id);
+      if (!res.error && p.photo_path) await supabase.storage.from(DOSSIER_PHOTOS).remove([p.photo_path]);
+      break;
     case 'valider':
       res = await supabase.from('profiles').update({ status: 'active' }).eq('id', id);
       break;

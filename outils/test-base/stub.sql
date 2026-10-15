@@ -10,3 +10,7 @@ alter default privileges in schema public grant all on tables to anon, authentic
 alter default privileges in schema public grant all on sequences to anon, authenticated;
 alter default privileges in schema public grant execute on functions to anon, authenticated;
 create publication supabase_realtime;
+alter table storage.objects add column if not exists metadata jsonb, add column if not exists owner uuid;
+create function storage.foldername(name text) returns text[] language sql immutable as $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
+grant usage on schema storage to anon, authenticated; grant all on storage.objects to authenticated; grant select on storage.objects to anon;
+grant execute on function storage.foldername(text) to anon, authenticated;

@@ -76,21 +76,73 @@ export function urlImage(chemin) {
   return chemin ? `${SUPABASE_URL}/storage/v1/object/public/public-images/${chemin}` : '';
 }
 
-// Photo de profil (envoi des photos : étape 7) — dossier « photos-profil »
-export function urlPhoto(chemin) {
-  return chemin ? `${SUPABASE_URL}/storage/v1/object/public/photos-profil/${chemin}` : '';
+// ---------- Photos de profil ----------
+// Dossier privé « photos-profil » : chaque photo s'affiche grâce à un lien
+// temporaire (1 heure) que la base accorde seulement aux membres validés.
+export const DOSSIER_PHOTOS = 'photos-profil';
+const DUREE_LIEN = 3600;
+const liensPhotos = new Map(); // chemin -> { url, fin }
+try {
+  const garde = JSON.parse(sessionStorage.getItem('dolina-photos') || '{}');
+  Object.entries(garde).forEach(([k, v]) => { if (v.fin > Date.now() + 60000) liensPhotos.set(k, v); });
+} catch { /* stockage indisponible : sans importance */ }
+
+function retenirLiens() {
+  try { sessionStorage.setItem('dolina-photos', JSON.stringify(Object.fromEntries(liensPhotos))); } catch { /* idem */ }
 }
 
-// Pastille de profil : la photo si le membre en a une, sinon ses initiales
+// Liens temporaires pour une liste de photos (demandés en une seule fois)
+export async function liensPhotosProfil(chemins) {
+  const manquants = [...new Set(chemins.filter(Boolean))]
+    .filter((c) => !(liensPhotos.get(c)?.fin > Date.now() + 60000));
+  if (manquants.length) {
+    const { data } = await supabase.storage.from(DOSSIER_PHOTOS).createSignedUrls(manquants, DUREE_LIEN);
+    (data || []).forEach((d) => {
+      if (d.signedUrl && !d.error) liensPhotos.set(d.path, { url: d.signedUrl, fin: Date.now() + DUREE_LIEN * 1000 });
+    });
+    retenirLiens();
+  }
+  return Object.fromEntries(chemins.filter((c) => liensPhotos.has(c)).map((c) => [c, liensPhotos.get(c).url]));
+}
+
+export function oublierLienPhoto(chemin) {
+  liensPhotos.delete(chemin);
+  retenirLiens();
+}
+
+// Remplit toutes les pastilles [data-photo] de la page avec leur photo
+export async function chargerPhotos(racine = document) {
+  const pastilles = [...racine.querySelectorAll('[data-photo]:not([data-photo-ok])')];
+  if (!pastilles.length) return;
+  pastilles.forEach((p) => p.setAttribute('data-photo-ok', ''));
+  const liens = await liensPhotosProfil(pastilles.map((p) => p.dataset.photo));
+  pastilles.forEach((p) => {
+    const url = liens[p.dataset.photo];
+    if (!url) return;
+    const img = new Image();
+    img.alt = '';
+    img.onload = () => p.prepend(img);
+    img.src = url;
+  });
+}
+
+// Pastille de profil : les initiales, remplacées par la photo dès qu'elle est chargée
 export function avatar(profil, classe = '') {
   const nom = profil ? nomAffiche(profil) : '?';
   const initiales = (profil?.first_name && profil?.last_name && !profil.use_nickname
     ? `${profil.first_name[0]}${profil.last_name[0]}`
     : nom.split(/\s+/).map((m) => m[0]).join('').slice(0, 2)).toUpperCase();
-  if (profil?.photo_path) {
-    return `<span class="avatar ${classe}"><img src="${esc(urlPhoto(profil.photo_path))}" alt="" loading="lazy" onerror="this.remove()"><span aria-hidden="true">${esc(initiales)}</span></span>`;
-  }
-  return `<span class="avatar ${classe}" aria-hidden="true"><span>${esc(initiales)}</span></span>`;
+  const photo = profil?.photo_path ? ` data-photo="${esc(profil.photo_path)}"` : '';
+  return `<span class="avatar ${classe}"${photo} aria-hidden="true"><span>${esc(initiales)}</span></span>`;
+}
+
+// Les pastilles ajoutées à la page reçoivent leur photo automatiquement
+if (typeof MutationObserver !== 'undefined') {
+  let attente = null;
+  new MutationObserver(() => {
+    if (attente) return;
+    attente = setTimeout(() => { attente = null; chargerPhotos(); }, 30);
+  }).observe(document.documentElement, { childList: true, subtree: true });
 }
 
 // Adresse de base du site (sert aux liens envoyés par email)

@@ -1,10 +1,10 @@
 // =====================================================================
 //  Mon compte : état du compte, équipes, espace capitaine, accès admin,
 //  changement de mot de passe, déconnexion
-//  (profil modifiable, photo et suppression du compte : étape 7)
+//  profil modifiable, photo de profil
 // =====================================================================
 
-import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche } from './app.js?v=__VERSION__';
+import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche, avatar, DOSSIER_PHOTOS, oublierLienPhoto } from './app.js?v=__VERSION__';
 
 const zone = document.getElementById('contenu');
 const boutonDeco = document.getElementById('deconnexion');
@@ -37,7 +37,7 @@ async function afficher() {
   const [{ data: equipes }, { data: mesRattachements }, { data: detail }, { data: prive }] = await Promise.all([
     supabase.from('teams').select('id, name, captain_id').order('sort_order'),
     supabase.from('team_members').select('team_id, status').eq('profile_id', profil.id),
-    supabase.from('profiles').select('nickname, use_nickname, hand, dart_weight, dart_brand').eq('id', profil.id).maybeSingle(),
+    supabase.from('profiles').select('first_name, last_name, nickname, use_nickname, hand, dart_weight, dart_brand, photo_path, photo_consent').eq('id', profil.id).maybeSingle(),
     supabase.from('profile_private').select('phone').eq('id', profil.id).maybeSingle(),
   ]);
   const p = detail || {};
@@ -152,6 +152,20 @@ async function afficher() {
       ${explication}
       ${materiel ? `<span class="match__format">${esc(materiel)}</span>` : ''}
     </div>
+    <div class="carte-info photo-profil" id="bloc-photo">
+      <h2>Ma photo</h2>
+      <div class="message" id="message-photo" role="alert" hidden></div>
+      <div class="photo-profil__ligne">
+        ${avatar({ ...p, id: profil.id }, 'avatar--grand')}
+        <div class="photo-profil__actions">
+          <input type="file" id="champ-photo" class="visuellement-cache" accept="image/jpeg,image/png,image/webp">
+          <label for="champ-photo" class="bouton bouton--petit${p.photo_consent ? '' : ' bouton--inactif'}" id="btn-choisir-photo" ${p.photo_consent ? '' : 'aria-disabled="true"'}>${p.photo_path ? 'Changer ma photo' : 'Ajouter une photo'}</label>
+          ${p.photo_path ? '<button type="button" class="bouton bouton--petit bouton--danger" id="btn-retirer-photo">Retirer ma photo</button>' : ''}
+        </div>
+      </div>
+      <label class="case case--simple"><input type="checkbox" id="accord-photo" ${p.photo_consent ? 'checked' : ''}>J'accepte que ma photo soit visible des membres connectés du club (jamais des visiteurs).</label>
+      <small class="match__format">La photo est recadrée en carré et réduite automatiquement. Décocher la case retire votre photo.</small>
+    </div>
     ${profil.status === 'active' ? `<div class="actions">
       <a class="bouton bouton--plein" href="mes-parties.html">Mes parties</a>
       <a class="bouton" href="stats.html">Mes stats</a>
@@ -205,6 +219,100 @@ async function afficher() {
   messageGeneral = document.getElementById('message-general');
   brancherChangementMotDePasse(profil.email);
   brancherProfil();
+  brancherPhoto(p);
+}
+
+// ---------- Photo de profil ----------
+
+const TAILLE_PHOTO = 400;
+
+// Recadre la photo en carré (centre de l'image), 400 × 400, en JPEG
+function preparerPhoto(fichier) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(fichier);
+    img.onload = () => {
+      const cote = Math.min(img.width, img.height);
+      const canvas = document.createElement('canvas');
+      canvas.width = TAILLE_PHOTO;
+      canvas.height = TAILLE_PHOTO;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#141414';
+      ctx.fillRect(0, 0, TAILLE_PHOTO, TAILLE_PHOTO);
+      ctx.drawImage(img, (img.width - cote) / 2, (img.height - cote) / 2, cote, cote, 0, 0, TAILLE_PHOTO, TAILLE_PHOTO);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('conversion'))), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('lecture')); };
+    img.src = url;
+  });
+}
+
+function brancherPhoto(p) {
+  const zoneMsg = document.getElementById('message-photo');
+  const champ = document.getElementById('champ-photo');
+  const accord = document.getElementById('accord-photo');
+  const ancien = p.photo_path;
+
+  async function terminer(texte) {
+    if (ancien) oublierLienPhoto(ancien);
+    await afficher();
+    message(document.getElementById('message-photo'), texte, 'ok');
+  }
+
+  document.getElementById('btn-choisir-photo').addEventListener('click', (e) => {
+    if (!accord.checked) {
+      e.preventDefault();
+      message(zoneMsg, 'Cochez d\'abord la case d\'accord pour ajouter une photo.');
+    }
+  });
+
+  champ.addEventListener('change', async () => {
+    const f = champ.files[0];
+    champ.value = '';
+    if (!f) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return message(zoneMsg, 'Format non accepté : choisissez une image JPEG, PNG ou WebP.');
+    message(zoneMsg, 'Envoi de la photo…', 'ok');
+    let blob;
+    try {
+      blob = await preparerPhoto(f);
+    } catch {
+      return message(zoneMsg, 'Impossible de lire cette image. Essayez avec une autre photo.');
+    }
+    const chemin = `${profil.id}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const envoi = await supabase.storage.from(DOSSIER_PHOTOS).upload(chemin, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
+    if (envoi.error) return message(zoneMsg, `La photo n'a pas pu être envoyée. ${erreurFr(envoi.error)}`);
+    const maj = await supabase.from('profiles').update({ photo_path: chemin, photo_consent: true }).eq('id', profil.id);
+    if (maj.error) {
+      await supabase.storage.from(DOSSIER_PHOTOS).remove([chemin]);
+      return message(zoneMsg, erreurFr(maj.error));
+    }
+    if (ancien) await supabase.storage.from(DOSSIER_PHOTOS).remove([ancien]);
+    await terminer('Photo enregistrée.');
+  });
+
+  async function retirer(retirerAccord) {
+    const maj = await supabase.from('profiles').update(retirerAccord ? { photo_path: null, photo_consent: false } : { photo_path: null }).eq('id', profil.id);
+    if (maj.error) return message(zoneMsg, erreurFr(maj.error));
+    if (ancien) await supabase.storage.from(DOSSIER_PHOTOS).remove([ancien]);
+    await terminer(retirerAccord ? (ancien ? 'Accord retiré : votre photo a été supprimée.' : 'Accord retiré.') : 'Photo retirée.');
+  }
+
+  document.getElementById('btn-retirer-photo')?.addEventListener('click', () => {
+    if (confirm('Retirer votre photo de profil ?')) retirer(false);
+  });
+
+  accord.addEventListener('change', async () => {
+    if (accord.checked) {
+      const maj = await supabase.from('profiles').update({ photo_consent: true }).eq('id', profil.id);
+      if (maj.error) { accord.checked = false; return message(zoneMsg, erreurFr(maj.error)); }
+      await terminer('Accord enregistré : vous pouvez ajouter une photo.');
+    } else if (!ancien || confirm('Retirer votre accord ? Votre photo sera supprimée.')) {
+      await retirer(true);
+    } else {
+      accord.checked = true;
+    }
+  });
 }
 
 // ---------- Modification du profil ----------
