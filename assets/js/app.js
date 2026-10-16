@@ -265,7 +265,7 @@ const ICONES_NAV = [
   ['tournois.html', 'Tournois', '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>'],
   ['stats.html', 'Mes stats', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],
   ['classement.html', 'Classement', '<path d="M8 21V11H3v10M15 21V4h-6v17M21 21v-7h-6v7M2 21h20"/>'],
-  [null, 'Club · bientôt', '<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7M17 4a4 4 0 0 1 0 8M22 21c0-3-2-6-5-6.5"/>'],
+  ['equipes.html', 'Équipes', '<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7M17 4a4 4 0 0 1 0 8M22 21c0-3-2-6-5-6.5"/>'],
   ['contact.html', 'Nous contacter', '<path d="M4 5h16v14H4z"/><path d="M4 6l8 7 8-7"/>'],
 ];
 // Pages rattachées à une rubrique (pour la mettre en avant)

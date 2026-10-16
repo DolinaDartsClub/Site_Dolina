@@ -126,7 +126,7 @@ async function afficher() {
     return `
       <div class="ligne-equipe">
         <span class="ligne-equipe__nom">${esc(t.name)}${capitaine ? ' <span class="statut statut--ok">Capitaine</span>' : ''}
-          ${m.status === 'accepted' ? '<span class="lien-bientot" title="La page de chaque équipe arrive dans une prochaine étape">Page de l\'équipe · bientôt</span>' : ''}</span>
+          ${m.status === 'accepted' ? `<a class="lien-equipe" href="equipes.html#${encodeURIComponent(t.name)}">Calendrier de l'équipe →</a>` : ''}</span>
         <span class="statut ${c}">${l}</span>
         <span class="ligne-equipe__actions">${action}</span>
       </div>`;

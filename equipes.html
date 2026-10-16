@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Équipes – Dolina Darts Club</title>
+  <meta name="description" content="Calendrier et résultats des équipes du Dolina Darts Club en championnat CPARD.">
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/equipes.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom">Équipes</span>
+      <span class="entete__sous">Dolina Darts Club</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page page--equipes">
+  <div class="message" id="message" role="alert" hidden></div>
+  <h1 class="section__titre">Équipes</h1>
+  <p class="intro eq-intro">Calendrier et résultats de nos équipes en championnat CPARD.</p>
+  <nav class="onglets eq-onglets" id="eq-onglets" aria-label="Choisir une équipe"></nav>
+  <div id="eq-contenu" aria-live="polite"><p class="vide">Chargement…</p></div>
+</main>
+
+<!-- Rencontre : ajout / modification (capitaine ou admin) -->
+<div class="fenetre" id="fen-rencontre" role="dialog" aria-modal="true" aria-labelledby="titre-rencontre" hidden>
+  <form class="fenetre__boite fenetre__boite--pleine eq-form" id="form-rencontre" novalidate>
+    <div class="fenetre__entete">
+      <h2 id="titre-rencontre">Nouvelle rencontre</h2>
+      <button type="button" class="bouton bouton--icone" data-fermer aria-label="Fermer">✕</button>
+    </div>
+    <div class="pastilles eq-lieu" role="group" aria-label="Domicile ou extérieur">
+      <button type="button" class="pastille-choix" data-domicile="1" aria-pressed="true">Domicile</button>
+      <button type="button" class="pastille-choix" data-domicile="0" aria-pressed="false">Extérieur</button>
+    </div>
+    <label class="champ">Adversaire<input type="text" name="adversaire" maxlength="80" required placeholder="Ex. Les Archers de Vanves"></label>
+    <div class="deux-colonnes">
+      <label class="champ">Date<input type="date" name="date_match" required></label>
+      <label class="champ">Heure du match<input type="time" name="heure_match" step="300"></label>
+    </div>
+    <div class="deux-colonnes">
+      <label class="champ">Rendez-vous<input type="time" name="heure_rdv" step="300"></label>
+      <label class="champ">Journée<input type="text" name="journee" maxlength="20" placeholder="Ex. J3"></label>
+    </div>
+    <div class="deux-colonnes">
+      <label class="champ">Division<input type="text" name="division" maxlength="40" placeholder="Ex. D2"></label>
+      <label class="champ">Poule<input type="text" name="poule" maxlength="40" placeholder="Ex. B"></label>
+    </div>
+    <label class="champ">Salle
+      <select name="salle_id"></select>
+    </label>
+    <fieldset class="bloc-choix eq-nouvelle-salle" id="eq-nouvelle-salle" hidden>
+      <legend>Nouvelle salle (ajoutée au carnet)</legend>
+      <label class="champ">Nom<input type="text" name="salle_nom" maxlength="80" placeholder="Ex. Bar Le Bullseye"></label>
+      <label class="champ">Adresse<input type="text" name="salle_adresse" maxlength="200" placeholder="N°, rue, code postal, ville"></label>
+      <label class="champ">Lien Google Maps <small>(facultatif)</small><input type="url" name="salle_lien" maxlength="300" placeholder="https://maps.app.goo.gl/…"></label>
+    </fieldset>
+    <label class="champ">Note <small>(facultatif)</small><textarea name="note" rows="2" maxlength="500" placeholder="Ex. prévoir 6 joueurs, match reporté…"></textarea></label>
+    <fieldset class="bloc-choix">
+      <legend>Score final <small>(une fois la rencontre jouée)</small></legend>
+      <div class="eq-score-saisie">
+        <label class="champ"><span id="lib-score-nous">Nous</span><input type="number" inputmode="numeric" name="score_nous" min="0" max="99"></label>
+        <span aria-hidden="true">–</span>
+        <label class="champ"><span id="lib-score-eux">Eux</span><input type="number" inputmode="numeric" name="score_eux" min="0" max="99"></label>
+      </div>
+    </fieldset>
+    <div class="actions">
+      <button type="submit" class="bouton bouton--plein" id="btn-enregistrer">Enregistrer</button>
+      <button type="button" class="bouton" data-fermer>Annuler</button>
+      <button type="button" class="bouton bouton--danger" id="btn-supprimer-rencontre" hidden>Supprimer</button>
+    </div>
+  </form>
+</div>
+
+</body>
+</html>

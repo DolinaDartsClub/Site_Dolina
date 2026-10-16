@@ -1385,3 +1385,80 @@ span.adm-partie__case { cursor: default; }
 .dem-equipe__texte b { color: var(--blanc); }
 .dem-equipe__actions { display: flex; gap: 6px; }
 .dem-titre { margin-top: 4px; }
+
+/* ===================== Équipes : calendrier et résultats ===================== */
+.eq-intro { margin: -4px 0 4px; }
+.eq-onglets { margin-bottom: 14px; }
+.eq-tete { display: grid; gap: 12px; }
+.eq-tete__haut { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.eq-tete__haut h2 { margin: 0; font-family: var(--police-titre); font-size: 28px; text-transform: uppercase; }
+.eq-saison select { min-height: 36px; }
+.eq-bilan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.eq-bilan__case { display: grid; justify-items: center; padding: 8px 4px; border: 1px solid var(--bord); border-radius: 10px; background: var(--noir-2); font-size: 12px; color: var(--gris); text-transform: uppercase; letter-spacing: .04em; }
+.eq-bilan__case b { font-family: var(--police-titre); font-size: 28px; line-height: 1.1; color: var(--blanc); }
+.eq-bilan__case--v b { color: var(--orange); }
+.eq-bilan__case--d b { color: var(--gris-clair); }
+.eq-liste { display: grid; gap: 10px; }
+.eq-rencontre { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--bord); border-radius: var(--rayon); background: var(--carte); scroll-margin: 90px; }
+.eq-rencontre--gagne { border-left: 4px solid var(--orange); }
+.eq-rencontre--perdu { border-left: 4px solid var(--bord-fort); }
+.eq-rencontre--nul { border-left: 4px solid var(--gris); }
+.eq-date { display: grid; justify-items: center; padding: 6px 0; border-radius: 10px; background: var(--noir-2); border: 1px solid var(--bord); line-height: 1.05; }
+.eq-date__jour, .eq-date__mois { font-size: 11px; text-transform: uppercase; color: var(--gris); letter-spacing: .05em; }
+.eq-date__num { font-family: var(--police-titre); font-size: 26px; color: var(--blanc); }
+.eq-rencontre__corps { display: grid; gap: 4px; min-width: 0; }
+.eq-rencontre__haut { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.eq-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--bord-fort); color: var(--gris-clair); }
+.eq-badge--dom { border-color: var(--orange); color: var(--orange); }
+.eq-meta { font-size: 12px; color: var(--gris); }
+.eq-affiche { margin: 0; font-size: 17px; line-height: 1.25; overflow-wrap: anywhere; }
+.eq-affiche span { color: var(--gris); font-weight: 500; font-size: 14px; }
+.eq-heures { margin: 0; font-weight: 600; color: var(--orange-clair); font-size: 14px; }
+.eq-salle, .eq-note { margin: 0; font-size: 13px; color: var(--gris-clair); overflow-wrap: anywhere; }
+.eq-salle a { color: var(--orange); font-weight: 600; white-space: nowrap; }
+.eq-note { font-style: italic; }
+.eq-rencontre__actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.eq-rencontre__actions:empty { display: none; }
+.eq-score { display: grid; justify-items: center; gap: 2px; min-width: 76px; }
+.eq-score__chiffres { font-family: var(--police-titre); font-size: 30px; line-height: 1; white-space: nowrap; }
+.eq-score__chiffres i { font-style: normal; color: var(--gris); margin: 0 3px; }
+.eq-score__res { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 2px 8px; border-radius: 999px; background: #2a2a2a; color: var(--gris-clair); }
+.eq-rencontre--gagne .eq-score__chiffres { color: var(--orange); }
+.eq-rencontre--gagne .eq-score__res { background: var(--orange); color: var(--noir); }
+@media (max-width: 480px) {
+  .eq-rencontre { grid-template-columns: 50px minmax(0, 1fr); }
+  .eq-score { grid-column: 2; justify-items: start; display: flex; align-items: center; gap: 10px; }
+}
+.eq-effectif { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.eq-joueur { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--bord); border-radius: 10px; color: var(--blanc); text-decoration: none; background: var(--carte); }
+.eq-joueur:hover { border-color: var(--orange); }
+.eq-cap { color: var(--orange); font-weight: 700; margin-left: 4px; }
+.eq-connexion { text-align: center; margin-top: 18px; }
+.eq-carnet { margin-top: 20px; display: grid; gap: 10px; }
+.eq-carnet summary { cursor: pointer; font-weight: 700; }
+.eq-salles { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.eq-salle-ligne { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid var(--bord); border-radius: 10px; background: var(--noir-2); }
+.eq-salle-ligne__texte { flex: 1; min-width: 180px; display: grid; gap: 2px; }
+.eq-salle-ligne__texte small { color: var(--gris); }
+.eq-salle-ligne__actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.eq-salle-form { display: grid; gap: 8px; width: 100%; }
+.eq-form { height: auto; max-height: 100%; overflow-y: auto; display: grid; gap: 12px; align-content: start; }
+.eq-lieu { margin: 0; }
+.eq-score-saisie { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: end; }
+.eq-score-saisie > span { padding-bottom: 12px; color: var(--gris); font-size: 20px; }
+.eq-score-saisie span[id] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+
+/* Accueil : derniers résultats des équipes */
+.resultats-accueil { display: grid; gap: 8px; }
+.res-ligne { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--bord); border-radius: 10px; background: var(--carte); color: var(--blanc); text-decoration: none; }
+.res-ligne:hover { border-color: var(--orange); }
+.res-ligne__res { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; background: #2a2a2a; color: var(--gris-clair); }
+.res-ligne--gagne .res-ligne__res { background: var(--orange); color: var(--noir); }
+.res-ligne__texte { display: grid; min-width: 0; }
+.res-ligne__texte strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.res-ligne__texte small { color: var(--gris); font-size: 12px; }
+.res-ligne__score { font-family: var(--police-titre); font-size: 22px; white-space: nowrap; }
+.res-ligne--gagne .res-ligne__score { color: var(--orange); }
+.res-tout { justify-self: start; color: var(--orange); font-weight: 600; font-size: 14px; }
+.lien-equipe { display: inline-block; margin-left: 6px; color: var(--orange); font-size: 12px; font-weight: 700; white-space: nowrap; vertical-align: middle; }
+.eq-tete { margin-bottom: 18px; } .eq-score__chiffres, .res-ligne__score, .eq-bilan__case b, .eq-date__num { font-weight: 700; }

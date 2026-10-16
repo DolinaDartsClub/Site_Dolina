@@ -95,6 +95,31 @@ function carteMatch(g, visits) {
 
 // ---------- Tournois en cours (visible des visiteurs) ----------
 
+// Derniers résultats des équipes (championnat CPARD, script 030)
+async function chargerResultats() {
+  const bloc = document.getElementById('bloc-resultats');
+  if (!bloc) return;
+  const [rr, rt] = await Promise.all([
+    supabase.from('rencontres').select('id, team_id, date_match, adversaire, domicile, score_nous, score_eux')
+      .not('score_nous', 'is', null).order('date_match', { ascending: false }).limit(4),
+    supabase.from('teams').select('id, name'),
+  ]);
+  if (rr.error || rt.error || !rr.data?.length) { bloc.hidden = true; return; }
+  const nom = (id) => rt.data.find((t) => t.id === id)?.name || 'Dolina';
+  const fmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+  document.getElementById('resultats-equipes').innerHTML = rr.data.map((r) => {
+    const code = r.score_nous > r.score_eux ? 'V' : (r.score_nous < r.score_eux ? 'D' : 'N');
+    const libelle = { V: 'Victoire', D: 'Défaite', N: 'Nul' }[code];
+    return `
+      <a class="res-ligne${code === 'V' ? ' res-ligne--gagne' : ''}" href="equipes.html#${encodeURIComponent(nom(r.team_id))}" aria-label="${esc(`${libelle} de ${nom(r.team_id)} contre ${r.adversaire}, ${r.score_nous} à ${r.score_eux}`)}">
+        <span class="res-ligne__res" aria-hidden="true">${code}</span>
+        <span class="res-ligne__texte"><strong>${esc(nom(r.team_id))} – ${esc(r.adversaire)}</strong><small>${esc(fmt.format(new Date(`${r.date_match}T12:00:00`)))} · ${r.domicile ? 'à domicile' : 'à l\'extérieur'}</small></span>
+        <span class="res-ligne__score">${r.score_nous} – ${r.score_eux}</span>
+      </a>`;
+  }).join('') + '<a class="res-tout" href="equipes.html">Calendrier des équipes →</a>';
+  bloc.hidden = false;
+}
+
 async function chargerTournois() {
   const bloc = document.getElementById('bloc-tournois');
   const zone = document.getElementById('tournois-en-cours');
@@ -191,6 +216,7 @@ supabase
   .subscribe();
 
 chargerTournois();
+chargerResultats();
 
 chargerMatchs();
 chargerArticles();
