@@ -1734,3 +1734,10 @@ span.adm-partie__case { cursor: default; }
   0% { opacity: 1; transform: none; filter: none; }
   100% { opacity: 0; transform: translateY(-14px) scale(.97); filter: blur(2px); }
 }
+
+/* Barres de filtres : un filtre par ligne, listes de même largeur, nom du filtre à gauche */
+.mp-filtres, .rc-filtres { display: grid; gap: 8px; }
+.mp-filtres > .ld, .rc-filtres > .ld { justify-self: start; min-width: min(320px, 100%); }
+.mp-filtres > .ld .ld-bouton, .rc-filtres > .ld .ld-bouton { width: 100%; }
+.mp-filtres .ld-libelle, .rc-filtres .ld-libelle { min-width: 72px; display: inline-block; text-align: left; }
+.mp-filtres .ld-chevron, .rc-filtres .ld-chevron { margin-left: auto; }

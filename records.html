@@ -36,14 +36,12 @@
     </div>
     <p class="intro rc-intro">Meilleure moyenne sur une partie et plus haut finish de chaque joueur. Mêmes parties que le classement : 301 et 501 terminées, en individuel, hors matchs amicaux et dartbot.</p>
     <div class="rc-filtres">
-      <div class="rc-periode">
-        <label class="rc-saison"><span class="visuellement-cache">Saison</span><select id="rc-saison"></select></label>
-        <div class="mp-filtre" role="group" aria-label="Période" id="rc-trimestres"></div>
-      </div>
+      <div class="mp-filtre" role="group" aria-label="Saison" id="rc-saisons"></div>
+      <div class="mp-filtre" role="group" aria-label="Période" id="rc-trimestres"></div>
       <div class="mp-filtre" role="group" aria-label="Jeu" id="rc-jeu">
         <button type="button" data-jeu="" aria-pressed="true">301 et 501</button>
-        <button type="button" data-jeu="501" aria-pressed="false">501</button>
-        <button type="button" data-jeu="301" aria-pressed="false">301</button>
+        <button type="button" data-jeu="501" aria-pressed="false">501 seulement</button>
+        <button type="button" data-jeu="301" aria-pressed="false">301 seulement</button>
       </div>
     </div>
     <p class="rc-periode-texte" id="rc-periode-texte" aria-live="polite"></p>

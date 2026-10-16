@@ -11,7 +11,7 @@ import { debutSaison, nomSaison } from './profil-commun.js?v=__VERSION__';
 const acces = document.getElementById('acces');
 const contenu = document.getElementById('contenu');
 const grille = document.getElementById('rc-grille');
-const choixSaison = document.getElementById('rc-saison');
+const choixSaison = document.getElementById('rc-saisons');
 const zoneTrimestres = document.getElementById('rc-trimestres');
 
 const TRIMESTRES = [
@@ -43,8 +43,8 @@ function afficherFiltres() {
   const saisons = [];
   for (let a = actuelle.getFullYear(); a >= 2026; a--) saisons.push(new Date(a, 8, 1));
   if (!saisons.length) saisons.push(actuelle);
-  choixSaison.innerHTML = saisons.map((s) => `<option value="${s.getFullYear()}"${s.getFullYear() === saison.getFullYear() ? ' selected' : ''}>${esc(nomSaison(s))}</option>`).join('');
-  choixSaison.disabled = trimestre === 'tout';
+  choixSaison.innerHTML = saisons.map((s) => `<button type="button" data-saison="${s.getFullYear()}" aria-pressed="${s.getFullYear() === saison.getFullYear()}">${esc(nomSaison(s).replace(/^Saison /, ""))}</button>`).join('');
+  choixSaison.hidden = trimestre === 'tout';   // « Depuis toujours » : la saison ne sert pas
   const enCours = saison.getFullYear() === actuelle.getFullYear() ? trimestreDe(new Date()) : 4;
   zoneTrimestres.innerHTML = TRIMESTRES.map((t, i) => `<button type="button" data-trimestre="${i}" aria-pressed="${trimestre === i}"${i > enCours ? ' disabled title="Trimestre pas encore commencé"' : ''}>${esc(t.nom)}${i === enCours ? ' <small>en cours</small>' : ''}</button>`).join('')
     + `<button type="button" data-trimestre="saison" aria-pressed="${trimestre === 'saison'}">Saison</button>`
@@ -108,8 +108,10 @@ zoneTrimestres.addEventListener('click', (e) => {
   trimestre = /^\d$/.test(b.dataset.trimestre) ? Number(b.dataset.trimestre) : b.dataset.trimestre;
   charger();
 });
-choixSaison.addEventListener('change', () => {
-  saison = new Date(Number(choixSaison.value), 8, 1);
+choixSaison.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-saison]');
+  if (!b) return;
+  saison = new Date(Number(b.dataset.saison), 8, 1);
   if (saison.getFullYear() !== debutSaison().getFullYear() && typeof trimestre === 'number') trimestre = 'saison';
   if (saison.getFullYear() === debutSaison().getFullYear() && trimestre === 'saison') trimestre = trimestreDe(new Date());
   charger();

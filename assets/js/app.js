@@ -543,7 +543,9 @@ function fermerListe() {
 function enListe(groupe) {
   const options = optionsDe(groupe);
   let ld = groupe.previousElementSibling?.classList.contains('ld') ? groupe.previousElementSibling : null;
-  if (!options.length || (options.length < SEUIL_LISTE && groupe.dataset.liste !== 'toujours')) {
+  // Dans une barre de filtres (plusieurs filtres distincts), chaque filtre est une liste
+  const toujours = groupe.dataset.liste === 'toujours' || !!groupe.closest('.mp-filtres, .rc-filtres');
+  if (!options.length || (options.length < SEUIL_LISTE && !toujours)) {
     groupe.classList.remove('ld-source');
     ld?.remove();
     return;
