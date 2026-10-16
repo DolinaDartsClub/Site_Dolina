@@ -49,16 +49,18 @@
     </div>
     <label class="champ">Adversaire<input type="text" name="adversaire" maxlength="80" required placeholder="Ex. Les Archers de Vanves"></label>
     <div class="deux-colonnes">
-      <label class="champ">Date<input type="date" name="date_match" required></label>
+      <label class="champ">Date <small>(ou début de la période)</small><input type="date" name="date_match" required></label>
+      <label class="champ">Date limite <small>(si pas encore fixée)</small><input type="date" name="date_fin"></label>
+    </div>
+    <p class="match__format eq-aide">Date exacte inconnue ? Indiquez la période de la journée CPARD (ex. du 05/10 au 17/10). Une fois le jour fixé, mettez-le en date et videz la date limite.</p>
+    <div class="deux-colonnes">
       <label class="champ">Heure du match<input type="time" name="heure_match" step="300"></label>
-    </div>
-    <div class="deux-colonnes">
       <label class="champ">Rendez-vous<input type="time" name="heure_rdv" step="300"></label>
-      <label class="champ">Journée<input type="text" name="journee" maxlength="20" placeholder="Ex. J3"></label>
     </div>
-    <div class="deux-colonnes">
-      <label class="champ">Division<input type="text" name="division" maxlength="40" placeholder="Ex. D2"></label>
-      <label class="champ">Poule<input type="text" name="poule" maxlength="40" placeholder="Ex. B"></label>
+    <div class="trois-colonnes">
+      <label class="champ">Journée<input type="text" name="journee" maxlength="20" placeholder="Ex. J3"></label>
+      <label class="champ">Division<input type="text" name="division" maxlength="40" placeholder="Ex. 1"></label>
+      <label class="champ">Poule<input type="text" name="poule" maxlength="40" placeholder="Ex. C"></label>
     </div>
     <label class="champ">Salle
       <select name="salle_id"></select>

@@ -1462,3 +1462,9 @@ span.adm-partie__case { cursor: default; }
 .res-tout { justify-self: start; color: var(--orange); font-weight: 600; font-size: 14px; }
 .lien-equipe { display: inline-block; margin-left: 6px; color: var(--orange); font-size: 12px; font-weight: 700; white-space: nowrap; vertical-align: middle; }
 .eq-tete { margin-bottom: 18px; } .eq-score__chiffres, .res-ligne__score, .eq-bilan__case b, .eq-date__num { font-weight: 700; }
+
+.eq-periode { margin: 0; font-weight: 600; color: var(--gris-clair); font-size: 14px; }
+.eq-date--periode { border-style: dashed; }
+.eq-date--periode .eq-date__num { color: var(--gris-clair); }
+.eq-aide { margin: -6px 0 0; font-size: 12px; }
+.trois-colonnes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }

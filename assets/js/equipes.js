@@ -17,6 +17,7 @@ const form = document.getElementById('form-rencontre');
 const fmtJour = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' });
 const fmtMois = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
 const fmtLong = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const fmtCourt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
 
 let moi = null;
 let equipes = [];
@@ -35,6 +36,10 @@ const aujourdhui = () => new Date().toLocaleDateString('fr-CA');
 const hm = (t) => (t ? t.slice(0, 5).replace(':', 'h') : '');
 const isoJour = (d) => d.toLocaleDateString('fr-CA');
 const saisonDe = (d) => isoJour(debutSaison(dateLocale(d)));
+// Journée dont la date exacte n'est pas encore fixée : une période (du … au …)
+const aConfirmer = (r) => !!r.date_fin && r.date_fin !== r.date_match;
+const finDe = (r) => r.date_fin || r.date_match;
+const periode = (r) => `Entre le ${fmtCourt.format(dateLocale(r.date_match)).replace('.', '')} et le ${fmtCourt.format(dateLocale(r.date_fin)).replace('.', '')}`;
 const salleDe = (r) => salles.find((s) => s.id === r.salle_id) || null;
 const peutGerer = (teamId) => !!moi && moi.status === 'active'
   && (moi.role === 'admin' || equipes.some((t) => t.id === teamId && t.captain_id === moi.id));
@@ -111,22 +116,29 @@ function carteRencontre(r, gerer) {
   const heures = [r.heure_match && `Match ${hm(r.heure_match)}`, r.heure_rdv && `RDV ${hm(r.heure_rdv)}`].filter(Boolean).join(' · ');
   return `
     <article class="eq-rencontre${res ? ` eq-rencontre--${res.classe}` : ''}" id="r-${r.id}">
+      ${aConfirmer(r) ? `
+      <div class="eq-date eq-date--periode" aria-label="${esc(periode(r))}">
+        <span class="eq-date__jour">dès le</span>
+        <span class="eq-date__num">${d.getDate()}</span>
+        <span class="eq-date__mois">${esc(fmtMois.format(d).replace('.', ''))}</span>
+      </div>` : `
       <div class="eq-date" aria-label="${esc(fmtLong.format(d))}">
         <span class="eq-date__jour">${esc(fmtJour.format(d).replace('.', ''))}</span>
         <span class="eq-date__num">${d.getDate()}</span>
         <span class="eq-date__mois">${esc(fmtMois.format(d).replace('.', ''))}</span>
-      </div>
+      </div>`}
       <div class="eq-rencontre__corps">
         <div class="eq-rencontre__haut">
           <span class="eq-badge${r.domicile ? ' eq-badge--dom' : ''}">${r.domicile ? 'Domicile' : 'Extérieur'}</span>
           ${meta ? `<span class="eq-meta">${esc(meta)}</span>` : ''}
         </div>
         <h3 class="eq-affiche">${esc(equipe?.name || '')} <span>${r.domicile ? 'reçoit' : 'chez'}</span> ${esc(r.adversaire)}</h3>
+        ${aConfirmer(r) ? `<p class="eq-periode">${esc(periode(r))}${res ? '' : ' · date à confirmer'}</p>` : ''}
         ${heures ? `<p class="eq-heures">${esc(heures)}</p>` : ''}
         ${s ? `<p class="eq-salle"><strong>${esc(s.nom)}</strong> · ${esc(s.adresse)} <a href="${esc(lienCarte(s))}" target="_blank" rel="noopener">Itinéraire</a></p>` : ''}
         ${r.note ? `<p class="eq-note">${esc(r.note)}</p>` : ''}
         <div class="eq-rencontre__actions">
-          ${!res ? `<button type="button" class="bouton bouton--petit" data-agenda="${r.id}">Ajouter à mon agenda</button>` : ''}
+          ${!res && !aConfirmer(r) ? `<button type="button" class="bouton bouton--petit" data-agenda="${r.id}">Ajouter à mon agenda</button>` : ''}
           ${gerer ? `<button type="button" class="bouton bouton--petit" data-modifier="${r.id}">${res ? 'Modifier' : 'Modifier / score'}</button>` : ''}
         </div>
       </div>
@@ -147,8 +159,9 @@ function afficher() {
   const saisons = [...new Set([saison, ...toutes.map((r) => saisonDe(r.date_match))])].sort().reverse();
   const liste = toutes.filter((r) => saisonDe(r.date_match) === saison);
   const auj = aujourdhui();
-  const avenir = liste.filter((r) => !resultat(r) && r.date_match >= auj);
-  const jouees = liste.filter((r) => resultat(r) || r.date_match < auj).reverse();
+  const avenir = liste.filter((r) => !resultat(r) && finDe(r) >= auj);
+  const jouees = liste.filter((r) => resultat(r) || finDe(r) < auj).reverse();
+  const agendables = avenir.filter((r) => !aConfirmer(r));
   const bilan = { V: 0, N: 0, D: 0 };
   liste.forEach((r) => { const x = resultat(r); if (x) bilan[x.code] += 1; });
   const capitaine = (effectifs[t.id] || []).find((p) => p.id === t.captain_id);
@@ -169,7 +182,7 @@ function afficher() {
       ${capitaine ? `<p class="match__format" style="margin:0">Capitaine : <strong>${esc(nomAffiche(capitaine))}</strong></p>` : ''}
       <div class="actions">
         ${gerer ? '<button type="button" class="bouton bouton--plein bouton--petit" id="btn-ajouter">+ Ajouter une rencontre</button>' : ''}
-        ${avenir.length ? `<button type="button" class="bouton bouton--petit" id="btn-agenda-saison">Toute la saison dans mon agenda (${avenir.length})</button>` : ''}
+        ${agendables.length ? `<button type="button" class="bouton bouton--petit" id="btn-agenda-saison">${agendables.length > 1 ? `Les ${agendables.length} prochains matchs` : 'Le prochain match'} dans mon agenda</button>` : ''}
       </div>
     </section>
 
@@ -261,7 +274,7 @@ function ouvrirFormulaire(r = null) {
   document.getElementById('btn-supprimer-rencontre').hidden = !r;
   const f = form.elements;
   if (r) {
-    ['adversaire', 'date_match', 'division', 'poule', 'journee', 'note'].forEach((k) => { f[k].value = r[k] || ''; });
+    ['adversaire', 'date_match', 'date_fin', 'division', 'poule', 'journee', 'note'].forEach((k) => { f[k].value = r[k] || ''; });
     f.heure_match.value = r.heure_match ? r.heure_match.slice(0, 5) : '';
     f.heure_rdv.value = r.heure_rdv ? r.heure_rdv.slice(0, 5) : '';
     f.score_nous.value = r.score_nous ?? '';
@@ -312,6 +325,7 @@ form.addEventListener('submit', async (e) => {
   const adversaire = f.adversaire.value.trim();
   if (!adversaire) return message(zoneMsg, 'Indiquez l\'adversaire.') || f.adversaire.focus();
   if (!f.date_match.value) return message(zoneMsg, 'Indiquez la date de la rencontre.') || f.date_match.focus();
+  if (f.date_fin.value && f.date_fin.value < f.date_match.value) return message(zoneMsg, 'La date limite doit être après la date de début.');
   const sn = f.score_nous.value === '' ? null : Number(f.score_nous.value);
   const se = f.score_eux.value === '' ? null : Number(f.score_eux.value);
   if ((sn === null) !== (se === null)) return message(zoneMsg, 'Saisissez le score des deux équipes, ou laissez les deux cases vides.');
@@ -337,6 +351,7 @@ form.addEventListener('submit', async (e) => {
     adversaire,
     domicile,
     date_match: f.date_match.value,
+    date_fin: f.date_fin.value && f.date_fin.value !== f.date_match.value ? f.date_fin.value : null,
     heure_match: f.heure_match.value || null,
     heure_rdv: f.heure_rdv.value || null,
     salle_id: salleId,
@@ -433,7 +448,7 @@ zone.addEventListener('click', async (e) => {
   if (b.id === 'btn-agenda-saison') {
     const t = equipes.find((x) => x.id === equipeActive);
     const auj = aujourdhui();
-    const liste = rencontres.filter((r) => r.team_id === equipeActive && !resultat(r) && r.date_match >= auj);
+    const liste = rencontres.filter((r) => r.team_id === equipeActive && !resultat(r) && r.date_match >= auj && !aConfirmer(r));
     return telechargerIcs(liste.map(evenement), `calendrier-${t.name}.ics`.replace(/\s+/g, '-').toLowerCase(), `Dolina – ${t.name}`);
   }
   if (b.dataset.salleModifier) return modifierSalle(b.dataset.salleModifier);
@@ -450,6 +465,13 @@ zone.addEventListener('click', async (e) => {
     afficher();
     zone.querySelector('.eq-carnet').open = true;
   }
+});
+
+// Lien vers une autre équipe (#Dolina%202) sans recharger la page
+window.addEventListener('hashchange', () => {
+  const demandee = decodeURIComponent(location.hash.slice(1));
+  const t = equipes.find((x) => x.id === demandee || x.name === demandee);
+  if (t && t.id !== equipeActive) { equipeActive = t.id; saison = isoJour(debutSaison()); afficher(); }
 });
 
 charger();

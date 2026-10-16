@@ -100,7 +100,7 @@ async function chargerResultats() {
   const bloc = document.getElementById('bloc-resultats');
   if (!bloc) return;
   const [rr, rt] = await Promise.all([
-    supabase.from('rencontres').select('id, team_id, date_match, adversaire, domicile, score_nous, score_eux')
+    supabase.from('rencontres').select('id, team_id, date_match, date_fin, journee, adversaire, domicile, score_nous, score_eux')
       .not('score_nous', 'is', null).order('date_match', { ascending: false }).limit(4),
     supabase.from('teams').select('id, name'),
   ]);
@@ -113,7 +113,7 @@ async function chargerResultats() {
     return `
       <a class="res-ligne${code === 'V' ? ' res-ligne--gagne' : ''}" href="equipes.html#${encodeURIComponent(nom(r.team_id))}" aria-label="${esc(`${libelle} de ${nom(r.team_id)} contre ${r.adversaire}, ${r.score_nous} à ${r.score_eux}`)}">
         <span class="res-ligne__res" aria-hidden="true">${code}</span>
-        <span class="res-ligne__texte"><strong>${esc(nom(r.team_id))} – ${esc(r.adversaire)}</strong><small>${esc(fmt.format(new Date(`${r.date_match}T12:00:00`)))} · ${r.domicile ? 'à domicile' : 'à l\'extérieur'}</small></span>
+        <span class="res-ligne__texte"><strong>${esc(nom(r.team_id))} – ${esc(r.adversaire)}</strong><small>${esc(r.date_fin && r.date_fin !== r.date_match ? (r.journee ? `Journée ${r.journee.replace(/^J/i, '')}` : 'Championnat') : fmt.format(new Date(`${r.date_match}T12:00:00`)))} · ${r.domicile ? 'à domicile' : 'à l\'extérieur'}</small></span>
         <span class="res-ligne__score">${r.score_nous} – ${r.score_eux}</span>
       </a>`;
   }).join('') + '<a class="res-tout" href="equipes.html">Calendrier des équipes →</a>';
