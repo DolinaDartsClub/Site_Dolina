@@ -1859,8 +1859,8 @@ body { background: transparent; }
 .nav-bas::before { display: none; }
 
 /* Jouer : titres des catégories en bandeau plein, transparent et lumineux */
-.formulaire-jeu .bloc-choix { padding-top: 22px; }
-.formulaire-jeu .bloc-choix > legend {
+.formulaire-jeu .bloc-choix, #form-contact .bloc-choix { padding-top: 22px; }
+.formulaire-jeu .bloc-choix > legend, #form-contact .bloc-choix > legend {
   display: inline-flex; align-items: center; gap: 8px; margin-left: -4px; padding: 6px 14px;
   border-radius: 999px; border: 1px solid rgba(245, 122, 0, .45);
   background: linear-gradient(135deg, rgba(245, 122, 0, .30), rgba(245, 122, 0, .10));
@@ -1868,5 +1868,26 @@ body { background: transparent; }
   box-shadow: 0 4px 16px rgba(245, 122, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .12);
   color: var(--blanc); font-family: var(--police-titre); font-size: 15px; letter-spacing: .08em;
 }
-.formulaire-jeu .bloc-choix > legend::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 8px var(--orange); }
+.formulaire-jeu .bloc-choix > legend::before, #form-contact .bloc-choix > legend::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 8px var(--orange); }
 .formulaire-jeu .visibilite strong { display: inline-block; padding: 4px 12px; border-radius: 999px; background: linear-gradient(135deg, rgba(245, 122, 0, .22), rgba(245, 122, 0, .06)); border: 1px solid rgba(245, 122, 0, .35); }
+
+/* Nous contacter : moyen de contact préféré */
+.ct-moyens { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 420px) { .ct-moyens { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ct-moyen { display: grid; justify-items: center; gap: 6px; padding: 14px 6px 12px; border-radius: 14px; border: 1px solid var(--verre-bord, #2e2e2e); background: rgba(40,40,40,.35); color: var(--gris-clair); font: 600 14px var(--police); cursor: pointer; transition: border-color .2s, background .2s, color .2s, transform .15s; }
+.ct-moyen svg { width: 26px; height: 26px; color: var(--orange); }
+.ct-moyen:hover { border-color: var(--orange); }
+.ct-moyen[aria-pressed="true"] { background: linear-gradient(135deg, rgba(245,122,0,.35), rgba(245,122,0,.12)); border-color: var(--orange); color: var(--blanc); box-shadow: 0 6px 18px rgba(245,122,0,.2); transform: translateY(-1px); }
+.ct-moment { display: grid; gap: 8px; }
+.ct-moment__titre { font-size: 13px; font-weight: 700; color: var(--gris-clair); }
+.ct-moment__titre small { font-weight: 500; color: var(--gris); }
+.ct-puces { display: flex; flex-wrap: wrap; gap: 6px; }
+.ct-puces button { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--bord-fort); background: rgba(40,40,40,.35); color: var(--gris-clair); font: 600 13px var(--police); cursor: pointer; }
+.ct-puces button[aria-pressed="true"] { background: var(--orange); border-color: var(--orange); color: var(--noir); }
+.ct-facultatif { color: var(--gris); font-weight: 500; }
+/* Bannière de l'accueil : bouton « Rejoindre le club » */
+.horaires__cta { justify-self: center; display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; border-radius: 999px; background: var(--orange); color: var(--noir); font-weight: 800; text-decoration: none; box-shadow: 0 6px 20px rgba(245,122,0,.35); transition: transform .15s, box-shadow .15s; }
+.horaires__cta:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(245,122,0,.45); color: var(--noir); }
+.horaires__cta svg { width: 18px; height: 18px; }
+/* Admin, Demandes : moyen préféré */
+.dem-pref { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(245,122,0,.16); border: 1px solid rgba(245,122,0,.45); color: var(--blanc); font-weight: 700; font-size: 13px; }

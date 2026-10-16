@@ -79,8 +79,17 @@ function afficher() {
     </div>`;
 }
 
+const PREFS = { appel: 'Appel', sms: 'SMS', whatsapp: 'WhatsApp', email: 'Email' };
+const MOMENTS = { matin: 'le matin', midi: 'le midi', 'apres-midi': 'l\'après-midi', soir: 'le soir', 'week-end': 'le week-end' };
+
 function carte(d) {
-  const tel = d.phone.replace(/[^\d+]/g, '');
+  const tel = (d.phone || '').replace(/[^\d+]/g, '');
+  const telInter = tel.startsWith('0') ? `33${tel.slice(1)}` : tel.replace(/^\+/, '');
+  const pref = d.contact_pref;
+  const actionPref = !pref ? '' : pref === 'appel' ? `<a class="bouton bouton--petit bouton--plein" href="tel:${esc(tel)}">Appeler</a>`
+    : pref === 'sms' ? `<a class="bouton bouton--petit bouton--plein" href="sms:${esc(tel)}">Envoyer un SMS</a>`
+      : pref === 'whatsapp' ? `<a class="bouton bouton--petit bouton--plein" href="https://wa.me/${esc(telInter)}" target="_blank" rel="noopener">Ouvrir WhatsApp</a>`
+        : `<a class="bouton bouton--petit bouton--plein" href="mailto:${esc(d.email || '')}?subject=${encodeURIComponent('Dolina Darts Club – votre demande')}">Répondre par email</a>`;
   return `
     <article class="carte-info demande${d.status === 'new' ? ' demande--nouvelle' : ''}">
       <div class="demande__haut">
@@ -89,10 +98,12 @@ function carte(d) {
         ${d.status === 'done' ? '<span class="statut statut--ok">Traitée</span>' : ''}
       </div>
       <h2>${esc(d.first_name)} ${esc(d.last_name)}</h2>
+      ${pref ? `<p class="demande__pref"><span class="dem-pref">Préfère : ${esc(PREFS[pref] || pref)}</span>${d.moment ? ` <span class="match__format">${esc(MOMENTS[d.moment] || d.moment)}</span>` : ''}</p>` : ''}
       <div class="demande__coord">
-        <a href="tel:${esc(tel)}">${esc(d.phone)}</a>
-        <a href="mailto:${esc(d.email)}?subject=${encodeURIComponent('Dolina Darts Club – votre demande')}">${esc(d.email)}</a>
+        ${d.phone ? `<a href="tel:${esc(tel)}">${esc(d.phone)}</a>` : ''}
+        ${d.email ? `<a href="mailto:${esc(d.email)}?subject=${encodeURIComponent('Dolina Darts Club – votre demande')}">${esc(d.email)}</a>` : ''}
       </div>
+      ${actionPref ? `<div class="actions">${actionPref}</div>` : ''}
       ${d.message ? `<p class="demande__message">${esc(d.message)}</p>` : '<p class="match__format" style="margin:0">Pas de message.</p>'}
       <label class="champ">Note interne <small>(visible des admins)</small>
         <textarea data-note="${d.id}" rows="2" maxlength="1000" placeholder="Ex. rappelé le 16/10, vient jeudi">${esc(d.note || '')}</textarea>

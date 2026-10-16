@@ -44,12 +44,30 @@
         <button type="button" class="pastille-choix" data-valeur="autre">Autre</button>
       </div>
     </fieldset>
+    <fieldset class="bloc-choix">
+      <legend>Comment vous recontacter ?</legend>
+      <div class="ct-moyens" data-groupe="pref">
+        <button type="button" class="ct-moyen" data-valeur="appel"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg><span>Appel</span></button>
+        <button type="button" class="ct-moyen" data-valeur="sms"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>SMS</span></button>
+        <button type="button" class="ct-moyen" data-valeur="whatsapp"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.7-5A8.5 8.5 0 1 1 8 19.4z"/><path d="M9 10c0 3 2 5 5 5l1-1.5-2-1-1 .8c-.8-.4-1.5-1.1-1.8-1.8l.8-1-1-2z"/></svg><span>WhatsApp</span></button>
+        <button type="button" class="ct-moyen" data-valeur="email"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M4 6l8 7 8-7"/></svg><span>Email</span></button>
+      </div>
+      <div class="ct-moment" id="ct-moment" hidden>
+        <span class="ct-moment__titre">Le meilleur moment <small>(facultatif)</small></span>
+        <div class="ct-puces" data-groupe="moment">
+          <button type="button" data-valeur="" aria-pressed="true">Peu importe</button>
+          <button type="button" data-valeur="midi">Midi</button>
+          <button type="button" data-valeur="soir">Le soir</button>
+          <button type="button" data-valeur="week-end">Le week-end</button>
+        </div>
+      </div>
+    </fieldset>
     <div class="deux-colonnes">
       <label class="champ">Prénom<input type="text" name="prenom" autocomplete="given-name" maxlength="60" required></label>
       <label class="champ">Nom<input type="text" name="nom" autocomplete="family-name" maxlength="60" required></label>
     </div>
-    <label class="champ">Téléphone mobile<input type="tel" name="telephone" autocomplete="tel" inputmode="tel" maxlength="30" required></label>
-    <label class="champ">Email<input type="email" name="email" autocomplete="email" maxlength="160" required></label>
+    <label class="champ" id="champ-tel">Téléphone mobile <small class="ct-facultatif">(facultatif)</small><input type="tel" name="telephone" autocomplete="tel" inputmode="tel" maxlength="30"></label>
+    <label class="champ" id="champ-email">Email <small class="ct-facultatif">(facultatif)</small><input type="email" name="email" autocomplete="email" maxlength="160"></label>
     <label class="champ">Message <small>(facultatif)</small><textarea name="message" rows="5" maxlength="2000" placeholder="Votre niveau, vos disponibilités, votre question…"></textarea></label>
     <!-- Champ piège pour les robots : laissé vide par les humains -->
     <label class="visuellement-cache" aria-hidden="true">Ne pas remplir<input type="text" name="site" tabindex="-1" autocomplete="off"></label>
@@ -59,7 +77,7 @@
 
   <section class="carte-info" id="merci" hidden>
     <h2>Merci, votre demande est envoyée !</h2>
-    <p class="match__format" style="margin:0">Le club vous recontacte très vite par téléphone ou par email.</p>
+    <p class="match__format" style="margin:0" id="merci-texte">Le club vous recontacte très vite.</p>
     <div class="actions"><a class="bouton" href="./">Retour à l'accueil</a></div>
   </section>
 
