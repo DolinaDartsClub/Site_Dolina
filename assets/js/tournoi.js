@@ -393,6 +393,20 @@ function carteMatch(m, { avecLibelle = true, compacte = false } = {}) {
 
 // ---------- Poules ----------
 
+// Sous le classement de chaque poule : sa cible (match en cours, ou les prochains à lancer)
+function blocCible(k) {
+  if (t.status !== 'running') return '';
+  const enCours = enCoursDePoule(k);
+  const file = fileDePoule(k);
+  if (!enCours && !file.length) return '';
+  const tetes = enCours ? [enCours] : file.slice(0, PROPOSES_PAR_POULE);
+  return `
+        <div class="p-cible">
+          <h4 class="p-journee">Cible de la poule · ${enCours ? 'en cours' : (tetes.length > 1 ? 'à lancer, au choix' : 'à lancer')}</h4>
+          <div class="m-liste">${tetes.map((x) => carteMatch(x, { avecLibelle: false })).join('')}</div>
+        </div>`;
+}
+
 function vuePoules() {
   const nbPoules = t.pools_count || Math.max(0, ...inscrits.map((e) => e.pool_no || 0));
   if (!nbPoules) return '<p class="vide">Les poules apparaîtront au lancement du tournoi.</p>';
@@ -431,8 +445,9 @@ function vuePoules() {
             <tbody>${lignes}</tbody>
           </table>
         </div>
-        <details class="p-matchs"${maPoule ? ' open' : ''}>
-          <summary>Matchs de la poule</summary>
+        ${blocCible(k)}
+        <details class="p-matchs">
+          <summary>Tous les matchs de la poule</summary>
           ${journees.map((j) => `
             <h4 class="p-journee">Journée ${j}</h4>
             <div class="m-liste">${mPoule.filter((m) => m.round_no === j).map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div>`).join('')}
@@ -440,7 +455,7 @@ function vuePoules() {
       </section>`);
   }
   return `
-    <p class="t-legende">Les ${t.pool_qualifiers} premier${t.pool_qualifiers > 1 ? 's' : ''} de chaque poule (surlignés) se qualifient pour la phase finale.
+    <p class="t-legende">${t.pool_qualifiers > 1 ? `Les ${t.pool_qualifiers} premiers de chaque poule (surlignés) se qualifient` : 'Le premier de chaque poule (surligné) se qualifie'} pour la phase finale.
       Classement : ${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite ; à égalité, le plus de manches gagnées, puis le match entre les joueurs à égalité.</p>
     <div class="p-poules">${blocs.join('')}</div>`;
 }
