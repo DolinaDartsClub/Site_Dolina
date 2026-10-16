@@ -309,6 +309,8 @@ function ligneJoueur(m, cote) {
 const ordrePoule = (a, b) => a.round_no - b.round_no || a.match_no - b.match_no;
 function matchsDePoule(k) { return matchs.filter((x) => x.phase === 'pool' && x.pool_no === k).sort(ordrePoule); }
 function enCoursDePoule(k) { return matchsDePoule(k).find((x) => x.status === 'live') || null; }
+// Cible libre : les 2 prochains matchs de la poule sont proposés (si des joueurs du 1er ne sont pas prêts)
+const PROPOSES_PAR_POULE = 2;
 function fileDePoule(k) { return matchsDePoule(k).filter((x) => x.status === 'ready'); }
 
 function boutonMatch(m) {
@@ -318,11 +320,11 @@ function boutonMatch(m) {
   const boutons = [];
   if (m.status === 'ready' && autorise && m.phase === 'pool') {
     const enCours = enCoursDePoule(m.pool_no);
-    const suivant = fileDePoule(m.pool_no)[0];
+    const rang = fileDePoule(m.pool_no).findIndex((x) => x.id === m.id);
     if (enCours) {
       // La cible de la poule est occupée : rien à lancer
-    } else if (suivant && suivant.id === m.id) {
-      boutons.push(`<button type="button" class="bouton bouton--petit bouton--plein" data-lancer="${m.id}">Lancer le match</button>`);
+    } else if (rang >= 0 && rang < PROPOSES_PAR_POULE) {
+      boutons.push(`<button type="button" class="bouton bouton--petit${rang === 0 ? ' bouton--plein' : ''}" data-lancer="${m.id}">Lancer le match</button>`);
     } else if (orga) {
       boutons.push(`<button type="button" class="bouton bouton--petit" data-lancer="${m.id}" title="Ce n'est pas le prochain match de la poule">Lancer hors ordre</button>`);
     }
@@ -364,6 +366,7 @@ function etatPartieMatch(m) {
     const rang = file.findIndex((x) => x.id === m.id);
     if (enCours) notes.push(`<p class="m-carte__note m-carte__note--gris">Cible de la poule ${lettrePoule(m.pool_no)} occupée : M${enCours.match_no} en cours.${rang === 0 ? ' Ce match est le suivant.' : ''}</p>`);
     else if (rang === 0) notes.push(`<p class="m-carte__note">Prochain match sur la cible de la poule ${lettrePoule(m.pool_no)}.</p>`);
+    else if (rang > 0 && rang < PROPOSES_PAR_POULE) notes.push(`<p class="m-carte__note">Peut aussi être lancé maintenant sur la cible de la poule ${lettrePoule(m.pool_no)} (si les joueurs de M${file[0].match_no} ne sont pas prêts).</p>`);
     else if (rang > 0) notes.push(`<p class="m-carte__note m-carte__note--gris">À jouer après M${file[rang - 1].match_no} sur la cible de la poule ${lettrePoule(m.pool_no)}.</p>`);
   }
   if (m.corrected_at) notes.push('<p class="m-carte__note m-carte__note--gris">Score corrigé par l\'organisateur</p>');
@@ -504,12 +507,12 @@ function vueMatchs() {
     const enCours = enCoursDePoule(k);
     const file = fileDePoule(k);
     if (!enCours && !file.length) continue;
-    const tete = enCours || file[0];
-    const ensuite = (enCours ? file : file.slice(1));
+    const tetes = enCours ? [enCours] : file.slice(0, PROPOSES_PAR_POULE);
+    const ensuite = enCours ? file : file.slice(PROPOSES_PAR_POULE);
     cibles.push(`
       <div class="c-cible">
-        <h4 class="c-cible__titre">Cible poule ${lettrePoule(k)} <span>${enCours ? 'En cours' : 'Libre'}</span></h4>
-        ${carteMatch(tete)}
+        <h4 class="c-cible__titre">Cible poule ${lettrePoule(k)} <span>${enCours ? 'En cours' : `Libre · ${tetes.length > 1 ? 'au choix' : 'à lancer'}`}</span></h4>
+        ${tetes.map((x) => carteMatch(x)).join('')}
         ${ensuite.length ? `<p class="c-cible__suite">Ensuite : ${ensuite.slice(0, 6).map((x) => `M${x.match_no} (${esc(nomEntree(x.entry_a))} – ${esc(nomEntree(x.entry_b))})`).join(' · ')}${ensuite.length > 6 ? ` · et ${ensuite.length - 6} autre${ensuite.length - 6 > 1 ? 's' : ''}` : ''}</p>` : '<p class="c-cible__suite">Dernier match de la poule.</p>'}
       </div>`);
   }
