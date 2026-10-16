@@ -6,6 +6,7 @@
 //  un message demande de la ressaisir.
 // =====================================================================
 
+import { voleeBot, lireReglageBot } from './dartbot.js?v=__VERSION__';
 import { reglageVoix, definirVoix, voixDisponible, annoncerVolee, dire } from './voix.js?v=__VERSION__';
 import { supabase, esc, message, erreurFr, profilConnecte, formatPartie, supprimerPartie } from './app.js?v=__VERSION__';
 import {
@@ -19,6 +20,9 @@ const zoneMsg = $('message');
 let game = null;
 let camps = [];           // numéros des camps
 let nomsCamps = {};       // side -> nom affiché
+let botSide = null;       // camp du dartbot (partie contre le bot)
+let reglageBot = null;
+let minuterieBot = null;
 let joueursCamps = {};    // side -> [noms des joueurs dans l'ordre de lancer]
 let visits = [];
 let etat = null;
@@ -55,11 +59,19 @@ async function init() {
     nomsCamps[s] = game.mode === 'double' && camp?.name ? camp.name : joueursCamps[s].join(' / ');
   }
 
+  const campBot = game.game_sides.find((x) => x.is_bot);
+  if (campBot) {
+    botSide = campBot.side;
+    reglageBot = lireReglageBot(campBot.name);
+  }
+
   const res = await supabase.from('visits').select('*').eq('game_id', id).order('id');
   visits = res.data || [];
   prochainIdLocal = (visits.at(-1)?.id || 0) + 1;
 
-  $('titre-format').textContent = `${formatPartie(game)} · finish double`;
+  $('titre-format').textContent = botSide
+    ? `${formatPartie(game)} · bot : moy. ${reglageBot.moyenne}, doubles ${reglageBot.doubles} %`
+    : `${formatPartie(game)} · finish double`;
   // Guide de finish masqué si le créateur l'a choisi
   document.querySelector('.scorer__finish').hidden = game.show_checkout === false;
   $('fin-live').href = `live.html?id=${encodeURIComponent(id)}`;
@@ -87,8 +99,10 @@ function rafraichir() {
   const reste = etat.auLancer ? etat.reste[etat.auLancer] : null;
   const sugg = reste !== null ? suggestionFinish(reste) : null;
   $('finish').textContent = sugg ? sugg.join(' · ') : (reste === null ? '—' : (reste > 170 ? 'Pas encore' : 'Pas de finish en une volée'));
-  $('qui').textContent = etat.auLancer ? `Volée de ${nomsCamps[etat.auLancer]}` : 'Partie terminée';
+  $('qui').textContent = etat.auLancer ? (tourDuBot() ? 'Le dartbot lance…' : `Volée de ${nomsCamps[etat.auLancer]}`) : 'Partie terminée';
   $('saisie').textContent = saisie || '0';
+  document.body.classList.toggle('scorer--tour-bot', tourDuBot());
+  planifierBot();
 
   if (etat.gagnant && game.status !== 'abandoned') afficherFin();
 }
@@ -245,7 +259,7 @@ function saisir(c) {
 
 document.querySelector('.scorer__saisie').addEventListener('click', (e) => {
   const b = e.target.closest('button');
-  if (!b || !etat || etat.gagnant || game.status === 'abandoned') return;
+  if (!b || !etat || etat.gagnant || game.status === 'abandoned' || tourDuBot()) return;
   if (b.dataset.chiffre) saisir(b.dataset.chiffre);
   else if ('effacer' in b.dataset) { saisie = ''; $('saisie').textContent = '0'; $('erreur').textContent = ''; }
   else if ('valider' in b.dataset) { if (saisie !== '') valider(Number(saisie)); }
@@ -254,7 +268,7 @@ document.querySelector('.scorer__saisie').addEventListener('click', (e) => {
 
 // Clavier (ordinateur) : chiffres, Entrée, Retour arrière
 document.addEventListener('keydown', (e) => {
-  if (!etat || etat.gagnant || e.target.closest('input, textarea')) return;
+  if (!etat || etat.gagnant || tourDuBot() || e.target.closest('input, textarea')) return;
   if (!document.querySelectorAll('.fenetre:not([hidden])').length) {
     if (/^[0-9]$/.test(e.key)) saisir(e.key);
     else if (e.key === 'Enter' && saisie !== '') valider(Number(saisie));
@@ -369,15 +383,45 @@ function enregistrer() {
   void avant;
 }
 
+// ---------- Dartbot : il joue tout seul quand c'est son tour ----------
+
+function tourDuBot() {
+  return !!(botSide && etat && !etat.gagnant && etat.auLancer === botSide);
+}
+
+function planifierBot() {
+  if (!tourDuBot() || enAttente || minuterieBot || game.status !== 'live') return;
+  // Un peu plus long avec l'annonce vocale, pour laisser finir la phrase
+  minuterieBot = setTimeout(jouerBot, reglageVoix().actif ? 2600 : 1300);
+}
+
+function jouerBot() {
+  minuterieBot = null;
+  if (!tourDuBot() || enAttente || game.status !== 'live') return;
+  const reste = etat.reste[botSide];
+  const v = voleeBot(reste, reglageBot);
+  enAttente = { score: v.score, reste, nature: v.nature, detail: { flechettes: v.flechettes, auDouble: v.auDouble } };
+  enregistrer();
+  if (v.nature === 'normale') afficherEvenement(`Dartbot : ${v.detail.join(' · ')}`);
+}
+
 // ---------- Annuler la dernière volée ----------
 
 async function annuler() {
+  clearTimeout(minuterieBot);
+  minuterieBot = null;
   await file;
-  const v = visits.at(-1);
+  // Contre le dartbot : on revient à la dernière volée du joueur (la volée du bot qui suit est annulée aussi)
+  const aRetirer = [];
+  for (let i = visits.length - 1; i >= 0; i--) {
+    aRetirer.push(visits[i]);
+    if (!botSide || visits[i].side !== botSide) break;
+  }
+  const v = aRetirer.at(-1);
   if (!v) return;
-  const { error } = await supabase.from('visits').delete().eq('id', v.id);
+  const { error } = await supabase.from('visits').delete().in('id', aRetirer.map((x) => x.id));
   if (error) return message(zoneMsg, `Impossible d'annuler la volée : ${erreurFr(error)}`);
-  visits.pop();
+  visits.splice(visits.length - aRetirer.length, aRetirer.length);
   if (game.status === 'finished') {
     await supabase.from('games').update({ status: 'live', winner_side: null, finished_at: null }).eq('id', id);
     game.status = 'live';

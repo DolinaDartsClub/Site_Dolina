@@ -62,11 +62,26 @@
       <div class="pastilles" data-groupe="mode">
         <button type="button" class="pastille-choix" data-valeur="single" aria-pressed="true">Individuel</button>
         <button type="button" class="pastille-choix" data-valeur="double">Double 2v2</button>
-        <button type="button" class="pastille-choix" data-valeur="bot" disabled title="Arrive en janvier">Dartbot <small>janvier</small></button>
+        <button type="button" class="pastille-choix" data-valeur="bot">Contre le dartbot</button>
       </div>
     </fieldset>
 
-    <fieldset class="bloc-choix">
+    <fieldset class="bloc-choix" id="bloc-bot" hidden>
+      <legend>Réglages du dartbot</legend>
+      <label class="reglage-bot">
+        <span class="reglage-bot__haut">Moyenne visée <output id="val-moyenne">50</output></span>
+        <input type="range" name="bot_moyenne" min="20" max="110" step="1" value="50">
+        <span class="reglage-bot__bornes"><span>20 · débutant</span><span>110 · pro</span></span>
+      </label>
+      <label class="reglage-bot">
+        <span class="reglage-bot__haut">Réussite aux doubles <output id="val-doubles">30 %</output></span>
+        <input type="range" name="bot_doubles" min="5" max="80" step="1" value="30">
+        <span class="reglage-bot__bornes"><span>5 %</span><span>80 %</span></span>
+      </label>
+      <p class="match__format" style="margin:0">Le bot marque des scores variables autour de sa moyenne et peut rater ses doubles. Ces parties ne comptent ni dans votre moyenne ni dans votre bilan victoires / défaites.</p>
+    </fieldset>
+
+    <fieldset class="bloc-choix" id="bloc-type">
       <legend>Type de match</legend>
       <div id="type-match"></div>
     </fieldset>

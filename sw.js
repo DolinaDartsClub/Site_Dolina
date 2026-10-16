@@ -48,6 +48,7 @@ const FICHIERS = [
   'assets/js/jouer.js',
   'assets/js/scorer.js',
   'assets/js/voix.js',
+  'assets/js/dartbot.js',
   'assets/js/mes-parties.js',
   'assets/js/tournoi-commun.js',
   'assets/js/vendor/qrcode.js',

@@ -1322,3 +1322,13 @@ details.carte-info:not([open]) { gap: 0; }
 .qr-grand__code { margin: 0; font-size: 15px; color: var(--gris-clair); }
 .qr-grand__code b { font-family: var(--police-titre); font-size: 26px; letter-spacing: 4px; color: var(--orange); }
 .qr-grand__aide { margin: 0; font-size: 13px; color: var(--gris); }
+
+/* Réglages du dartbot (Jouer) */
+.reglage-bot { display: flex; flex-direction: column; gap: 4px; }
+.reglage-bot__haut { display: flex; justify-content: space-between; font-weight: 600; }
+.reglage-bot__haut output { font-family: var(--police-titre); font-size: 20px; color: var(--orange, #f57c00); }
+.reglage-bot input[type=range] { width: 100%; accent-color: var(--orange, #f57c00); height: 28px; }
+.reglage-bot__bornes { display: flex; justify-content: space-between; font-size: 12px; color: var(--gris); }
+
+/* Scorer : pendant le tour du dartbot, le pavé est en pause */
+.scorer--tour-bot .raccourcis, .scorer--tour-bot .pave, .scorer--tour-bot .ecran-saisie__valeur { opacity: .4; pointer-events: none; }

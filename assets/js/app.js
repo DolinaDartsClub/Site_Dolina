@@ -29,7 +29,7 @@ export function formatPartie(g) {
   const kind = (k) => (k === 'first_to' ? 'premier à' : 'au meilleur de');
   const legs = `${kind(g.legs_kind)} ${g.legs_n} manche${g.legs_n > 1 ? 's' : ''}`;
   const sets = g.sets_n ? `${kind(g.sets_kind)} ${g.sets_n} sets, ` : '';
-  const mode = g.mode === 'double' ? ' · double 2v2' : '';
+  const mode = g.mode === 'double' ? ' · double 2v2' : (g.mode === 'bot' ? ' · contre le dartbot' : '');
   return `${jeu}${mode} · ${sets}${legs}`;
 }
 

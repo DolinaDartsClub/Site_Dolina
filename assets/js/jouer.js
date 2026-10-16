@@ -2,6 +2,7 @@
 //  Jouer : création d'un match X01 et reprise des parties en cours
 // =====================================================================
 
+import { BOT_DEFAUT, nomCampBot } from './dartbot.js?v=__VERSION__';
 import { reglageVoix, definirVoix, voixDisponible, dire } from './voix.js?v=__VERSION__';
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie, supprimerPartie, avatar, brancherTypeMatch } from './app.js?v=__VERSION__';
 
@@ -135,10 +136,14 @@ function afficherJoueurs() {
       <button type="button" class="puce__retirer" data-retirer="${i}" aria-label="Retirer ${esc(j.nom)}">✕</button>
     </span>`).join('') || '<span class="match__format">Aucun joueur pour l\'instant.</span>';
 
-  const plein = joueurs.length >= MAX_JOUEURS;
+  const bot = choix.mode === 'bot';
+  const plein = joueurs.length >= (bot ? 1 : MAX_JOUEURS);
   document.getElementById('ajout-joueurs').hidden = plein;
+  document.getElementById('bloc-bot').hidden = !bot;
+  document.getElementById('bloc-type').hidden = bot;
   document.getElementById('aide-joueurs').textContent = choix.mode === 'double'
     ? `Double 2v2 : ajoutez 4 joueurs (${joueurs.length}/4), puis formez les deux doublettes.`
+    : bot ? (joueurs.length > 1 ? 'Contre le dartbot, un seul joueur : retirez les autres.' : 'Un joueur seul contre le dartbot.')
     : `De 1 à 4 joueurs. Les statistiques sont enregistrées dans le compte de chaque membre.${joueurs.length === 1 ? ' Seul (sans adversaire), la partie ne compte pas dans les statistiques ni dans le classement.' : ''}`;
 
   // Doublettes
@@ -330,8 +335,31 @@ function construireCamps() {
       joueurs: joueurs.map((_, i) => i).filter((i) => affectation[i] === eq),
     }));
   }
+  if (choix.mode === 'bot') {
+    return [{ side: 1, nom: joueurs[0]?.nom, joueurs: [0] }, { side: 2, nom: 'Dartbot', joueurs: [], bot: true }];
+  }
   return joueurs.map((j, i) => ({ side: i + 1, nom: j.nom, joueurs: [i] }));
 }
+
+// ---------- Réglages du dartbot (gardés sur l'appareil) ----------
+
+function reglageBot() {
+  return { moyenne: Number(form.elements.bot_moyenne.value), doubles: Number(form.elements.bot_doubles.value) };
+}
+function majBot() {
+  const r = reglageBot();
+  document.getElementById('val-moyenne').textContent = r.moyenne;
+  document.getElementById('val-doubles').textContent = `${r.doubles} %`;
+  try { localStorage.setItem('dolina-bot', JSON.stringify(r)); } catch { /* stockage indisponible */ }
+}
+(() => {
+  let r = BOT_DEFAUT;
+  try { r = { ...BOT_DEFAUT, ...JSON.parse(localStorage.getItem('dolina-bot') || '{}') }; } catch { /* idem */ }
+  form.elements.bot_moyenne.value = r.moyenne;
+  form.elements.bot_doubles.value = r.doubles;
+  majBot();
+  ['bot_moyenne', 'bot_doubles'].forEach((n) => form.elements[n].addEventListener('input', majBot));
+})();
 
 function verifier() {
   const f = form.elements;
@@ -339,8 +367,9 @@ function verifier() {
     const s = Number(f.start_score.value);
     if (!Number.isInteger(s) || s < 2 || s > 9999) return 'Le score de départ doit être un nombre entre 2 et 9999.';
   }
-  if (typeMatch.manque()) return typeMatch.manque();
+  if (choix.mode !== 'bot' && typeMatch.manque()) return typeMatch.manque();
   if (!joueurs.length) return 'Ajoutez au moins un joueur.';
+  if (choix.mode === 'bot' && joueurs.length !== 1) return 'Contre le dartbot, un seul joueur : retirez les autres.';
   if (choix.mode === 'double') {
     if (joueurs.length !== 4) return 'En double 2v2, il faut 4 joueurs.';
     const c = construireCamps();
@@ -384,7 +413,7 @@ async function creerPartie(premier) {
     visibility: choix.public ? 'public' : 'private',
     first_side: premier,
     show_checkout: choix.guide,
-    match_type: typeMatch.valeur() || 'club',
+    match_type: choix.mode === 'bot' ? 'club' : (typeMatch.valeur() || 'club'),
   };
   let { data: game, error } = await supabase.from('games').insert(ligneGame).select('id').single();
   // Base pas encore à jour (script 029 non exécuté) : on crée la partie sans le type
@@ -407,11 +436,13 @@ async function creerPartie(premier) {
   if (error) return echec(error);
 
   let res = await supabase.from('game_sides').insert(camps.map((c) => ({
-    game_id: game.id, side: c.side, name: choix.mode === 'double' ? c.nom : null,
+    game_id: game.id, side: c.side,
+    name: choix.mode === 'double' ? c.nom : (c.bot ? nomCampBot(reglageBot()) : null),
+    is_bot: !!c.bot,
   })));
   if (res.error) return echec(res.error);
 
-  res = await supabase.from('game_players').insert(camps.flatMap((c) => c.joueurs.map((i, ordre) => {
+  res = await supabase.from('game_players').insert(camps.flatMap((c) => (c.bot ? [{ game_id: game.id, side: c.side, throw_order: 1 }] : c.joueurs.map((i, ordre) => {
     const j = joueurs[i];
     return {
       game_id: game.id,
@@ -420,7 +451,7 @@ async function creerPartie(premier) {
       guest_name: j.type === 'invite' ? j.nom : null,
       throw_order: ordre + 1,
     };
-  })));
+  }))));
   if (res.error) return echec(res.error);
 
   location.href = `scorer.html?id=${game.id}`;
