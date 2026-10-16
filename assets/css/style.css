@@ -470,6 +470,15 @@ img { max-width: 100%; display: block; }
 .scorer__titre { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; }
 .scorer__titre strong { font-family: var(--police-titre); font-size: 18px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .scorer__titre span { font-size: 13px; color: var(--gris); }
+.scorer__voix { display: inline-flex; align-items: center; gap: 4px; padding-inline: 10px; }
+.scorer__voix svg { width: 20px; height: 20px; }
+.scorer__voix:not(.bouton--plein) svg { opacity: .55; }
+.scorer__voix span:empty { display: none; }
+.scorer__voix span { font-size: 12px; font-weight: 700; }
+#bloc-voix { flex-wrap: wrap; }
+#bloc-voix > div:first-child { flex: 1 1 220px; }
+.voix-choix { display: flex; gap: 6px; flex: 1 1 100%; flex-direction: row !important; }
+.voix-choix .pastille-choix { flex: 1; }
 
 .scorer__camps { grid-area: camps; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
 .camp { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 14px; background: var(--carte); border: 3px solid var(--bord); min-width: 0; }

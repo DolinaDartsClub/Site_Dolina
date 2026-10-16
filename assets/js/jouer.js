@@ -2,6 +2,7 @@
 //  Jouer : création d'un match X01 et reprise des parties en cours
 // =====================================================================
 
+import { reglageVoix, definirVoix, voixDisponible, dire } from './voix.js?v=__VERSION__';
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie, supprimerPartie, avatar, brancherTypeMatch } from './app.js?v=__VERSION__';
 
 const MAX_JOUEURS = 4;
@@ -83,7 +84,7 @@ document.getElementById('liste-reprendre').addEventListener('click', async (e) =
 
 // ---------- Choix du jeu, du mode, du format ----------
 
-form.querySelectorAll('.pastilles').forEach((groupe) => {
+form.querySelectorAll('.pastilles[data-groupe]').forEach((groupe) => {
   groupe.addEventListener('click', (e) => {
     const b = e.target.closest('.pastille-choix');
     if (!b || b.disabled) return;
@@ -284,6 +285,27 @@ document.getElementById('btn-visi').addEventListener('click', (e) => {
 });
 
 // ---------- Guide de finish affiché / masqué ----------
+
+// Annonce vocale : réglage gardé sur cet appareil (il sert aussi aux matchs de tournoi)
+function majVoix() {
+  const r = reglageVoix();
+  const val = r.actif ? r.langue : 'off';
+  document.querySelectorAll('[data-voix-val]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.voixVal === val)));
+}
+if (!voixDisponible()) {
+  document.getElementById('bloc-voix').hidden = true;
+} else {
+  majVoix();
+  document.querySelector('[data-voix]').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-voix-val]');
+    if (!b) return;
+    const v = b.dataset.voixVal;
+    definirVoix(v === 'off' ? { actif: false, langue: reglageVoix().langue } : { actif: true, langue: v });
+    majVoix();
+    if (v === 'fr') dire('Annonce vocale activée.', 'fr');
+    else if (v === 'en') dire('Game on!', 'en');
+  });
+}
 
 document.getElementById('btn-guide').addEventListener('click', (e) => {
   choix.guide = !choix.guide;

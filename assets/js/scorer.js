@@ -6,6 +6,7 @@
 //  un message demande de la ressaisir.
 // =====================================================================
 
+import { reglageVoix, definirVoix, voixDisponible, annoncerVolee, dire } from './voix.js?v=__VERSION__';
 import { supabase, esc, message, erreurFr, profilConnecte, formatPartie, supprimerPartie } from './app.js?v=__VERSION__';
 import {
   calculerEtat, nouvelleVolee, verifierVolee, natureVolee, finissable, suggestionFinish, moyenne,
@@ -134,6 +135,34 @@ function campsNombreux() {
     </div>`).join('');
   return `${carteCamp(focus, true)}<div class="mini-camps">${lignes}</div>`;
 }
+
+// Nom prononcé : le joueur qui va lancer (en double, celui du camp dont c'est le tour)
+function nomVoix(side) {
+  const j = joueursCamps[side] || [];
+  if (game.mode === 'double' && j.length > 1) return j[etat.voleesTotal[side] % j.length];
+  return nomsCamps[side];
+}
+
+// Bouton haut-parleur : coupé → français → anglais → coupé
+function majBoutonVoix() {
+  const b = $('btn-voix');
+  if (!b) return;
+  if (!voixDisponible()) { b.hidden = true; return; }
+  const r = reglageVoix();
+  b.classList.toggle('bouton--plein', r.actif);
+  b.querySelector('span').textContent = r.actif ? (r.langue === 'en' ? 'EN' : 'FR') : '';
+  b.setAttribute('aria-label', r.actif ? `Annonce vocale en ${r.langue === 'en' ? 'anglais' : 'français'} (toucher pour changer)` : 'Annonce vocale coupée (toucher pour l\'activer)');
+  b.title = b.getAttribute('aria-label');
+}
+$('btn-voix')?.addEventListener('click', () => {
+  const r = reglageVoix();
+  const suivant = !r.actif ? { actif: true, langue: 'fr' } : (r.langue === 'fr' ? { actif: true, langue: 'en' } : { actif: false, langue: 'fr' });
+  definirVoix(suivant);
+  majBoutonVoix();
+  if (suivant.actif) dire(suivant.langue === 'en' ? 'Game on!' : 'Annonce vocale activée.', suivant.langue);
+  else if (voixDisponible()) window.speechSynthesis.cancel();
+});
+majBoutonVoix();
 
 function afficherEvenement(texte) {
   const ev = $('evenement');
@@ -308,6 +337,11 @@ function enregistrer() {
   visits.push(v);
   const avant = etat;
   rafraichir();
+
+  // Annonce vocale : le score, puis ce qu'il reste au joueur suivant s'il est sur un finish
+  const suivant = etat.auLancer && !etat.gagnant && finissable(etat.reste[etat.auLancer])
+    ? { nom: nomVoix(etat.auLancer), reste: etat.reste[etat.auLancer] } : null;
+  annoncerVolee({ score, bust: nature === 'bust', finManche: nature === 'finish' && !etat.gagnant, finPartie: !!etat.gagnant, suivant });
 
   if (nature === 'bust') afficherEvenement('Bust : la volée vaut 0');
   else if (etat.gagnant) afficherEvenement('Game shot and the match');
