@@ -1818,3 +1818,55 @@ body.barre-visible .entete::after { opacity: 0; }
 .ld-options { background: rgba(24,24,24,.62); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%); border-color: rgba(255,255,255,.12); box-shadow: 0 18px 44px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06); }
 .ld-option:hover:not([disabled]), .ld-option:focus-visible { background: rgba(255,255,255,.08); }
 .ld-option[aria-selected="true"] { background: rgba(245,122,0,.20); }
+
+/* ===================== Effet verre (transparence dépolie) sur tout le site ===================== */
+:root {
+  --verre: rgba(34, 34, 34, .38);
+  --verre-fort: rgba(30, 30, 30, .52);
+  --verre-bord: rgba(255, 255, 255, .09);
+  --verre-reflet: inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+/* Fond de page : halos orangés très discrets, pour que la transparence se voie */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(60vmax 50vmax at 85% -10%, rgba(245, 122, 0, .10), transparent 60%),
+    radial-gradient(50vmax 40vmax at -10% 40%, rgba(245, 122, 0, .06), transparent 60%),
+    radial-gradient(60vmax 50vmax at 110% 110%, rgba(255, 255, 255, .04), transparent 60%),
+    var(--noir);
+}
+body { background: transparent; }
+
+/* Cartes et blocs : fond transparent avec reflet en haut */
+.carte-info, .bloc-choix, .match, .pr-carte, .res-ligne, .eq-rencontre, .actu, .rc-carte, .cap-ligne, .adm-partie, .eq-joueur,
+.ex-carte, .demande, .eq-salle-ligne, .cap-raccourci, .eq-bilan__case, .t-inscrit, .ligne-membre {
+  background: var(--verre); border-color: var(--verre-bord); box-shadow: var(--verre-reflet);
+}
+.pr-carte--mienne { background: linear-gradient(110deg, rgba(245, 122, 0, .24), var(--verre) 65%); border-color: var(--orange); }
+.eq-rencontre--gagne { border-left-color: var(--orange); }
+
+/* Éléments flottants : vrai flou d'arrière-plan */
+.ld-bouton { background: rgba(40, 40, 40, .26); backdrop-filter: blur(8px) saturate(140%); -webkit-backdrop-filter: blur(8px) saturate(140%); }
+.ld-options { background: rgba(26, 26, 26, .42); backdrop-filter: blur(20px) saturate(170%); -webkit-backdrop-filter: blur(20px) saturate(170%); }
+.mc-liste, .adm-menu__liste { background: rgba(26, 26, 26, .55); backdrop-filter: blur(20px) saturate(170%); -webkit-backdrop-filter: blur(20px) saturate(170%); border-color: var(--verre-bord); }
+.t-onglets, .eq-onglets, .raccourcis-accueil__piste, .adm-menu__bouton, .barre-collante.eq-filtre {
+  background: rgba(30, 30, 30, .40) !important; backdrop-filter: blur(12px) saturate(150%); -webkit-backdrop-filter: blur(12px) saturate(150%); border-color: var(--verre-bord) !important;
+}
+.fenetre { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.fenetre__boite { background: rgba(28, 28, 28, .72); backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%); border-color: var(--verre-bord); box-shadow: 0 24px 60px rgba(0, 0, 0, .5), var(--verre-reflet); }
+.fenetre__boite--accent { border-color: var(--orange); }
+.nav-bas { background: rgba(22, 22, 22, .72); backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%); border-top-color: var(--verre-bord); }
+.nav-bas::before { display: none; }
+
+/* Jouer : titres des catégories en bandeau plein, transparent et lumineux */
+.formulaire-jeu .bloc-choix { padding-top: 22px; }
+.formulaire-jeu .bloc-choix > legend {
+  display: inline-flex; align-items: center; gap: 8px; margin-left: -4px; padding: 6px 14px;
+  border-radius: 999px; border: 1px solid rgba(245, 122, 0, .45);
+  background: linear-gradient(135deg, rgba(245, 122, 0, .30), rgba(245, 122, 0, .10));
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(245, 122, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .12);
+  color: var(--blanc); font-family: var(--police-titre); font-size: 15px; letter-spacing: .08em;
+}
+.formulaire-jeu .bloc-choix > legend::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 8px var(--orange); }
+.formulaire-jeu .visibilite strong { display: inline-block; padding: 4px 12px; border-radius: 999px; background: linear-gradient(135deg, rgba(245, 122, 0, .22), rgba(245, 122, 0, .06)); border: 1px solid rgba(245, 122, 0, .35); }
