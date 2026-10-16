@@ -400,63 +400,76 @@ chargerArticles();
 }());
 
 // ---------- Raccourcis vers les rubriques (téléphone) ----------
-// Barre de pastilles sous l'en-tête : visible en haut de page, cachée quand on descend,
-// elle réapparaît dès qu'on remonte. La rubrique affichée est mise en avant.
+// Barre sous la bannière « Entraînements » ; une fois collée sous l'en-tête, elle se cache
+// quand on descend et réapparaît dès qu'on remonte. La rubrique affichée est mise en avant.
 (function raccourcis() {
   const barre = document.getElementById('raccourcis-accueil');
   if (!barre) return;
+  const I = (d) => `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
   const RUBRIQUES = [
-    ['entrainements', 'Entraînements'],
-    ['bloc-tournois', 'Tournois'],
-    ['bloc-prochaines', 'Rencontres'],
-    ['bloc-resultats', 'Résultats'],
-    ['actualites', 'Actualités'],
-    ['matchs-en-cours', 'En direct'],
-    ['rejoindre', 'Nous rejoindre'],
+    ['bloc-tournois', 'Tournois', I('<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>')],
+    ['bloc-prochaines', 'Rencontres', I('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>')],
+    ['bloc-resultats', 'Résultats', I('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>')],
+    ['actualites', 'Actualités', I('<path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v8a2 2 0 0 1-2 2"/><path d="M8 9h5M8 13h5"/>')],
+    ['matchs-en-cours', 'En direct', '<span class="pastille" aria-hidden="true"></span>'],
   ];
   let actif = null;
   const dessiner = () => {
     const presentes = RUBRIQUES.filter(([id]) => { const el = document.getElementById(id); return el && !el.hidden; });
-    const html = presentes.map(([id, nom]) => `<a href="#${id}" data-rubrique="${id}"${id === actif ? ' aria-current="true"' : ''}>${nom}</a>`).join('');
+    const html = `<div class="raccourcis-accueil__piste">${presentes.map(([id, nom, icone]) => `<a href="#${id}" data-rubrique="${id}"${id === actif ? ' aria-current="true"' : ''}>${icone}<span>${nom}</span></a>`).join('')}</div>`;
     if (barre.innerHTML !== html) barre.innerHTML = html;
-    return presentes;
   };
   dessiner();
-  document.body.classList.add('raccourcis-visibles');
-  // Les blocs Tournois, Rencontres, Résultats apparaissent après chargement
   new MutationObserver(dessiner).observe(document.querySelector('main'), { subtree: true, attributes: true, attributeFilter: ['hidden'] });
 
-  // Rubrique en cours de lecture
   const observateur = new IntersectionObserver((entrees) => {
     const visibles = entrees.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
     if (!visibles.length) return;
     actif = visibles[0].target.id;
     barre.querySelectorAll('a').forEach((a) => {
-      const oui = a.dataset.rubrique === actif;
-      if (oui) { a.setAttribute('aria-current', 'true'); a.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); } else a.removeAttribute('aria-current');
+      if (a.dataset.rubrique === actif) {
+        a.setAttribute('aria-current', 'true');
+        const piste = barre.querySelector('.raccourcis-accueil__piste');
+        piste?.scrollTo({ left: a.offsetLeft - piste.clientWidth / 2 + a.clientWidth / 2, behavior: 'smooth' });
+      } else a.removeAttribute('aria-current');
     });
   }, { rootMargin: '-35% 0px -55% 0px' });
   RUBRIQUES.forEach(([id]) => { const el = document.getElementById(id); if (el) observateur.observe(el); });
 
-  // Montrer en remontant, cacher en descendant
   let dernier = window.scrollY;
   let enAttente = false;
-  let auto = 0;   // défilement lancé par un clic sur une pastille : la barre reste visible
-  window.addEventListener('scroll', () => {
-    if (enAttente) return;
-    enAttente = true;
-    requestAnimationFrame(() => {
-      const y = window.scrollY;
-      if (Date.now() < auto) { dernier = y; enAttente = false; return; }
-      if (y < 80 || y < dernier - 6) barre.classList.remove('raccourcis-accueil--cache');
+  let auto = 0;   // défilement lancé par un clic : la barre reste visible
+  const banniere = document.getElementById('entrainements');
+  const rejoindre = document.getElementById('rejoindre');
+  const calme = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const effets = () => {
+    const y = window.scrollY;
+    // Bannière : reste presque fixe et s'efface en douceur quand on fait défiler
+    if (banniere && !calme) {
+      const p = Math.min(1, Math.max(0, y / (banniere.offsetHeight * 0.9)));
+      banniere.style.setProperty('--p', p.toFixed(3));
+    }
+    // « Rejoindre le club » : zoom progressif à son arrivée en fin de page
+    if (rejoindre && !calme) {
+      const r = rejoindre.getBoundingClientRect();
+      const q = Math.min(1, Math.max(0, (window.innerHeight - r.top) / (window.innerHeight * 0.65)));
+      rejoindre.style.setProperty('--q', q.toFixed(3));
+    }
+    // Barre collée : cachée en descendant, visible en remontant
+    const collee = barre.getBoundingClientRect().top <= (document.querySelector('.entete')?.offsetHeight || 64) + 1;
+    if (Date.now() >= auto) {
+      if (!collee || y < dernier - 6) barre.classList.remove('raccourcis-accueil--cache');
       else if (y > dernier + 6) barre.classList.add('raccourcis-accueil--cache');
-      document.body.classList.toggle('raccourcis-visibles', !barre.classList.contains('raccourcis-accueil--cache'));
-      dernier = y;
-      enAttente = false;
-    });
-  }, { passive: true });
+    }
+    barre.classList.toggle('raccourcis-accueil--collee', collee);
+    document.body.classList.toggle('raccourcis-visibles', collee && !barre.classList.contains('raccourcis-accueil--cache'));
+    dernier = y;
+    enAttente = false;
+  };
+  window.addEventListener('scroll', () => { if (!enAttente) { enAttente = true; requestAnimationFrame(effets); } }, { passive: true });
+  window.addEventListener('resize', effets);
+  effets();
 
-  // Clic : défilement doux, en tenant compte de l'en-tête et de la barre
   barre.addEventListener('click', (e) => {
     const a = e.target.closest('a[data-rubrique]');
     if (!a) return;
@@ -465,7 +478,6 @@ chargerArticles();
     const decalage = (document.querySelector('.entete')?.offsetHeight || 64) + barre.offsetHeight + 8;
     auto = Date.now() + 1200;
     barre.classList.remove('raccourcis-accueil--cache');
-    document.body.classList.add('raccourcis-visibles');
     window.scrollTo({ top: cible.getBoundingClientRect().top + window.scrollY - decalage, behavior: 'smooth' });
   });
 }());

@@ -1723,7 +1723,7 @@ span.adm-partie__case { cursor: default; }
 /* Les éléments qui passent sous l'en-tête s'estompent et remontent légèrement (navigateurs récents) */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    main :is(.section__titre, .match, .pr-carte, .res-ligne, .actus, .eq-rencontre, .adm-partie, .cap-ligne, .mt-ligne, .demande, .rc-carte, .t-carte, .horaires > *, .liste-cartes > .carte-info, .eq-joueur, .ligne-membre, .mp-partie) {
+    main :is(.section__titre, .match, .pr-carte, .res-ligne, .actus, .eq-rencontre, .adm-partie, .cap-ligne, .mt-ligne, .demande, .rc-carte, .t-carte, .liste-cartes > .carte-info, .eq-joueur, .ligne-membre, .mp-partie) {
       animation: sortie-haut linear both;
       animation-timeline: view(block calc(var(--entete-h, 76px) - 10px) 0px);
       animation-range: exit 0% exit 100%;
@@ -1745,26 +1745,42 @@ span.adm-partie__case { cursor: default; }
 .accueil-droite { display: grid; gap: inherit; align-content: start; min-width: 0; }
 .page--accueil .accueil-droite { gap: 28px; }
 
-/* ===================== Accueil (téléphone) : raccourcis vers les rubriques ===================== */
+
+
+/* ===================== Accueil : bannière, raccourcis, « Rejoindre » ===================== */
+/* Bannière Entraînements : semble fixe et s'efface quand on fait défiler (--p de 0 à 1) */
+.horaires { --p: 0; z-index: 0; transform-origin: center top; will-change: transform, opacity;
+  transform: translateY(calc(var(--p) * 38%)) scale(calc(1 - var(--p) * .08)); opacity: calc(1 - var(--p) * 1.15); filter: blur(calc(var(--p) * 3px)); }
+.page--accueil > :not(.horaires):not(.raccourcis-accueil) { position: relative; z-index: 1; }
+/* « Rejoindre le club » : zoom progressif à son arrivée (--q de 0 à 1) */
+.contact-accueil { --q: 1; transform: scale(calc(.86 + var(--q) * .14)); opacity: calc(.25 + var(--q) * .75); transform-origin: center 30%; will-change: transform, opacity; }
+
 .raccourcis-accueil { display: none; }
 @media (max-width: 899px) {
   .raccourcis-accueil {
-    position: sticky; top: var(--entete-h, 64px); z-index: 9;
-    display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
-    padding: 8px var(--gouttiere) 10px; margin-bottom: -6px;
-    background: linear-gradient(to bottom, var(--noir) 75%, rgba(20,20,20,0));
+    grid-column: 1 / -1; position: sticky; top: var(--entete-h, 64px); z-index: 9 !important;
+    display: block; margin: -6px calc(-1 * var(--gouttiere)) -10px; padding: 8px var(--gouttiere) 12px;
+    background: linear-gradient(to bottom, var(--noir) 72%, rgba(20,20,20,0));
     transition: transform .28s ease, opacity .2s ease;
   }
-  .raccourcis-accueil::-webkit-scrollbar { display: none; }
-  .raccourcis-accueil--cache { transform: translateY(-115%); opacity: 0; pointer-events: none; }
-  .raccourcis-accueil a {
-    flex: none; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--bord-fort);
-    background: var(--carte); color: var(--gris-clair); font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap;
-    transition: background .2s, color .2s, border-color .2s;
+  .raccourcis-accueil--cache { transform: translateY(-120%); opacity: 0; pointer-events: none; }
+  .raccourcis-accueil__piste {
+    display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding: 4px;
+    border-radius: 999px; border: 1px solid var(--bord-fort); background: #1a1a1a;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 6px 18px rgba(0,0,0,.35);
   }
-  .raccourcis-accueil a[aria-current="true"] { background: var(--orange); border-color: var(--orange); color: var(--noir); }
-  .page--accueil > section, .page--accueil > div > section { scroll-margin-top: calc(var(--entete-h, 64px) + 56px); }
+  .raccourcis-accueil__piste::-webkit-scrollbar { display: none; }
+  .raccourcis-accueil a {
+    flex: 1 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 12px; border-radius: 999px; color: var(--gris-clair); font-size: 13px; font-weight: 600;
+    text-decoration: none; white-space: nowrap; transition: background .25s, color .25s, box-shadow .25s;
+  }
+  .raccourcis-accueil a svg { width: 16px; height: 16px; color: var(--orange); flex: none; transition: color .25s; }
+  .raccourcis-accueil a .pastille { width: 8px; height: 8px; }
+  .raccourcis-accueil a[aria-current="true"] { background: var(--orange); color: var(--noir); box-shadow: 0 4px 14px rgba(245,122,0,.35); }
+  .raccourcis-accueil a[aria-current="true"] svg { color: var(--noir); }
+  .page--accueil section { scroll-margin-top: calc(var(--entete-h, 64px) + 64px); }
+  body.raccourcis-visibles .entete::after { opacity: 0; }
+  .entete::after { transition: opacity .2s; }
 }
-@media (max-width: 899px) and (prefers-reduced-motion: reduce) { .raccourcis-accueil { transition: none; } }
-
-@media (max-width: 899px) { body.raccourcis-visibles .entete::after { opacity: 0; } .entete::after { transition: opacity .2s; } }
+@media (prefers-reduced-motion: reduce) { .horaires, .contact-accueil { transform: none !important; opacity: 1 !important; filter: none !important; } .raccourcis-accueil { transition: none; } }
