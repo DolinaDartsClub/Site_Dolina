@@ -1468,3 +1468,7 @@ span.adm-partie__case { cursor: default; }
 .eq-date--periode .eq-date__num { color: var(--gris-clair); }
 .eq-aide { margin: -6px 0 0; font-size: 12px; }
 .trois-colonnes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+
+/* Équipes : filtre À venir / Résultats, collé en haut au défilement */
+.eq-filtre { position: sticky; top: calc(var(--entete-h, 64px) + 6px); z-index: 5; margin: 0 0 4px; padding: 6px; border-radius: 999px; background: rgba(20,20,20,.92); backdrop-filter: blur(6px); width: fit-content; max-width: 100%; scroll-margin-top: 90px; }
+.eq-filtre b { margin-left: 4px; font-weight: 700; opacity: .75; }

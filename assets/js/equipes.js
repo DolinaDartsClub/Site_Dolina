@@ -28,6 +28,7 @@ let equipeActive = null;
 let saison = null;      // date de début de la saison affichée (AAAA-MM-JJ)
 let enEdition = null;   // rencontre modifiée (null = nouvelle)
 let domicile = true;
+let vue = 'avenir';     // filtre : 'avenir', 'resultats' ou 'tout'
 
 // ---------- Outils ----------
 
@@ -186,12 +187,16 @@ function afficher() {
       </div>
     </section>
 
-    <section class="section">
+    <div class="mp-filtre eq-filtre" role="group" aria-label="Afficher">
+      ${[['avenir', `À venir <b>${avenir.length}</b>`], ['resultats', `Résultats <b>${jouees.length}</b>`], ['tout', 'Tout']].map(([v, l]) => `<button type="button" data-vue="${v}" aria-pressed="${vue === v}">${l}</button>`).join('')}
+    </div>
+
+    <section class="section"${vue === 'resultats' ? ' hidden' : ''}>
       <h2 class="section__titre">À venir</h2>
       <div class="eq-liste">${avenir.length ? avenir.map((r) => carteRencontre(r, gerer)).join('') : `<p class="vide">Aucune rencontre à venir${gerer ? ' : ajoutez la première avec « Ajouter une rencontre »' : ''}.</p>`}</div>
     </section>
 
-    <section class="section">
+    <section class="section"${vue === 'avenir' ? ' hidden' : ''}>
       <h2 class="section__titre">Résultats</h2>
       <div class="eq-liste">${jouees.length ? jouees.map((r) => carteRencontre(r, gerer)).join('') : '<p class="vide">Pas encore de résultat cette saison.</p>'}</div>
     </section>
@@ -371,6 +376,7 @@ form.addEventListener('submit', async (e) => {
   rencontres = rencontres.filter((x) => x.id !== data.id).concat(data)
     .sort((a, b) => (a.date_match + (a.heure_match || '')).localeCompare(b.date_match + (b.heure_match || '')));
   saison = saisonDe(data.date_match);
+  if (vue !== 'tout') vue = resultat(data) || finDe(data) < aujourdhui() ? 'resultats' : 'avenir';
   fermerFormulaire();
   message(zoneMsg, enEdition ? 'Rencontre mise à jour.' : 'Rencontre ajoutée au calendrier.', 'ok');
   afficher();
@@ -438,6 +444,12 @@ zone.addEventListener('change', (e) => {
 zone.addEventListener('click', async (e) => {
   const b = e.target.closest('button');
   if (!b) return;
+  if (b.dataset.vue) {
+    vue = b.dataset.vue;
+    afficher();
+    zone.querySelector('.eq-filtre')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    return;
+  }
   if (b.id === 'btn-ajouter') return ouvrirFormulaire();
   if (b.dataset.modifier) return ouvrirFormulaire(rencontres.find((r) => r.id === b.dataset.modifier));
   if (b.dataset.agenda) {
@@ -466,6 +478,14 @@ zone.addEventListener('click', async (e) => {
     zone.querySelector('.eq-carnet').open = true;
   }
 });
+
+// Hauteur de l'en-tête collant : le filtre se colle juste en dessous
+function majHauteurEntete() {
+  const h = document.querySelector('.entete')?.offsetHeight || 64;
+  document.documentElement.style.setProperty('--entete-h', `${h}px`);
+}
+majHauteurEntete();
+window.addEventListener('resize', majHauteurEntete);
 
 // Lien vers une autre équipe (#Dolina%202) sans recharger la page
 window.addEventListener('hashchange', () => {
