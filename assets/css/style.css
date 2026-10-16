@@ -482,7 +482,7 @@ img { max-width: 100%; display: block; }
 .camp__lanceur { font-size: 13px; color: var(--gris-clair); }
 .camp__reste { font-family: var(--police-titre); font-weight: 700; font-size: clamp(56px, 16vw, 120px); line-height: 0.95; text-align: center; }
 .scorer--nombreux .camp__reste { font-size: clamp(44px, 11vw, 84px); }
-.camp__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; text-align: center; }
+.camp__stats { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 2px; text-align: center; }
 .camp__stats span { display: flex; flex-direction: column; }
 .camp__stats small { font-size: 10px; color: var(--gris); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .camp__stats b { font-family: var(--police-titre); font-size: 19px; }

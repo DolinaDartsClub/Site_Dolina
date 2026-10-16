@@ -111,6 +111,7 @@ function carteCamp(s, volees = false) {
       <div class="camp__stats">
         <span><small>Manches</small><b class="orange">${etat.manches[s]}</b></span>
         ${game.sets_n ? `<span><small>Sets</small><b class="orange">${etat.sets[s]}</b></span>` : ''}
+        <span title="Fléchettes lancées dans cette manche"><small>Fléchettes</small><b>${etat.flechettesManche?.[s] ?? 0}</b></span>
         <span><small>Moyenne</small><b>${moy === null ? '–' : moy.toLocaleString('fr-FR')}</b></span>
         <span><small>Dernière</small><b>${st.derniere ?? '–'}</b></span>
       </div>

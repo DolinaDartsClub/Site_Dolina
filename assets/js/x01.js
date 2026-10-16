@@ -66,6 +66,7 @@ export function calculerEtat(game, sides, visits) {
     sets: zero(),              // sets gagnés
     voleesManche: zero(),      // volées de chaque camp dans la manche en cours
     voleesTotal: zero(),       // volées de chaque camp depuis le début (alternance en double)
+    flechettesManche: zero(),  // fléchettes lancées par chaque camp dans la manche en cours
     stats: Object.fromEntries(camps.map((c) => [c, { points: 0, flechettes: 0, auDouble: 0, finishs: 0, derniere: null, meilleurFinish: 0, cent: 0, cent40: 0, cent80: 0 }])),
     gagnant: null,
     debutManche: premier,
@@ -93,6 +94,7 @@ export function calculerEtat(game, sides, visits) {
     }
     etat.voleesManche[v.side] += 1;
     etat.voleesTotal[v.side] += 1;
+    etat.flechettesManche[v.side] += v.is_checkout ? v.darts_used : 3;
     etat.historique.push(v);
     etat.totalManche += 1;
     if (!v.is_bust) etat.reste[v.side] = v.remaining_before - v.score;
@@ -116,6 +118,7 @@ export function calculerEtat(game, sides, visits) {
       // Nouvelle manche
       etat.reste = Object.fromEntries(camps.map((c) => [c, game.start_score]));
       etat.voleesManche = zero();
+      if (!etat.gagnant) etat.flechettesManche = zero();
       etat.historique = [];
       etat.totalManche = 0;
     }
