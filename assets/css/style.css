@@ -389,9 +389,8 @@ img { max-width: 100%; display: block; }
   :root { --gouttiere: 32px; --barre-bas: 0px; }
   .nav-bas { display: none; }
   .nav-haut { display: flex; }
-  .page--accueil { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
-  .page--accueil .section--matchs { position: sticky; top: 96px; }
-  .articles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page--accueil { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; column-gap: 32px; }
+  .page--accueil > .contact-accueil { grid-column: 1 / -1; }
 }
 
 @media (orientation: landscape) and (max-height: 520px) {
@@ -1291,3 +1290,8 @@ details.carte-info:not([open]) { gap: 0; }
   .horaires__bloc--ou { justify-items: start; text-align: left; }
   .horaires__heure { font-size: 42px; }
 }
+
+/* Accueil : colonne de gauche = matchs en cours puis tournois */
+.accueil-gauche { display: grid; gap: inherit; align-content: start; min-width: 0; }
+.page--accueil .accueil-gauche { gap: 28px; }
+@media (min-width: 900px) { .contact-accueil .diaporama { aspect-ratio: 21 / 9; } }
