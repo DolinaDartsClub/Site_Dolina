@@ -1183,3 +1183,4 @@ details.carte-info:not([open]) { gap: 0; }
 .adm-tournoi__actions { margin-top: 4px; }
 .adm-tournoi__confirmer { display: grid; gap: 8px; margin-top: 6px; padding: 10px 12px; border-radius: 10px; border: 1px solid #5a2a2a; background: #241414; }
 .adm-tournoi__confirmer p { margin: 0; font-size: 14px; }
+.bouton--mini { min-height: 30px; padding: 0 10px; font-size: 12px; border-radius: 8px; }

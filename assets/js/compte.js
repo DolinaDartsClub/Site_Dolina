@@ -120,9 +120,9 @@ async function afficher() {
     const m = rattachements.find((x) => x.team_id === t.id);
     const capitaine = t.captain_id === profil.id;
     let action = '';
-    if (m.status === 'pending') action = `<button type="button" class="bouton bouton--petit bouton--danger" data-action="annuler" data-team="${t.id}">Annuler la demande</button>`;
+    if (m.status === 'pending') action = `<button type="button" class="bouton bouton--mini bouton--danger" data-action="annuler" data-team="${t.id}">Annuler la demande</button>`;
     else if (m.status === 'refused') action = `<button type="button" class="bouton bouton--petit" data-action="redemander" data-team="${t.id}">Refaire une demande</button>`;
-    else if (!capitaine) action = `<button type="button" class="bouton bouton--petit bouton--danger" data-action="quitter" data-team="${t.id}" data-nom="${esc(t.name)}">Quitter l'équipe</button>`;
+    else if (!capitaine) action = `<button type="button" class="bouton bouton--mini bouton--danger" data-action="quitter" data-team="${t.id}" data-nom="${esc(t.name)}">Quitter l'équipe</button>`;
     const [c, l] = STATUTS_EQUIPE[m.status];
     return `
       <div class="ligne-equipe">
