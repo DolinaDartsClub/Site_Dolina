@@ -1295,3 +1295,21 @@ details.carte-info:not([open]) { gap: 0; }
 .accueil-gauche { display: grid; gap: inherit; align-content: start; min-width: 0; }
 .page--accueil .accueil-gauche { gap: 28px; }
 @media (min-width: 900px) { .contact-accueil .diaporama { aspect-ratio: 21 / 9; } }
+
+/* Tournoi : QR code à côté du code */
+.t-code--qr { grid-template-columns: auto 1fr auto; }
+.t-code--qr .t-code__aide { grid-column: 1 / -1; }
+.t-code__qr { width: 88px; height: 88px; padding: 4px; border: 0; border-radius: 8px; background: #fff; cursor: zoom-in; display: grid; place-items: center; }
+.t-code__qr svg { width: 100%; height: 100%; display: block; }
+@media (max-width: 560px) {
+  .t-code--qr { grid-template-columns: auto 1fr; }
+  .t-code--qr .t-code__actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .t-code__qr { width: 76px; height: 76px; }
+}
+.qr-grand { align-items: center; text-align: center; max-width: 420px; }
+.qr-grand h2 { margin: 0; }
+.qr-grand__image { width: min(78vw, 320px); aspect-ratio: 1; padding: 10px; border-radius: 12px; background: #fff; }
+.qr-grand__image svg { width: 100%; height: 100%; display: block; }
+.qr-grand__code { margin: 0; font-size: 15px; color: var(--gris-clair); }
+.qr-grand__code b { font-family: var(--police-titre); font-size: 26px; letter-spacing: 4px; color: var(--orange); }
+.qr-grand__aide { margin: 0; font-size: 13px; color: var(--gris); }

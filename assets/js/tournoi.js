@@ -7,6 +7,7 @@
 
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie, avatar, etiquetteType } from './app.js?v=__VERSION__';
 import { chargerMembres } from './tournoi-commun.js?v=__VERSION__';
+import qrcode from './vendor/qrcode.js?v=__VERSION__';
 import {
   badgeStatut, resumeFormat, estMoi, choisirMembre, STATUTS,
   classementPoule, nomTour, lettrePoule, POINTS_VICTOIRE, POINTS_DEFAITE,
@@ -154,9 +155,45 @@ function podium() {
     </section>`;
 }
 
+// QR code du tournoi : ouvre la page « Rejoindre » avec le code déjà rempli.
+// Calculé sur place (rien n'est enregistré) ; il disparaît avec le code quand le tournoi est terminé.
+function lienRejoindre() { return `${BASE_URL}tournois.html?code=${t.code}`; }
+function svgQr(taille = 4) {
+  try {
+    const q = qrcode(0, 'M');
+    q.addData(lienRejoindre());
+    q.make();
+    return q.createSvgTag({ cellSize: taille, margin: 2, scalable: true });
+  } catch { return ''; }
+}
+
+function ouvrirQr() {
+  const f = document.createElement('div');
+  f.className = 'fenetre';
+  f.setAttribute('role', 'dialog');
+  f.setAttribute('aria-modal', 'true');
+  f.setAttribute('aria-label', 'QR code du tournoi');
+  f.innerHTML = `
+    <div class="fenetre__boite qr-grand">
+      <h2>${esc(t.name)}</h2>
+      <div class="qr-grand__image">${svgQr(8)}</div>
+      <p class="qr-grand__code">Code : <b>${esc(t.code)}</b></p>
+      <p class="qr-grand__aide">Scannez avec l'appareil photo du téléphone pour rejoindre le tournoi.</p>
+      <button type="button" class="bouton bouton--plein" data-fermer>Fermer</button>
+    </div>`;
+  document.body.appendChild(f);
+  const fermer = () => { f.remove(); document.removeEventListener('keydown', echap); };
+  const echap = (e) => { if (e.key === 'Escape') fermer(); };
+  document.addEventListener('keydown', echap);
+  f.addEventListener('click', (e) => { if (e.target === f || e.target.closest('[data-fermer]')) fermer(); });
+  f.querySelector('[data-fermer]').focus();
+}
+
 function blocCode() {
+  const qr = svgQr(4);
   return `
-    <section class="t-code" aria-label="Code du tournoi">
+    <section class="t-code${qr ? ' t-code--qr' : ''}" aria-label="Code du tournoi">
+      ${qr ? `<button type="button" class="t-code__qr" id="btn-qr" aria-label="Afficher le QR code en grand" title="Agrandir le QR code">${qr}</button>` : ''}
       <div>
         <span class="t-code__titre">Code du tournoi</span>
         <span class="t-code__valeur" id="valeur-code">${esc(t.code)}</span>
@@ -166,7 +203,7 @@ function blocCode() {
         <button type="button" class="bouton bouton--petit bouton--plein" id="btn-partager">Partager</button>
       </div>
       <p class="t-code__aide">${t.status === 'open'
-        ? 'Les membres saisissent ce code dans Tournois › Rejoindre un tournoi.'
+        ? 'Les membres saisissent ce code dans Tournois › Rejoindre un tournoi, ou scannent le QR code (touchez-le pour l\'agrandir).'
         : (avantLancement() ? 'Inscriptions fermées : ouvrez-les pour que le code fonctionne.' : 'Les inscriptions sont terminées.')}</p>
     </section>`;
 }
@@ -714,13 +751,14 @@ function brancher() {
     c.addEventListener('keydown', (e) => { if (e.key === 'Enter') ouvrir(); });
   });
 
+  document.getElementById('btn-qr')?.addEventListener('click', ouvrirQr);
   document.getElementById('btn-copier')?.addEventListener('click', async (e) => {
     const ok = await copier(t.code);
     e.target.textContent = ok ? 'Code copié ✓' : 'Copie impossible';
     setTimeout(() => { e.target.textContent = 'Copier le code'; }, 2000);
   });
   document.getElementById('btn-partager')?.addEventListener('click', async (e) => {
-    const lien = `${BASE_URL}tournois.html?code=${t.code}`;
+    const lien = lienRejoindre();
     const texte = `Rejoins le tournoi « ${t.name} » du Dolina Darts Club avec le code ${t.code}`;
     if (navigator.share) {
       try { await navigator.share({ title: t.name, text: texte, url: lien }); } catch { /* partage annulé */ }
