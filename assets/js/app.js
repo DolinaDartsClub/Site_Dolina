@@ -450,3 +450,108 @@ export function etiquetteType(type) {
   if (type === 'amical') return '<span class="type-match type-match--amical">Amical</span>';
   return '';
 }
+
+// ---------------------------------------------------------------------
+// Listes déroulantes : un groupe de choix (filtres, onglets) de 4 options
+// ou plus s'affiche en liste déroulante compacte. Les boutons d'origine
+// restent dans la page (masqués) : choisir une option clique le bouton,
+// donc chaque page garde son fonctionnement.
+// ---------------------------------------------------------------------
+const GROUPES_CHOIX = '.mp-filtre, .t-onglets, .ardoise__onglets';
+const SEUIL_LISTE = 4;
+const CHEVRON = '<svg class="ld-chevron" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+const COCHE = '<svg class="ld-coche" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
+const estChoisi = (b) => b.getAttribute('aria-pressed') === 'true' || b.getAttribute('aria-selected') === 'true' || b.getAttribute('aria-current') === 'page';
+const optionsDe = (groupe) => [...groupe.children].filter((e) => (e.tagName === 'BUTTON' || e.tagName === 'A') && !e.hidden);
+let listeOuverte = null;
+
+function fermerListe() {
+  if (!listeOuverte) return;
+  listeOuverte.classList.remove('ld--ouverte');
+  listeOuverte.querySelector('.ld-bouton').setAttribute('aria-expanded', 'false');
+  listeOuverte = null;
+}
+
+function enListe(groupe) {
+  const options = optionsDe(groupe);
+  let ld = groupe.previousElementSibling?.classList.contains('ld') ? groupe.previousElementSibling : null;
+  if (options.length < SEUIL_LISTE) {
+    groupe.classList.remove('ld-source');
+    ld?.remove();
+    return;
+  }
+  if (!ld) {
+    ld = document.createElement('div');
+    ld.className = 'ld';
+    ld.innerHTML = `<button type="button" class="ld-bouton" aria-haspopup="listbox" aria-expanded="false"></button><div class="ld-options" role="listbox"></div>`;
+    groupe.before(ld);
+    ld._groupe = groupe;
+  }
+  groupe.classList.add('ld-source');
+  ld.hidden = groupe.hidden;
+  if (groupe.classList.contains('eq-filtre')) ld.classList.add('ld--collant');
+  const libelle = groupe.getAttribute('aria-label') || '';
+  const choisi = options.find(estChoisi) || options[0];
+  const bouton = ld.querySelector('.ld-bouton');
+  const contenu = `${libelle ? `<span class="ld-libelle">${esc(libelle)}</span>` : ''}<span class="ld-valeur">${choisi.innerHTML}</span>${CHEVRON}`;
+  if (bouton.innerHTML !== contenu) bouton.innerHTML = contenu;
+  bouton.setAttribute('aria-label', `${libelle} : ${choisi.textContent.trim()}`);
+  const liste = options.map((o, i) => `<button type="button" class="ld-option" role="option" data-ld="${i}" aria-selected="${o === choisi}"${o.disabled || o.getAttribute('aria-disabled') === 'true' ? ' disabled' : ''}${o.title ? ` title="${esc(o.title)}"` : ''}>${COCHE}<span>${o.innerHTML}</span></button>`).join('');
+  const zone = ld.querySelector('.ld-options');
+  if (zone.innerHTML !== liste) zone.innerHTML = liste;
+}
+
+function rafraichirListes(racine = document) {
+  racine.querySelectorAll(GROUPES_CHOIX).forEach(enListe);
+  // Listes dont le groupe a disparu
+  document.querySelectorAll('.ld').forEach((ld) => { if (!ld._groupe?.isConnected) ld.remove(); });
+}
+
+let listesEnAttente = false;
+new MutationObserver((mutations) => {
+  if (listesEnAttente) return;
+  if (mutations.every((m) => m.target.closest?.('.ld') || (m.target.nodeType === 3 && m.target.parentElement?.closest('.ld')))) return;
+  listesEnAttente = true;
+  requestAnimationFrame(() => { listesEnAttente = false; rafraichirListes(); });
+}).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-pressed', 'aria-selected', 'hidden', 'disabled'] });
+document.addEventListener('DOMContentLoaded', () => rafraichirListes());
+rafraichirListes();
+
+document.addEventListener('click', (e) => {
+  const bouton = e.target.closest('.ld-bouton');
+  if (bouton) {
+    const ld = bouton.parentElement;
+    const ouvrir = !ld.classList.contains('ld--ouverte');
+    fermerListe();
+    if (ouvrir) {
+      ld.classList.add('ld--ouverte');
+      bouton.setAttribute('aria-expanded', 'true');
+      listeOuverte = ld;
+      // Ouvre vers le haut s'il n'y a pas la place en dessous
+      const bas = window.innerHeight - bouton.getBoundingClientRect().bottom;
+      ld.classList.toggle('ld--haut', bas < 260 && bouton.getBoundingClientRect().top > bas);
+      (ld.querySelector('.ld-option[aria-selected="true"]') || ld.querySelector('.ld-option:not([disabled])'))?.focus({ preventScroll: true });
+    }
+    return;
+  }
+  const option = e.target.closest('.ld-option');
+  if (option) {
+    const ld = option.closest('.ld');
+    const source = optionsDe(ld._groupe)[Number(option.dataset.ld)];
+    fermerListe();
+    ld.querySelector('.ld-bouton').focus({ preventScroll: true });
+    source?.click();
+    return;
+  }
+  if (!e.target.closest('.ld')) fermerListe();
+});
+document.addEventListener('keydown', (e) => {
+  if (!listeOuverte) return;
+  if (e.key === 'Escape') { const b = listeOuverte.querySelector('.ld-bouton'); fermerListe(); b.focus(); return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const opts = [...listeOuverte.querySelectorAll('.ld-option:not([disabled])')];
+    const i = opts.indexOf(document.activeElement);
+    opts[(i + (e.key === 'ArrowDown' ? 1 : -1) + opts.length) % opts.length]?.focus();
+  }
+});

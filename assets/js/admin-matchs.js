@@ -99,7 +99,7 @@ function afficher() {
   zone.innerHTML = `
     <p class="sv-aide">Toutes les parties enregistrées sur le site, de la plus récente à la plus ancienne. Les matchs de tournoi se corrigent depuis la page du tournoi.</p>
     <div class="mt-outils">
-      <div class="mp-filtre" role="group" aria-label="Filtrer les matchs">
+      <div class="mp-filtre" role="group" aria-label="Afficher">
         ${[['tout', 'Tous'], ['live', 'En cours'], ['finished', 'Terminés'], ['tournoi', 'Tournois'], ['bot', 'Dartbot']].map(([v, l]) => `<button type="button" data-filtre-match="${v}" aria-pressed="${filtre === v}">${l} <b>${nb(v)}</b></button>`).join('')}
       </div>
       <label class="champ mt-recherche"><span class="visuellement-cache">Rechercher un joueur</span>
