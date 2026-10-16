@@ -289,6 +289,7 @@ async function executer(action, el) {
     message(zoneMessage, res.error.code === 'P0001' ? res.error.message : erreurFr(res.error));
   } else {
     message(zoneMessage, '');
+    if (/equipe/.test(action)) document.dispatchEvent(new CustomEvent('dolina:equipes-maj', { detail: { source: 'admin' } }));
   }
   await charger();
 }
@@ -412,6 +413,8 @@ document.addEventListener('toggle', (e) => {
   if (e.target.open) ouverts.add(id); else ouverts.delete(id);
 }, true);
 recherche.addEventListener('input', afficherMembres);
+// Une demande d'équipe traitée dans l'onglet Demandes : on met à jour Membres et Équipes
+document.addEventListener('dolina:equipes-maj', (e) => { if (e.detail?.source === 'demandes') charger(); });
 
 // ---------- Onglets ----------
 

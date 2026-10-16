@@ -1374,3 +1374,14 @@ details.carte-info:not([open]) { gap: 0; }
 span.adm-partie__case { cursor: default; }
 .adm-partie--choisie { border-color: var(--orange) !important; background: var(--orange-fond) !important; }
 .adm-partie .adm-partie__texte { flex: 1; }
+
+/* Admin, Demandes : demandes pour rejoindre une équipe */
+.dem-equipes { display: grid; gap: 10px; border-color: var(--orange); margin-bottom: 18px; }
+.dem-equipes h2 { display: flex; align-items: center; gap: 8px; margin: 0; }
+.dem-equipes__liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.dem-equipe { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid var(--bord); border-radius: 10px; background: var(--noir-2); }
+.dem-equipe__texte { flex: 1; min-width: 160px; display: grid; gap: 2px; }
+.dem-equipe__texte small { color: var(--gris); }
+.dem-equipe__texte b { color: var(--blanc); }
+.dem-equipe__actions { display: flex; gap: 6px; }
+.dem-titre { margin-top: 4px; }

@@ -1,9 +1,10 @@
 // =====================================================================
-//  Administration : demandes reçues par « Nous contacter »
-//  (répertoire unique des demandes ; les emails viendront s'y ajouter)
+//  Administration : demandes reçues par « Nous contacter » et demandes
+//  pour rejoindre une équipe (répertoire unique des demandes ; les emails
+//  viendront s'y ajouter)
 // =====================================================================
 
-import { supabase, esc, message, erreurFr } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, avatar, nomAffiche } from './app.js?v=__VERSION__';
 
 const MOTIFS = { adhesion: 'Rejoindre le club', question: 'Question', autre: 'Autre' };
 const fmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -12,31 +13,64 @@ let zone;
 let zoneMsg;
 let filtre = 'new';
 let demandes = [];
+let equipesAttente = [];
 
 export async function initDemandes(zoneMessage) {
   zone = document.getElementById('vue-demandes');
   zoneMsg = zoneMessage;
   zone.addEventListener('click', clic);
+  // Les autres onglets (Membres, Équipes) préviennent quand une équipe change
+  document.addEventListener('dolina:equipes-maj', () => charger());
   await charger();
 }
 
 async function charger() {
-  const { data, error } = await supabase.from('contact_requests').select('*').order('created_at', { ascending: false }).limit(200);
-  if (error) {
-    zone.innerHTML = `<p class="vide">Demandes indisponibles : exécutez le script SQL 018 dans Supabase. (${esc(error.message || '')})</p>`;
+  const [rc, re] = await Promise.all([
+    supabase.from('contact_requests').select('*').order('created_at', { ascending: false }).limit(200),
+    supabase.from('team_members')
+      .select('team_id, profile_id, requested_at, teams(name, captain_id), profiles!team_members_profile_id_fkey(id, first_name, last_name, nickname, use_nickname, photo_path, status)')
+      .eq('status', 'pending').order('requested_at'),
+  ]);
+  if (rc.error) {
+    zone.innerHTML = `<p class="vide">Demandes indisponibles : exécutez le script SQL 018 dans Supabase. (${esc(rc.error.message || '')})</p>`;
     return;
   }
-  demandes = data || [];
-  const nb = demandes.filter((d) => d.status === 'new').length;
+  demandes = rc.data || [];
+  equipesAttente = (re.data || []).filter((d) => d.profiles && d.profiles.status !== 'refused');
+  const nb = demandes.filter((d) => d.status === 'new').length + equipesAttente.length;
   const compteur = document.getElementById('nb-demandes');
   compteur.textContent = nb;
   compteur.hidden = !nb;
   afficher();
 }
 
+function blocEquipes() {
+  if (!equipesAttente.length) return '';
+  return `
+    <section class="carte-info dem-equipes">
+      <h2>Demandes pour rejoindre une équipe <span class="compteur">${equipesAttente.length}</span></h2>
+      <p class="match__format" style="margin:0">Le capitaine de l'équipe peut aussi les accepter depuis son compte.</p>
+      <ul class="dem-equipes__liste">
+        ${equipesAttente.map((d) => `
+          <li class="dem-equipe">
+            ${avatar(d.profiles, 'avatar--liste')}
+            <div class="dem-equipe__texte">
+              <strong>${esc(nomAffiche(d.profiles))}</strong>
+              <small>veut rejoindre <b>${esc(d.teams?.name || '?')}</b>${d.requested_at ? ` · ${esc(fmt.format(new Date(d.requested_at)))}` : ''}${d.profiles.status === 'pending' ? ' · <span class="statut">compte en attente de validation</span>' : ''}</small>
+            </div>
+            <span class="dem-equipe__actions">
+              <button type="button" class="bouton bouton--petit bouton--plein" data-equipe-ok="${d.team_id}" data-profil="${d.profile_id}">Accepter</button>
+              <button type="button" class="bouton bouton--petit bouton--danger" data-equipe-non="${d.team_id}" data-profil="${d.profile_id}">Refuser</button>
+            </span>
+          </li>`).join('')}
+      </ul>
+    </section>`;
+}
+
 function afficher() {
   const liste = demandes.filter((d) => filtre === 'tout' || d.status === filtre);
-  zone.innerHTML = `
+  zone.innerHTML = `${blocEquipes()}
+    <h2 class="section__titre dem-titre">Messages « Nous contacter »</h2>
     <div class="mp-filtre" role="group" aria-label="Filtrer les demandes">
       ${[['new', 'À traiter'], ['done', 'Traitées'], ['tout', 'Toutes']].map(([v, l]) => `<button type="button" data-filtre="${v}" aria-pressed="${filtre === v}">${l}</button>`).join('')}
     </div>
@@ -77,6 +111,17 @@ async function clic(e) {
   const b = e.target.closest('button');
   if (!b) return;
   if (b.dataset.filtre) { filtre = b.dataset.filtre; afficher(); return; }
+  if (b.dataset.equipeOk || b.dataset.equipeNon) {
+    const team = b.dataset.equipeOk || b.dataset.equipeNon;
+    b.disabled = true;
+    const r = await supabase.from('team_members').update({ status: b.dataset.equipeOk ? 'accepted' : 'refused' })
+      .eq('team_id', team).eq('profile_id', b.dataset.profil).select('team_id');
+    b.disabled = false;
+    if (r.error || !r.data?.length) return message(zoneMsg, r.error ? erreurFr(r.error) : 'La demande n\'a pas pu être mise à jour.');
+    message(zoneMsg, b.dataset.equipeOk ? 'Demande acceptée : le joueur fait partie de l\'équipe.' : 'Demande refusée.', 'ok');
+    document.dispatchEvent(new CustomEvent('dolina:equipes-maj', { detail: { source: 'demandes' } }));
+    return;
+  }
   const id = b.dataset.traiter || b.dataset.rouvrir || b.dataset.enregistrerNote || b.dataset.supprimer;
   if (!id) return;
   b.disabled = true;
