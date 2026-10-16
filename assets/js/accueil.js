@@ -237,3 +237,16 @@ chargerArticles();
   document.addEventListener('visibilitychange', () => (document.hidden ? arreter() : lancer()));
   lancer();
 }());
+
+// Horaires : met en avant le jour d'entraînement (mardi, jeudi) et « ce soir » avant 22h30
+(function horaires() {
+  const maintenant = new Date();
+  const jour = maintenant.getDay();
+  document.querySelectorAll('.horaires__jour').forEach((el) => el.classList.toggle('horaires__jour--aujourdhui', Number(el.dataset.jour) === jour));
+  const minutes = maintenant.getHours() * 60 + maintenant.getMinutes();
+  const ceSoir = document.getElementById('ce-soir');
+  if (ceSoir && (jour === 2 || jour === 4) && minutes < 22 * 60 + 30) {
+    ceSoir.hidden = false;
+    if (minutes >= 19 * 60) ceSoir.textContent = 'Entraînement en cours !';
+  }
+}());
