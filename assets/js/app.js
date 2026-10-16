@@ -697,3 +697,30 @@ window.addEventListener('load', majHauteurEntete);
   reperer();
   effets();
 }());
+
+// ---------------------------------------------------------------------
+// Barre de navigation du bas (téléphone) sur toutes les pages, comme sur l'accueil
+// ---------------------------------------------------------------------
+(function barreDuBas() {
+  if (document.querySelector('.nav-bas')) return;
+  const page = location.pathname.split('/').pop() || 'index.html';
+  if (['scorer.html', 'live.html'].includes(page) || document.body.classList.contains('sans-nav')) return;
+  const RUB = {
+    'classement.html': 'stats.html', 'records.html': 'stats.html', 'face-a-face.html': 'stats.html', 'profil.html': 'stats.html',
+    'mes-parties.html': 'jouer.html', 'tournoi.html': 'tournois.html', 'tournoi-creer.html': 'tournois.html',
+    'capitaine.html': 'equipes.html', 'article.html': './',
+  };
+  const actuelle = RUB[page] || page;
+  const liens = [
+    ['./', 'Accueil', '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'],
+    ['jouer.html', 'Jouer', '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'],
+    ['tournois.html', 'Tournois', '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>'],
+    ['stats.html', 'Mes stats', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],
+    ['equipes.html', 'Équipes', '<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7M17 4a4 4 0 0 1 0 8M22 21c0-3-2-6-5-6.5"/>'],
+  ];
+  const nav = document.createElement('nav');
+  nav.className = 'nav-bas';
+  nav.setAttribute('aria-label', 'Navigation principale');
+  nav.innerHTML = liens.map(([href, nom, d]) => `<a href="${href}"${href === actuelle ? ' aria-current="page"' : ''}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>${nom}</a>`).join('');
+  document.body.appendChild(nav);
+}());

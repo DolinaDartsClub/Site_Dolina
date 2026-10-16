@@ -1810,3 +1810,11 @@ body.barre-visible .entete::after { opacity: 0; }
 .barre-collante.t-onglets, .barre-collante.eq-onglets { margin-left: 0; margin-right: 0; padding: 4px; background: #1a1a1a; }
 @media (prefers-reduced-motion: reduce) { .tete-page { transform: none !important; opacity: 1 !important; filter: none !important; } .barre-collante { transition: none; } }
 .barre-collante.eq-filtre { margin: 0 0 4px; padding: 6px; background: rgba(20,20,20,.92); }
+
+/* Listes déroulantes des filtres : fond transparent dépoli */
+.ld-bouton { background: rgba(38,38,38,.45); backdrop-filter: blur(10px) saturate(140%); -webkit-backdrop-filter: blur(10px) saturate(140%); border-color: rgba(255,255,255,.12); }
+.ld-bouton:hover { background: rgba(245,122,0,.10); }
+.ld--ouverte .ld-bouton { background: rgba(245,122,0,.16); }
+.ld-options { background: rgba(24,24,24,.62); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%); border-color: rgba(255,255,255,.12); box-shadow: 0 18px 44px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06); }
+.ld-option:hover:not([disabled]), .ld-option:focus-visible { background: rgba(255,255,255,.08); }
+.ld-option[aria-selected="true"] { background: rgba(245,122,0,.20); }
