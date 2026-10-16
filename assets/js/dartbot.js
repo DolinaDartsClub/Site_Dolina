@@ -117,3 +117,12 @@ export function voleeBot(reste, reglage, rng = Math.random) {
   }
   return { score: reste - r, nature: 'normale', flechettes: 3, auDouble, detail };
 }
+
+// Tirage au bull : distance au centre (mm) d'une fléchette du bot, selon son niveau.
+// Dispersion autour du centre (loi de Rayleigh) : ~12 mm pour un pro, ~70 mm pour un débutant.
+export function bullBot({ moyenne }, rng = Math.random) {
+  const sigma = borne(95 - 0.75 * moyenne, 12, 80);
+  const d = sigma * Math.sqrt(-2 * Math.log(1 - rng()));
+  const angle = rng() * 2 * Math.PI;
+  return { x: d * Math.cos(angle), y: d * Math.sin(angle), distance: d };
+}

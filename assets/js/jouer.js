@@ -2,7 +2,8 @@
 //  Jouer : création d'un match X01 et reprise des parties en cours
 // =====================================================================
 
-import { BOT_DEFAUT, nomCampBot } from './dartbot.js?v=__VERSION__';
+import { BOT_DEFAUT, nomCampBot, bullBot } from './dartbot.js?v=__VERSION__';
+import { cibleSvg, pointCible, marque } from './cible.js?v=__VERSION__';
 import { reglageVoix, definirVoix, voixDisponible, dire } from './voix.js?v=__VERSION__';
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie, supprimerPartie, avatar, brancherTypeMatch } from './app.js?v=__VERSION__';
 
@@ -385,9 +386,68 @@ form.addEventListener('submit', (e) => {
   message(zoneMsg, '');
   const camps = construireCamps();
   if (camps.length === 1) return creerPartie(1);
+  if (choix.mode === 'bot') return ouvrirBullBot();
   document.getElementById('liste-bull').innerHTML = camps.map((c) => `
     <button type="button" class="bouton bouton--large" data-premier="${c.side}">${esc(c.nom)}</button>`).join('');
   ouvrir('fenetre-bull');
+});
+
+// ----- Tirage au bull contre le dartbot : le joueur montre où sa fléchette est tombée,
+// le bot lance à une distance réaliste pour son niveau -----
+
+let bullJoueur = null;
+let premierBull = null;
+const mm = (d) => `${(d / 10).toFixed(1).replace('.', ',')} cm`;
+const distance = (p) => Math.hypot(p.x, p.y);
+
+function ouvrirBullBot() {
+  bullJoueur = null;
+  premierBull = null;
+  document.getElementById('bull-cible').innerHTML = cibleSvg({ id: 'cible-bull', etiquette: 'Cible : touchez l\'endroit où votre fléchette est tombée' });
+  document.getElementById('bull-bot-texte').textContent = 'Lancez une fléchette vers le bull, puis touchez la cible là où elle est tombée.';
+  const ok = document.getElementById('bull-bot-ok');
+  ok.textContent = 'Valider ma fléchette';
+  ok.disabled = true;
+  ouvrir('fenetre-bull-bot');
+}
+
+document.getElementById('bull-cible').addEventListener('click', (e) => {
+  const svg = e.target.closest('svg');
+  if (!svg || premierBull || document.getElementById('bull-bot-ok').dataset.attente) return;
+  bullJoueur = pointCible(svg, e);
+  if (distance(bullJoueur) > 200) return;
+  svg.querySelector('.cible-marques').innerHTML = marque(bullJoueur, 'Vous', 'cible-fleche--joueur');
+  document.getElementById('bull-bot-texte').textContent = `Votre fléchette : à ${mm(distance(bullJoueur))} du centre. Touchez ailleurs pour corriger.`;
+  document.getElementById('bull-bot-ok').disabled = false;
+});
+
+document.getElementById('bull-bot-ok').addEventListener('click', (e) => {
+  const ok = e.currentTarget;
+  if (premierBull) return creerPartie(premierBull);
+  if (!bullJoueur) return;
+  ok.disabled = true;
+  ok.dataset.attente = '1';
+  document.getElementById('bull-bot-texte').textContent = 'Le dartbot lance…';
+  setTimeout(() => {
+    delete ok.dataset.attente;
+    const bot = bullBot(reglageBot());
+    const marques = document.querySelector('#cible-bull .cible-marques');
+    marques.insertAdjacentHTML('beforeend', marque(bot, 'Bot', 'cible-fleche--bot'));
+    const dJ = Math.round(distance(bullJoueur));
+    const dB = Math.round(bot.distance);
+    const texte = document.getElementById('bull-bot-texte');
+    if (dJ === dB) {
+      texte.textContent = `Égalité, les deux fléchettes sont à ${mm(dJ)} du centre. Relancez et touchez à nouveau la cible.`;
+      bullJoueur = null;
+      setTimeout(() => { marques.innerHTML = ''; }, 1500);
+      ok.textContent = 'Valider ma fléchette';
+      return;
+    }
+    premierBull = dJ < dB ? 1 : 2;
+    texte.innerHTML = `Vous : ${mm(dJ)} · Bot : ${mm(dB)}.<br><strong>${premierBull === 1 ? 'Vous êtes le plus proche : vous commencez.' : 'Le dartbot est le plus proche : il commence.'}</strong>`;
+    ok.textContent = 'Lancer la partie';
+    ok.disabled = false;
+  }, 900);
 });
 
 document.getElementById('liste-bull').addEventListener('click', (e) => {
@@ -397,7 +457,7 @@ document.getElementById('liste-bull').addEventListener('click', (e) => {
 
 async function creerPartie(premier) {
   const f = form.elements;
-  const boutons = document.querySelectorAll('#liste-bull button, #lancer');
+  const boutons = document.querySelectorAll('#liste-bull button, #lancer, #bull-bot-ok');
   boutons.forEach((b) => { b.disabled = true; });
   const camps = construireCamps();
 
@@ -431,6 +491,7 @@ async function creerPartie(premier) {
     if (game?.id) await supprimerPartie(game.id);
     boutons.forEach((b) => { b.disabled = false; });
     fermer(document.getElementById('fenetre-bull'));
+    fermer(document.getElementById('fenetre-bull-bot'));
     message(zoneMsg, `La partie n'a pas pu être créée. ${erreurFr(err)}`);
   };
   if (error) return echec(error);

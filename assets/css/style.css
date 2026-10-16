@@ -1332,3 +1332,16 @@ details.carte-info:not([open]) { gap: 0; }
 
 /* Scorer : pendant le tour du dartbot, le pavé est en pause */
 .scorer--tour-bot .raccourcis, .scorer--tour-bot .pave, .scorer--tour-bot .ecran-saisie__valeur { opacity: .4; pointer-events: none; }
+
+/* Tirage au bull contre le dartbot */
+.bull-bot { max-width: 420px; }
+.bull-bot__texte { margin: 0; min-height: 3em; }
+.bull-bot__cible { display: flex; justify-content: center; }
+.cible-svg { width: 100%; max-width: 340px; max-height: 56vh; touch-action: manipulation; cursor: crosshair; border-radius: 50%; }
+.cible-fleche circle { stroke: #fff; stroke-width: 2.5; }
+.cible-fleche text { font: 700 16px var(--police); paint-order: stroke; stroke: #111; stroke-width: 4px; fill: #fff; }
+.cible-fleche--joueur circle { fill: var(--orange); }
+.cible-fleche--bot circle { fill: #4fc3f7; }
+.cible-fleche--bot { animation: fleche-arrive .35s ease-out; transform-box: fill-box; transform-origin: center; }
+@keyframes fleche-arrive { from { opacity: 0; transform: scale(2.2); } to { opacity: 1; transform: scale(1); } }
+.bull-bot__actions .bouton { flex: 1; }

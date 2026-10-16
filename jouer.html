@@ -186,6 +186,19 @@
   </form>
 </div>
 
+<!-- Tirage au bull contre le dartbot -->
+<div class="fenetre" id="fenetre-bull-bot" role="dialog" aria-modal="true" aria-labelledby="titre-bull-bot" hidden>
+  <div class="fenetre__boite bull-bot">
+    <h2 id="titre-bull-bot">Tirage au bull</h2>
+    <p class="intro bull-bot__texte" id="bull-bot-texte" role="status">Lancez une fléchette vers le bull, puis touchez la cible là où elle est tombée.</p>
+    <div class="bull-bot__cible" id="bull-cible"></div>
+    <div class="actions bull-bot__actions">
+      <button type="button" class="bouton bouton--plein" id="bull-bot-ok" disabled>Valider ma fléchette</button>
+      <button type="button" class="bouton" data-fermer>Annuler</button>
+    </div>
+  </div>
+</div>
+
 <!-- Tirage au bull -->
 <div class="fenetre" id="fenetre-bull" role="dialog" aria-modal="true" aria-labelledby="titre-bull" hidden>
   <div class="fenetre__boite">
