@@ -122,7 +122,6 @@ async function afficher() {
     let action = '';
     if (m.status === 'pending') action = `<button type="button" class="bouton bouton--mini bouton--danger" data-action="annuler" data-team="${t.id}">Annuler la demande</button>`;
     else if (m.status === 'refused') action = `<button type="button" class="bouton bouton--petit" data-action="redemander" data-team="${t.id}">Refaire une demande</button>`;
-    else if (!capitaine) action = `<button type="button" class="bouton bouton--mini bouton--danger" data-action="quitter" data-team="${t.id}" data-nom="${esc(t.name)}">Quitter l'équipe</button>`;
     const [c, l] = STATUTS_EQUIPE[m.status];
     return `
       <div class="ligne-equipe">
