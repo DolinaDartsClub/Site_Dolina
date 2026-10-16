@@ -475,7 +475,7 @@ function fermerListe() {
 function enListe(groupe) {
   const options = optionsDe(groupe);
   let ld = groupe.previousElementSibling?.classList.contains('ld') ? groupe.previousElementSibling : null;
-  if (options.length < SEUIL_LISTE) {
+  if (options.length < SEUIL_LISTE && groupe.dataset.liste !== 'toujours') {
     groupe.classList.remove('ld-source');
     ld?.remove();
     return;

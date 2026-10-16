@@ -1612,3 +1612,10 @@ span.adm-partie__case { cursor: default; }
 .ld--collant { position: sticky; top: calc(var(--entete-h, 64px) + 6px); }
 .mp-filtres > .ld, .rc-filtres > .ld { justify-self: start; }
 @media (prefers-reduced-motion: reduce) { .ld-options, .ld-chevron { transition: none; } }
+
+/* Classement : trois listes (période, jeu, équipe), une par ligne, de même largeur */
+.cl-filtres { gap: 8px; }
+.cl-filtres > .ld { min-width: min(320px, 100%); }
+.cl-filtres > .ld .ld-bouton { width: 100%; }
+.cl-filtres .ld-libelle { min-width: 72px; display: inline-block; text-align: left; }
+.cl-filtres .ld-chevron { margin-left: auto; }
