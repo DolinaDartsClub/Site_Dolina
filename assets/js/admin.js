@@ -208,7 +208,7 @@ function afficherEquipes() {
     const autresCapitaines = new Set(equipes.filter((x) => x.id !== t.id && x.captain_id).map((x) => x.captain_id));
     return `
       <article class="carte-info">
-        <h2>${esc(t.name)}</h2>
+        <div class="cap-bloc-tete"><h2>${esc(t.name)}</h2><a class="lien-equipe" href="capitaine.html?equipe=${encodeURIComponent(t.name)}">Espace capitaine →</a></div>
         <label class="champ">Capitaine
           <select data-action="capitaine" data-team="${t.id}">
             <option value="">— Aucun capitaine —</option>

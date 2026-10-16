@@ -100,6 +100,16 @@ async function charger() {
   equipeActive = (equipes.find((t) => t.id === demandee || t.name === demandee) || mienne || equipes[0])?.id || null;
   saison = isoJour(debutSaison());
   afficher();
+  // Raccourcis depuis l'espace capitaine : ?ajouter=1 ou ?modifier=<rencontre>
+  const params = new URLSearchParams(location.search);
+  if (params.has('ajouter') || params.has('modifier')) {
+    history.replaceState(null, '', location.pathname + location.hash);
+    if (peutGerer(equipeActive)) {
+      const r = rencontres.find((x) => x.id === params.get('modifier'));
+      if (r) { equipeActive = r.team_id; saison = saisonDe(r.date_match); afficher(); }
+      ouvrirFormulaire(r || null);
+    }
+  }
 }
 
 // ---------- Affichage ----------

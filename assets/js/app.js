@@ -269,7 +269,7 @@ const ICONES_NAV = [
   ['contact.html', 'Nous contacter', '<path d="M4 5h16v14H4z"/><path d="M4 6l8 7 8-7"/>'],
 ];
 // Pages rattachées à une rubrique (pour la mettre en avant)
-const RUBRIQUES = { 'scorer.html': 'jouer.html', 'live.html': './', 'mes-parties.html': 'jouer.html', 'tournoi.html': 'tournois.html', 'tournoi-creer.html': 'tournois.html', 'face-a-face.html': 'classement.html', 'records.html': 'classement.html', 'equipes.html': 'equipes.html', 'profil.html': 'classement.html', 'article.html': './' };
+const RUBRIQUES = { 'scorer.html': 'jouer.html', 'live.html': './', 'mes-parties.html': 'jouer.html', 'tournoi.html': 'tournois.html', 'tournoi-creer.html': 'tournois.html', 'face-a-face.html': 'classement.html', 'records.html': 'classement.html', 'capitaine.html': 'equipes.html', 'equipes.html': 'equipes.html', 'profil.html': 'classement.html', 'article.html': './' };
 
 function ajouterBarreIcones() {
   const entete = document.querySelector('.entete');
@@ -345,7 +345,8 @@ async function menuCompte(lien, uid) {
   menu.innerHTML = `
     <div class="mc-liste" role="menu" aria-label="Mon compte">
       ${item('compte.html', 'profil', 'Mon profil')}
-      ${equipe ? item('compte.html#capitaine', 'capitaine', `Espace capitaine <small>${esc(equipe.name)}</small>`) : ''}
+      ${equipe && !admin ? item('capitaine.html', 'capitaine', `Espace capitaine <small>${esc(equipe.name)}</small>`) : ''}
+      ${admin ? item(equipe ? `capitaine.html?equipe=${encodeURIComponent(equipe.name)}` : 'capitaine.html', 'capitaine', 'Espaces capitaines <small>toutes les équipes</small>') : ''}
       ${equipe ? item(`equipes.html#${encodeURIComponent(equipe.name)}`, 'calendrier', 'Calendrier de l\'équipe') : ''}
       ${admin ? item('admin.html', 'admin', 'Espace admin', aTraiter ? `<span class="compteur">${aTraiter}</span>` : '') : ''}
       <hr>
@@ -542,7 +543,7 @@ function fermerListe() {
 function enListe(groupe) {
   const options = optionsDe(groupe);
   let ld = groupe.previousElementSibling?.classList.contains('ld') ? groupe.previousElementSibling : null;
-  if (options.length < SEUIL_LISTE && groupe.dataset.liste !== 'toujours') {
+  if (!options.length || (options.length < SEUIL_LISTE && groupe.dataset.liste !== 'toujours')) {
     groupe.classList.remove('ld-source');
     ld?.remove();
     return;

@@ -96,7 +96,7 @@ async function afficher() {
   // ----- Bloc capitaine -----
   const blocCapitaine = monEquipe ? `
     <div class="carte-info" id="capitaine">
-      <h2>Capitaine · ${esc(monEquipe.name)}</h2>
+      <div class="cap-bloc-tete"><h2>Capitaine · ${esc(monEquipe.name)}</h2><a class="lien-equipe" href="capitaine.html">Espace capitaine →</a></div>
       ${demandes.length ? demandes.map((d) => {
         const p = d.profiles || {};
         const valide = p.status === 'active';

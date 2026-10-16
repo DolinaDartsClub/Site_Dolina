@@ -1667,3 +1667,26 @@ span.adm-partie__case { cursor: default; }
 .mc-liste hr { border: 0; border-top: 1px solid var(--bord); margin: 4px 6px; }
 @media (prefers-reduced-motion: reduce) { .mc-liste { transition: none; } }
 .lien-compte .mc-pastille { display: inline-grid !important; place-items: center; }
+
+/* ===================== Espace capitaine ===================== */
+.cap-tete { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.cap-tete .section__titre { margin: 0; }
+.cap-carte { display: grid; gap: 14px; margin-bottom: 18px; }
+.cap-carte__haut { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.cap-carte__haut h2 { margin: 0; font-family: var(--police-titre); font-size: 28px; text-transform: uppercase; }
+.cap-carte__haut a { color: var(--orange); font-weight: 700; }
+.cap-prochaine { display: grid; gap: 4px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(245,122,0,.45); background: var(--orange-fond); }
+.cap-prochaine__titre { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--orange-clair); font-weight: 700; }
+.cap-prochaine strong { font-size: 18px; }
+.cap-prochaine .bouton { justify-self: start; margin-top: 6px; }
+.cap-raccourcis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.cap-raccourci { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--bord); background: var(--noir-2); color: var(--blanc); font-weight: 600; text-decoration: none; }
+.cap-raccourci:hover { border-color: var(--orange); }
+.cap-raccourci svg { width: 32px; height: 32px; padding: 6px; border-radius: 9px; background: #232323; color: var(--orange); flex: none; }
+.cap-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.cap-ligne { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid var(--bord); border-radius: 10px; background: var(--carte); }
+.cap-ligne__texte { flex: 1; min-width: 150px; display: grid; gap: 2px; color: var(--blanc); text-decoration: none; }
+.cap-ligne__texte small { color: var(--gris); }
+.cap-ligne__actions { display: flex; gap: 6px; }
+.cap-bloc-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.cap-bloc-tete h2 { margin: 0; }
