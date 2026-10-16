@@ -194,3 +194,46 @@ chargerTournois();
 
 chargerMatchs();
 chargerArticles();
+
+// ---------- Diaporama « Rejoindre le club » ----------
+// Défile tout seul (5 s), se met en pause au survol ou au toucher, flèches, points et glissement du doigt.
+(function diaporama() {
+  const racine = document.getElementById('diaporama');
+  if (!racine) return;
+  const photos = [...racine.querySelectorAll('.diaporama__photo')];
+  const points = racine.querySelector('.diaporama__points');
+  if (photos.length < 2) return;
+  let actuelle = 0;
+  let minuteur = null;
+  const calme = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  points.innerHTML = photos.map((_, i) => `<button type="button" data-point="${i}" aria-label="Photo ${i + 1}"${i === 0 ? ' aria-current="true"' : ''}></button>`).join('');
+  const montrer = (i) => {
+    actuelle = (i + photos.length) % photos.length;
+    photos.forEach((p, k) => p.classList.toggle('est-visible', k === actuelle));
+    points.querySelectorAll('button').forEach((b, k) => (k === actuelle ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
+  };
+  const lancer = () => { if (!calme) { clearInterval(minuteur); minuteur = setInterval(() => montrer(actuelle + 1), 5000); } };
+  const arreter = () => clearInterval(minuteur);
+  racine.addEventListener('click', (e) => {
+    const f = e.target.closest('[data-diapo]');
+    const p = e.target.closest('[data-point]');
+    if (f) montrer(actuelle + Number(f.dataset.diapo));
+    else if (p) montrer(Number(p.dataset.point));
+    else return;
+    lancer();
+  });
+  racine.addEventListener('mouseenter', arreter);
+  racine.addEventListener('mouseleave', lancer);
+  let x0 = null;
+  racine.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; arreter(); }, { passive: true });
+  racine.addEventListener('touchend', (e) => {
+    if (x0 !== null) {
+      const dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 40) montrer(actuelle + (dx < 0 ? 1 : -1));
+    }
+    x0 = null;
+    lancer();
+  });
+  document.addEventListener('visibilitychange', () => (document.hidden ? arreter() : lancer()));
+  lancer();
+}());

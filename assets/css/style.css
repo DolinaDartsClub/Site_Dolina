@@ -1197,3 +1197,23 @@ details.carte-info:not([open]) { gap: 0; }
 .p-filtre { margin-bottom: 12px; }
 @media (min-width: 900px) { .p-filtre { display: none; } }
 @media (max-width: 899px) { .p-poule--cachee { display: none; } }
+
+/* Accueil : diaporama « Rejoindre le club » */
+.contact-accueil:has(.diaporama) { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; }
+.contact-accueil:has(.diaporama) > .bouton { justify-self: start; }
+.contact-accueil .diaporama { grid-column: 1 / -1; width: 100%; }
+@media (min-width: 600px) { .contact-accueil:has(.diaporama) { grid-template-columns: minmax(0, 1fr) auto; } }
+.diaporama { position: relative; overflow: hidden; border-radius: 10px; background: var(--noir); aspect-ratio: 4 / 3; }
+@media (min-width: 600px) { .diaporama { aspect-ratio: 16 / 9; } }
+.diaporama__vues { position: absolute; inset: 0; }
+.diaporama__photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s ease; }
+.diaporama__photo.est-visible { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .diaporama__photo { transition: none; } }
+.diaporama__fleche { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(20, 20, 20, 0.6); color: var(--blanc); font-size: 26px; line-height: 1; cursor: pointer; display: grid; place-items: center; padding-bottom: 3px; }
+.diaporama__fleche:hover { background: var(--orange); color: var(--noir); }
+.diaporama__fleche--prec { left: 8px; }
+.diaporama__fleche--suiv { right: 8px; }
+.diaporama__points { position: absolute; left: 0; right: 0; bottom: 8px; z-index: 2; display: flex; justify-content: center; gap: 4px; }
+.diaporama__points button { width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+.diaporama__points button::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.55); box-shadow: 0 0 2px rgba(0, 0, 0, 0.6); }
+.diaporama__points button[aria-current="true"]::before { background: var(--orange); width: 11px; height: 11px; }
