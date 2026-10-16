@@ -1494,3 +1494,37 @@ span.adm-partie__case { cursor: default; }
   .mt-ligne .adm-partie__texte { flex-basis: calc(100% - 40px); }
   .mt-ligne .adm-partie__actions { margin-left: 30px; }
 }
+
+/* ===================== Admin : menu des rubriques (en haut à droite) ===================== */
+.adm-barre { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; position: relative; z-index: 6; }
+.adm-barre__titre { display: flex; align-items: center; gap: 10px; margin: 0; font-family: var(--police-titre); font-size: 26px; text-transform: uppercase; min-width: 0; }
+.adm-barre__titre svg { width: 28px; height: 28px; color: var(--orange); flex: none; }
+.adm-barre__titre span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-menu { position: relative; flex: none; }
+.adm-menu__bouton { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--orange); background: var(--carte); color: var(--blanc); font: 600 15px var(--police); cursor: pointer; transition: background .2s, box-shadow .2s; }
+.adm-menu__bouton:hover { background: var(--orange-fond); }
+.adm-menu__bouton svg { width: 20px; height: 20px; flex: none; }
+.adm-menu__chevron { transition: transform .25s ease; }
+.adm-menu--ouvert .adm-menu__bouton { background: var(--orange-fond); box-shadow: 0 0 0 4px rgba(245,122,0,.15); }
+.adm-menu--ouvert .adm-menu__chevron { transform: rotate(180deg); }
+.adm-menu__alerte { animation: fin-brille 2s ease-in-out infinite; }
+.adm-menu__liste { position: absolute; right: 0; top: calc(100% + 8px); width: min(290px, calc(100vw - 32px)); display: grid; gap: 2px; padding: 8px; border: 1px solid var(--bord-fort); border-radius: 16px; background: rgba(26,26,26,.97); backdrop-filter: blur(10px); box-shadow: 0 18px 50px rgba(0,0,0,.6); transform-origin: top right; opacity: 0; transform: translateY(-6px) scale(.96); pointer-events: none; visibility: hidden; transition: opacity .18s ease, transform .22s cubic-bezier(.2,1.2,.4,1), visibility 0s .22s; }
+.adm-menu--ouvert .adm-menu__liste { opacity: 1; transform: none; pointer-events: auto; visibility: visible; transition: opacity .18s ease, transform .22s cubic-bezier(.2,1.2,.4,1), visibility 0s; }
+.adm-menu__item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 46px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--gris-clair); font: 600 15px var(--police); text-align: left; cursor: pointer; border-bottom: 0; margin: 0; transition: background .15s, color .15s, transform .15s; }
+.adm-menu--ouvert .adm-menu__item { animation: menu-entree .3s ease both; }
+.adm-menu--ouvert .adm-menu__item:nth-child(2) { animation-delay: .02s; } .adm-menu--ouvert .adm-menu__item:nth-child(3) { animation-delay: .04s; }
+.adm-menu--ouvert .adm-menu__item:nth-child(4) { animation-delay: .06s; } .adm-menu--ouvert .adm-menu__item:nth-child(5) { animation-delay: .08s; }
+.adm-menu--ouvert .adm-menu__item:nth-child(6) { animation-delay: .10s; } .adm-menu--ouvert .adm-menu__item:nth-child(7) { animation-delay: .12s; }
+.adm-menu--ouvert .adm-menu__item:nth-child(8) { animation-delay: .14s; }
+@keyframes menu-entree { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+.adm-menu__item:hover, .adm-menu__item:focus-visible { background: #262626; color: var(--blanc); outline: none; transform: translateX(-2px); }
+.adm-menu__icone { width: 34px; height: 34px; padding: 7px; border-radius: 10px; background: #232323; border: 1px solid var(--bord); color: var(--gris-clair); flex: none; transition: background .15s, color .15s; }
+.adm-menu__texte { flex: 1; }
+.adm-menu__item[aria-selected="true"] { background: var(--orange-fond); color: var(--blanc); }
+.adm-menu__item[aria-selected="true"] .adm-menu__icone { background: var(--orange); border-color: var(--orange); color: var(--noir); }
+.adm-menu__item:hover .adm-menu__icone { color: var(--orange); }
+.adm-menu__item[aria-selected="true"]:hover .adm-menu__icone { color: var(--noir); }
+.adm-menu__item--alerte .adm-menu__icone { border-color: var(--orange); }
+@media (prefers-reduced-motion: reduce) { .adm-menu__liste, .adm-menu__item, .adm-menu--ouvert .adm-menu__item { transition: none; animation: none; } }
+@media (max-width: 480px) { .adm-menu__bouton > span:not(.compteur) { display: none; } .adm-barre__titre { font-size: 22px; } .adm-barre__titre .adm-menu__icone { width: 36px; height: 36px; padding: 7px; } }
+.adm-barre__titre .adm-menu__icone { width: 40px; height: 40px; padding: 8px; background: var(--orange); border-color: var(--orange); color: var(--noir); }

@@ -422,12 +422,44 @@ document.addEventListener('dolina:equipes-maj', (e) => { if (e.detail?.source ==
 
 // ---------- Onglets ----------
 
+// Menu des rubriques : bouton en haut à droite, liste verticale déroulante
+const menu = document.getElementById('adm-menu');
+const boutonMenu = document.getElementById('adm-menu-bouton');
+function ouvrirMenu(ouvert) {
+  menu.classList.toggle('adm-menu--ouvert', ouvert);
+  boutonMenu.setAttribute('aria-expanded', String(ouvert));
+  if (ouvert) menu.querySelector('[aria-selected="true"]')?.focus();
+}
+boutonMenu.addEventListener('click', () => ouvrirMenu(!menu.classList.contains('adm-menu--ouvert')));
+document.addEventListener('click', (e) => { if (!menu.contains(e.target)) ouvrirMenu(false); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && menu.classList.contains('adm-menu--ouvert')) { ouvrirMenu(false); boutonMenu.focus(); }
+});
+// Pastille du bouton : total des choses à traiter (inscriptions, demandes, sauvegarde)
+function majAlerte() {
+  const n = ['nb-attente', 'nb-demandes', 'nb-sauvegarde'].reduce((t, id) => {
+    const c = document.getElementById(id);
+    if (!c || c.hidden) return t;
+    return t + (Number(c.textContent) || (c.textContent.trim() === '!' ? 1 : 0));
+  }, 0);
+  const a = document.getElementById('adm-menu-alerte');
+  a.textContent = n;
+  a.hidden = !n;
+  document.querySelectorAll('.adm-menu__item .compteur').forEach((c) => {
+    c.closest('.adm-menu__item').classList.toggle('adm-menu__item--alerte', !c.hidden && c.textContent.trim() !== '0');
+  });
+}
+new MutationObserver(majAlerte).observe(document.getElementById('onglets'), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden'] });
+
 document.getElementById('onglets').addEventListener('click', (e) => {
   const b = e.target.closest('[data-onglet]');
   if (!b) return;
   document.querySelectorAll('[data-onglet]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
   Object.entries(vues).forEach(([nom, v]) => { v.hidden = nom !== b.dataset.onglet; });
   history.replaceState(null, '', `#${b.dataset.onglet}`);
+  // Titre de la rubrique affichée, avec son icône
+  document.getElementById('adm-titre').innerHTML = `${b.querySelector('svg').outerHTML}<span>${b.querySelector('.adm-menu__texte').textContent}</span>`;
+  ouvrirMenu(false);
 });
 
 // ---------- Démarrage ----------
@@ -442,7 +474,8 @@ async function init() {
     vues.inscriptions.innerHTML = '<p class="vide">Cet espace est réservé aux administrateurs du club.</p>';
     return;
   }
-  document.getElementById('onglets').hidden = false;
+  document.getElementById('adm-barre').hidden = false;
+  majAlerte();
   const depart = location.hash.slice(1);
   if (vues[depart]) document.querySelector(`[data-onglet="${depart}"]`).click();
   await Promise.all([charger(), initActus(moi), initDemandes(document.getElementById('message')), initSauvegarde(document.getElementById('message')), initTournois(document.getElementById('message')), initMatchs(document.getElementById('message'))]);
