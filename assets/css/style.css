@@ -1472,3 +1472,25 @@ span.adm-partie__case { cursor: default; }
 /* Équipes : filtre À venir / Résultats, collé en haut au défilement */
 .eq-filtre { position: sticky; top: calc(var(--entete-h, 64px) + 6px); z-index: 5; margin: 0 0 4px; padding: 6px; border-radius: 999px; background: rgba(20,20,20,.92); backdrop-filter: blur(6px); width: fit-content; max-width: 100%; scroll-margin-top: 90px; }
 .eq-filtre b { margin-left: 4px; font-weight: 700; opacity: .75; }
+
+/* Admin : derniers matchs */
+.mt-outils { display: grid; gap: 10px; margin-bottom: 12px; }
+.mt-outils .mp-filtre b { margin-left: 4px; opacity: .7; }
+.mt-recherche { margin: 0; }
+.mt-score { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-weight: 700; }
+.mt-score i { font-style: normal; color: var(--gris); }
+.mt-camp { display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; }
+.mt-camp__nom { overflow-wrap: anywhere; }
+.mt-camp b { font-family: var(--police-titre); font-size: 18px; color: var(--gris-clair); }
+.mt-camp--gagnant .mt-camp__nom, .mt-camp--gagnant b { color: var(--orange); }
+.mt-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.mt-statut, .mt-tag { font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--bord-fort); color: var(--gris-clair); }
+.mt-statut--live { border-color: var(--orange); color: var(--orange); }
+.mt-statut--finished { background: #262626; }
+.mt-ligne--live { border-color: rgba(245,122,0,.5); }
+#mt-plus { margin-top: 12px; justify-content: center; }
+@media (max-width: 480px) {
+  .mt-ligne { align-items: flex-start; }
+  .mt-ligne .adm-partie__texte { flex-basis: calc(100% - 40px); }
+  .mt-ligne .adm-partie__actions { margin-left: 30px; }
+}

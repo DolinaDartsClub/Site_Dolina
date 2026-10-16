@@ -35,6 +35,7 @@
     <button type="button" class="onglet" data-onglet="inscriptions" aria-selected="true">Inscriptions <span class="compteur" id="nb-attente">0</span></button>
     <button type="button" class="onglet" data-onglet="membres" aria-selected="false">Membres</button>
     <button type="button" class="onglet" data-onglet="equipes" aria-selected="false">Équipes</button>
+    <button type="button" class="onglet" data-onglet="matchs" aria-selected="false">Matchs</button>
     <button type="button" class="onglet" data-onglet="actus" aria-selected="false">Actualités</button>
     <button type="button" class="onglet" data-onglet="demandes" aria-selected="false">Demandes <span class="compteur" id="nb-demandes" hidden>0</span></button>
     <button type="button" class="onglet" data-onglet="tournois" aria-selected="false">Tournois</button>
@@ -55,6 +56,10 @@
 
   <section id="vue-equipes" class="section" hidden>
     <div id="liste-equipes" class="liste-cartes"></div>
+  </section>
+
+  <section id="vue-matchs" class="section" hidden aria-live="polite">
+    <p class="vide">Chargement…</p>
   </section>
 
   <section id="vue-demandes" class="section" hidden aria-live="polite">

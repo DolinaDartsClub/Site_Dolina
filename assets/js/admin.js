@@ -9,6 +9,7 @@
 import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur, avatar, DOSSIER_PHOTOS, formatPartie } from './app.js?v=__VERSION__';
 import { initActus } from './admin-actus.js?v=__VERSION__';
 import { initDemandes } from './admin-demandes.js?v=__VERSION__';
+import { initMatchs } from './admin-matchs.js?v=__VERSION__';
 import { initSauvegarde } from './admin-sauvegarde.js?v=__VERSION__';
 import { initTournois } from './admin-tournois.js?v=__VERSION__';
 
@@ -17,6 +18,7 @@ const vues = {
   inscriptions: document.getElementById('vue-inscriptions'),
   membres: document.getElementById('vue-membres'),
   equipes: document.getElementById('vue-equipes'),
+  matchs: document.getElementById('vue-matchs'),
   actus: document.getElementById('vue-actus'),
   demandes: document.getElementById('vue-demandes'),
   tournois: document.getElementById('vue-tournois'),
@@ -384,6 +386,7 @@ document.addEventListener('click', async (e) => {
     message(zoneMessage, n === ids.length
       ? `${n} partie${n > 1 ? 's' : ''} supprimée${n > 1 ? 's' : ''}.`
       : `${n} partie${n > 1 ? 's' : ''} supprimée${n > 1 ? 's' : ''} sur ${ids.length} : les autres n'ont pas pu l'être.`, n === ids.length ? 'ok' : undefined);
+    document.dispatchEvent(new Event('dolina:parties-maj'));
     return afficherPartiesMembre(b.dataset.id);
   }
   if (b.dataset.partieAction === 'supprimer') {
@@ -395,6 +398,7 @@ document.addEventListener('click', async (e) => {
       return message(zoneMessage, error ? (error.code === 'P0001' ? error.message : erreurFr(error)) : 'La partie n\'a pas pu être supprimée.');
     }
     message(zoneMessage, 'Partie supprimée.', 'ok');
+    document.dispatchEvent(new Event('dolina:parties-maj'));
     afficherPartiesMembre(b.dataset.id);
   }
 });
@@ -441,7 +445,7 @@ async function init() {
   document.getElementById('onglets').hidden = false;
   const depart = location.hash.slice(1);
   if (vues[depart]) document.querySelector(`[data-onglet="${depart}"]`).click();
-  await Promise.all([charger(), initActus(moi), initDemandes(document.getElementById('message')), initSauvegarde(document.getElementById('message')), initTournois(document.getElementById('message'))]);
+  await Promise.all([charger(), initActus(moi), initDemandes(document.getElementById('message')), initSauvegarde(document.getElementById('message')), initTournois(document.getElementById('message')), initMatchs(document.getElementById('message'))]);
 }
 
 init();
