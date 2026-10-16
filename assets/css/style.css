@@ -1366,3 +1366,11 @@ details.carte-info:not([open]) { gap: 0; }
 @keyframes fin-pop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes fin-brille { 50% { box-shadow: 0 0 0 10px rgba(245,122,0,.08), 0 0 40px rgba(245,122,0,.8); } }
 @media (prefers-reduced-motion: reduce) { .fin--victoire, .fin--defaite, .fin--victoire .fin__icone { animation: none; } }
+
+/* Admin : sélection multiple de parties */
+.adm-selection { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 8px 12px; border: 1px solid var(--bord); border-radius: 10px; background: var(--noir-2); }
+.adm-selection__tout { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; }
+.adm-selection input, .adm-partie__case { width: 20px; height: 20px; accent-color: var(--orange); flex: none; cursor: pointer; }
+span.adm-partie__case { cursor: default; }
+.adm-partie--choisie { border-color: var(--orange) !important; background: var(--orange-fond) !important; }
+.adm-partie .adm-partie__texte { flex: 1; }

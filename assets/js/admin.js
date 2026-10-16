@@ -311,7 +311,12 @@ async function afficherPartiesMembre(id) {
   if (!parties.length) { zone.innerHTML = '<p class="vide">Aucune partie enregistrée.</p>'; return; }
   const { data: fins } = await supabase.from('visits').select('game_id, side').in('game_id', parties.map((g) => g.id)).eq('is_checkout', true);
   const manches = (g, side) => (fins || []).filter((f) => f.game_id === g.id && f.side === side).length;
+  const supprimables = parties.filter((g) => !g.tournament_match_id).length;
   zone.innerHTML = `<p class="match__format" style="margin:0">${parties.length} partie${parties.length > 1 ? 's' : ''}${parties.length === 100 ? ' (les 100 plus récentes)' : ''}. Les matchs de tournoi se corrigent depuis la page du tournoi.</p>
+    ${supprimables ? `<div class="adm-selection">
+      <label class="adm-selection__tout"><input type="checkbox" data-tout-parties="${id}"> Tout sélectionner</label>
+      <button type="button" class="bouton bouton--petit bouton--danger" data-partie-action="supprimer-selection" data-id="${id}" disabled>Supprimer la sélection</button>
+    </div>` : ''}
     <ul class="adm-parties">${parties.map((g) => {
     const monCamp = g.moi?.[0]?.side;
     const camps = [...new Set(g.game_players.map((x) => x.side))].sort((a, b) => a - b);
@@ -322,6 +327,7 @@ async function afficherPartiesMembre(id) {
     const score = [monCamp, ...camps.filter((c) => c !== monCamp)].map((c) => manches(g, c)).join(' – ');
     return `
       <li class="adm-partie">
+        ${g.tournament_match_id ? '<span class="adm-partie__case"></span>' : `<input type="checkbox" class="adm-partie__case" data-choix-partie="${g.id}" aria-label="Sélectionner la partie du ${esc(fmtPartie.format(new Date(g.finished_at || g.created_at)))}">`}
         <div class="adm-partie__texte">
           <strong>${esc(fmtPartie.format(new Date(g.finished_at || g.created_at)))} · ${esc(resultat)}${camps.length > 1 ? ` · ${esc(score)}` : ''}</strong>
           <small>${adversaires ? `contre ${esc(adversaires)}` : 'Seul'} · ${esc(formatPartie(g))}</small>
@@ -335,10 +341,50 @@ async function afficherPartiesMembre(id) {
   }).join('')}</ul>`;
 }
 
+// Sélection multiple : cases à cocher + « Tout sélectionner »
+function majSelection(zone) {
+  const cases = [...zone.querySelectorAll('[data-choix-partie]')];
+  const n = cases.filter((c) => c.checked).length;
+  const bouton = zone.querySelector('[data-partie-action="supprimer-selection"]');
+  if (bouton) {
+    bouton.disabled = !n;
+    bouton.textContent = n ? `Supprimer la sélection (${n})` : 'Supprimer la sélection';
+  }
+  const tout = zone.querySelector('[data-tout-parties]');
+  if (tout) {
+    tout.checked = n > 0 && n === cases.length;
+    tout.indeterminate = n > 0 && n < cases.length;
+  }
+  cases.forEach((c) => c.closest('.adm-partie').classList.toggle('adm-partie--choisie', c.checked));
+}
+document.addEventListener('change', (e) => {
+  const zone = e.target.closest('[data-liste-parties]');
+  if (!zone) return;
+  if (e.target.matches('[data-tout-parties]')) zone.querySelectorAll('[data-choix-partie]').forEach((c) => { c.checked = e.target.checked; });
+  if (e.target.matches('[data-tout-parties], [data-choix-partie]')) majSelection(zone);
+});
+
 document.addEventListener('click', async (e) => {
   const b = e.target.closest('button[data-partie-action]');
   if (!b) return;
   if (b.dataset.partieAction === 'voir') return afficherPartiesMembre(b.dataset.id);
+  if (b.dataset.partieAction === 'supprimer-selection') {
+    const zone = b.closest('[data-liste-parties]');
+    const ids = [...zone.querySelectorAll('[data-choix-partie]:checked')].map((c) => c.dataset.choixPartie);
+    if (!ids.length) return;
+    if (!confirm(`Supprimer définitivement ${ids.length > 1 ? `ces ${ids.length} parties` : 'cette partie'} ?\n\nElles disparaîtront pour tous les joueurs, avec leurs volées : les statistiques et le classement seront recalculés sans elles.`)) return;
+    b.disabled = true;
+    const { data, error } = await supabase.from('games').delete().in('id', ids).select('id');
+    if (error) {
+      b.disabled = false;
+      return message(zoneMessage, error.code === 'P0001' ? error.message : erreurFr(error));
+    }
+    const n = data?.length || 0;
+    message(zoneMessage, n === ids.length
+      ? `${n} partie${n > 1 ? 's' : ''} supprimée${n > 1 ? 's' : ''}.`
+      : `${n} partie${n > 1 ? 's' : ''} supprimée${n > 1 ? 's' : ''} sur ${ids.length} : les autres n'ont pas pu l'être.`, n === ids.length ? 'ok' : undefined);
+    return afficherPartiesMembre(b.dataset.id);
+  }
   if (b.dataset.partieAction === 'supprimer') {
     if (!confirm(`Supprimer définitivement cette partie (${b.dataset.resume}) ?\n\nElle disparaîtra pour tous les joueurs, avec ses volées : leurs statistiques et le classement seront recalculés sans elle.`)) return;
     b.disabled = true;
