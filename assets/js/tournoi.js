@@ -304,12 +304,29 @@ function ligneJoueur(m, cote) {
     </div>`;
 }
 
+// ---------- Poules : une cible par poule ----------
+// Dans une poule, un seul match à la fois ; les matchs s'enchaînent dans l'ordre des journées.
+const ordrePoule = (a, b) => a.round_no - b.round_no || a.match_no - b.match_no;
+function matchsDePoule(k) { return matchs.filter((x) => x.phase === 'pool' && x.pool_no === k).sort(ordrePoule); }
+function enCoursDePoule(k) { return matchsDePoule(k).find((x) => x.status === 'live') || null; }
+function fileDePoule(k) { return matchsDePoule(k).filter((x) => x.status === 'ready'); }
+
 function boutonMatch(m) {
   const orga = role === 'organisateur';
   const autorise = orga || role === 'participant';
   const jeTiensLeScore = moi && m.game_created_by === moi.id;
   const boutons = [];
-  if (m.status === 'ready' && autorise) {
+  if (m.status === 'ready' && autorise && m.phase === 'pool') {
+    const enCours = enCoursDePoule(m.pool_no);
+    const suivant = fileDePoule(m.pool_no)[0];
+    if (enCours) {
+      // La cible de la poule est occupée : rien à lancer
+    } else if (suivant && suivant.id === m.id) {
+      boutons.push(`<button type="button" class="bouton bouton--petit bouton--plein" data-lancer="${m.id}">Lancer le match</button>`);
+    } else if (orga) {
+      boutons.push(`<button type="button" class="bouton bouton--petit" data-lancer="${m.id}" title="Ce n'est pas le prochain match de la poule">Lancer hors ordre</button>`);
+    }
+  } else if (m.status === 'ready' && autorise) {
     boutons.push(`<button type="button" class="bouton bouton--petit${estMonMatch(m) ? ' bouton--plein' : ''}" data-lancer="${m.id}">Lancer le match</button>`);
   }
   if (m.status === 'live' && m.game_id) {
@@ -341,6 +358,14 @@ function formatMatch(m) {
 function etatPartieMatch(m) {
   const notes = [];
   if (m.status === 'live' && m.game_status === 'finished') notes.push('<p class="m-carte__note">Partie terminée : résultat à valider.</p>');
+  if (m.status === 'ready' && m.phase === 'pool') {
+    const enCours = enCoursDePoule(m.pool_no);
+    const file = fileDePoule(m.pool_no);
+    const rang = file.findIndex((x) => x.id === m.id);
+    if (enCours) notes.push(`<p class="m-carte__note m-carte__note--gris">Cible de la poule ${lettrePoule(m.pool_no)} occupée : M${enCours.match_no} en cours.${rang === 0 ? ' Ce match est le suivant.' : ''}</p>`);
+    else if (rang === 0) notes.push(`<p class="m-carte__note">Prochain match sur la cible de la poule ${lettrePoule(m.pool_no)}.</p>`);
+    else if (rang > 0) notes.push(`<p class="m-carte__note m-carte__note--gris">À jouer après M${file[rang - 1].match_no} sur la cible de la poule ${lettrePoule(m.pool_no)}.</p>`);
+  }
   if (m.corrected_at) notes.push('<p class="m-carte__note m-carte__note--gris">Score corrigé par l\'organisateur</p>');
   if (m.format && m.status !== 'done' && m.status !== 'bye') notes.push(`<p class="m-carte__note m-carte__note--gris">${esc(formatPartie(m.format))}</p>`);
   return notes.join('');
@@ -472,6 +497,30 @@ function vueMatchs() {
   ];
   const mien = vrais.filter(estMonMatch);
   const sections = [];
+  // Poules en cours : une cible par poule, avec le match en cours et ceux qui suivent
+  const nbPoules = t.format === 'pools' ? (t.pools_count || 0) : 0;
+  const cibles = [];
+  for (let k = 1; k <= nbPoules; k++) {
+    const enCours = enCoursDePoule(k);
+    const file = fileDePoule(k);
+    if (!enCours && !file.length) continue;
+    const tete = enCours || file[0];
+    const ensuite = (enCours ? file : file.slice(1));
+    cibles.push(`
+      <div class="c-cible">
+        <h4 class="c-cible__titre">Cible poule ${lettrePoule(k)} <span>${enCours ? 'En cours' : 'Libre'}</span></h4>
+        ${carteMatch(tete)}
+        ${ensuite.length ? `<p class="c-cible__suite">Ensuite : ${ensuite.slice(0, 6).map((x) => `M${x.match_no} (${esc(nomEntree(x.entry_a))} – ${esc(nomEntree(x.entry_b))})`).join(' · ')}${ensuite.length > 6 ? ` · et ${ensuite.length - 6} autre${ensuite.length - 6 > 1 ? 's' : ''}` : ''}</p>` : '<p class="c-cible__suite">Dernier match de la poule.</p>'}
+      </div>`);
+  }
+  if (cibles.length) {
+    sections.push(`
+      <section class="m-groupe">
+        <h3 class="m-groupe__titre">Poules : une cible par poule</h3>
+        <p class="t-legende">Chaque poule joue sur sa cible : les poules avancent en même temps, et dans une poule les matchs s'enchaînent l'un après l'autre.</p>
+        <div class="c-cibles">${cibles.join('')}</div>
+      </section>`);
+  }
   if (mien.length) {
     const ordre = { live: 0, ready: 1, waiting: 2, done: 3 };
     sections.push(`
@@ -482,7 +531,7 @@ function vueMatchs() {
   }
   // Mes matchs sont regroupés en tête : on ne les répète pas dans les autres groupes
   for (const [st, titre] of groupes) {
-    const liste = vrais.filter((m) => m.status === st && !estMonMatch(m));
+    const liste = vrais.filter((m) => m.status === st && !estMonMatch(m) && !(cibles.length && m.phase === 'pool' && (st === 'live' || st === 'ready')));
     if (!liste.length) continue;
     sections.push(`
       <section class="m-groupe">

@@ -80,7 +80,7 @@ select _t(:'W', 'phase finale avant la fin des poules : refusé', $$select lance
 -- Un joueur ne peut pas jouer deux matchs à la fois
 select set_config('t.pm1', (select id::text from tournament_matches where tournament_id = current_setting('t.p')::uuid and pool_no = 1 order by match_no limit 1), false);
 select _t(:'W', 'lancer un match de poule', $$select set_config('t.pg1', lancer_match_tournoi(current_setting('t.pm1')::uuid)::text, false)$$);
-select _t(:'W', 'même joueur dans un 2e match simultané : refusé', $$select lancer_match_tournoi((select o.id from tournament_matches o, tournament_matches m where m.id = current_setting('t.pm1')::uuid and o.tournament_id = m.tournament_id and o.id <> m.id and o.status = 'ready' and (o.entry_a in (m.entry_a, m.entry_b) or o.entry_b in (m.entry_a, m.entry_b)) limit 1))::text$$, 'a déjà un match en cours');
+select _t(:'W', '2e match de la même poule (même joueur) : refusé, une cible par poule', $$select lancer_match_tournoi((select o.id from tournament_matches o, tournament_matches m where m.id = current_setting('t.pm1')::uuid and o.tournament_id = m.tournament_id and o.id <> m.id and o.status = 'ready' and (o.entry_a in (m.entry_a, m.entry_b) or o.entry_b in (m.entry_a, m.entry_b)) limit 1))::text$$, 'cible de la poule');
 select _t(:'W', 'autre poule en parallèle : accepté', $$select lancer_match_tournoi((select id from tournament_matches where tournament_id = current_setting('t.p')::uuid and pool_no = 2 and status = 'ready' order by match_no limit 1))::text$$);
 -- Jouer toutes les poules : le premier inscrit de chaque match gagne 2-1 (en tant qu'organisateur)
 do $$
