@@ -634,3 +634,66 @@ function majHauteurEntete() {
 majHauteurEntete();
 window.addEventListener('resize', majHauteurEntete);
 window.addEventListener('load', majHauteurEntete);
+
+// ---------------------------------------------------------------------
+// Mise en page au défilement, sur toutes les pages (comme l'accueil) :
+// - le titre de la page s'efface en douceur quand on descend ;
+// - la dernière barre d'onglets ou de filtres se colle sous l'en-tête,
+//   se cache quand on descend et réapparaît dès qu'on remonte.
+// ---------------------------------------------------------------------
+(function miseEnPageDefilement() {
+  const page = location.pathname.split('/').pop() || 'index.html';
+  if (['index.html', 'scorer.html', 'live.html'].includes(page)) return;
+  const main = document.querySelector('main');
+  if (!main) return;
+  const calme = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  let tete = [];
+  let barre = null;
+  let dernier = window.scrollY;
+  let enAttente = false;
+
+  const reperer = () => {
+    // Titre de page : le premier h1 visible (avec son bloc d'en-tête et l'intro qui suit)
+    const h1 = [...main.querySelectorAll('h1')].find((h) => h.offsetParent && !h.closest('.carte-info, .fenetre'));
+    const conteneur = h1?.closest('.rc-tete, .cap-tete');
+    const bloc = h1 ? (conteneur && !conteneur.querySelector('.ld, .mp-filtre') ? conteneur : h1) : null;
+    const nouveaux = bloc ? [bloc, ...(bloc.nextElementSibling?.matches('.intro, .eq-intro, .rc-intro') ? [bloc.nextElementSibling] : [])] : [];
+    if (nouveaux.join() !== tete.join()) {
+      tete.forEach((el) => { el.classList.remove('tete-page'); el.style.removeProperty('--p'); });
+      tete = calme ? [] : nouveaux;
+      tete.forEach((el) => el.classList.add('tete-page'));
+    }
+    // Barre collante : la dernière barre d'onglets ou de filtres visible de la page
+    const barres = [...main.querySelectorAll('.t-onglets, .eq-onglets, .mp-filtres, .rc-filtres, .eq-filtre')]
+      .filter((b) => b.offsetParent && !b.closest('.fenetre, [hidden]'));
+    const choisie = barres.at(-1) || null;
+    if (choisie !== barre) {
+      barre?.classList.remove('barre-collante', 'barre-collante--cache');
+      barre = choisie;
+      barre?.classList.add('barre-collante');
+    }
+  };
+
+  const effets = () => {
+    enAttente = false;
+    const y = window.scrollY;
+    const hEntete = document.querySelector('.entete')?.offsetHeight || 64;
+    tete.forEach((el) => el.style.setProperty('--p', Math.min(1, Math.max(0, y / 160)).toFixed(3)));
+    if (barre) {
+      const collee = barre.getBoundingClientRect().top <= hEntete + 1;
+      const menuOuvert = barre.querySelector('.ld--ouverte');
+      if (!collee || y < dernier - 6 || menuOuvert) barre.classList.remove('barre-collante--cache');
+      else if (y > dernier + 6) barre.classList.add('barre-collante--cache');
+      document.body.classList.toggle('barre-visible', collee && !barre.classList.contains('barre-collante--cache'));
+    }
+    dernier = y;
+  };
+
+  let attente = null;
+  new MutationObserver(() => { clearTimeout(attente); attente = setTimeout(reperer, 120); })
+    .observe(main, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+  window.addEventListener('scroll', () => { if (!enAttente) { enAttente = true; requestAnimationFrame(effets); } }, { passive: true });
+  window.addEventListener('resize', () => { reperer(); effets(); });
+  reperer();
+  effets();
+}());

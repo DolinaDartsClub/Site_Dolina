@@ -1724,9 +1724,10 @@ span.adm-partie__case { cursor: default; }
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     main :is(.section__titre, .match, .pr-carte, .res-ligne, .actus, .eq-rencontre, .adm-partie, .cap-ligne, .mt-ligne, .demande, .rc-carte, .t-carte, .liste-cartes > .carte-info, .eq-joueur, .ligne-membre, .mp-partie) {
-      animation: sortie-haut linear both;
-      animation-timeline: view(block calc(var(--entete-h, 76px) - 10px) 0px);
-      animation-range: exit 0% exit 100%;
+      /* Entrée par le bas : léger zoom ; sortie par le haut : fondu sous l'en-tête */
+      animation: entree-bas linear both, sortie-haut linear forwards;
+      animation-timeline: view(), view(block calc(var(--entete-h, 76px) - 10px) 0px);
+      animation-range: entry 0% entry 80%, exit 0% exit 100%;
     }
   }
 }
@@ -1784,3 +1785,28 @@ span.adm-partie__case { cursor: default; }
   .entete::after { transition: opacity .2s; }
 }
 @media (prefers-reduced-motion: reduce) { .horaires, .contact-accueil { transform: none !important; opacity: 1 !important; filter: none !important; } .raccourcis-accueil { transition: none; } }
+
+@keyframes entree-bas {
+  0% { opacity: .2; transform: translateY(18px) scale(.95); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* ===================== Toutes les pages : même mise en page que l'accueil ===================== */
+/* Titre de page : s'efface en douceur quand on fait défiler (--p de 0 à 1) */
+.tete-page { --p: 0; transform-origin: left top; will-change: transform, opacity;
+  transform: translateY(calc(var(--p) * 24px)) scale(calc(1 - var(--p) * .06)); opacity: calc(1 - var(--p) * 1.1); filter: blur(calc(var(--p) * 2px)); }
+/* Barre d'onglets ou de filtres : collée sous l'en-tête, cachée en descendant, revient en remontant */
+.barre-collante { position: sticky !important; top: var(--entete-h, 64px); z-index: 8; margin-left: calc(-1 * var(--gouttiere)); margin-right: calc(-1 * var(--gouttiere));
+  padding: 8px var(--gouttiere) 12px; background: linear-gradient(to bottom, var(--noir) 78%, rgba(20,20,20,0)); transition: transform .28s ease, opacity .2s ease; }
+.barre-collante--cache { transform: translateY(-120%); opacity: 0; pointer-events: none; }
+body.barre-visible .entete::after { opacity: 0; }
+.entete::after { transition: opacity .2s; }
+/* Onglets en capsule, comme la barre des rubriques de l'accueil */
+.t-onglets, .eq-onglets { display: flex; gap: 4px; padding: 4px; overflow-x: auto; scrollbar-width: none; border: 1px solid var(--bord-fort) !important; border-radius: 999px; background: #1a1a1a;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 6px 18px rgba(0,0,0,.3); width: fit-content; max-width: 100%; }
+.t-onglets::-webkit-scrollbar, .eq-onglets::-webkit-scrollbar { display: none; }
+.t-onglets button, .eq-onglets .onglet { flex: 1 0 auto; min-height: 0; padding: 8px 16px; border: 0 !important; border-radius: 999px; color: var(--gris-clair); font-size: 14px; font-weight: 700; transition: background .25s, color .25s, box-shadow .25s; }
+.t-onglets button[aria-selected="true"], .eq-onglets .onglet[aria-selected="true"] { background: var(--orange); color: var(--noir); box-shadow: 0 4px 14px rgba(245,122,0,.35); }
+.barre-collante.t-onglets, .barre-collante.eq-onglets { margin-left: 0; margin-right: 0; padding: 4px; background: #1a1a1a; }
+@media (prefers-reduced-motion: reduce) { .tete-page { transform: none !important; opacity: 1 !important; filter: none !important; } .barre-collante { transition: none; } }
+.barre-collante.eq-filtre { margin: 0 0 4px; padding: 6px; background: rgba(20,20,20,.92); }
