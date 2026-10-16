@@ -1706,3 +1706,6 @@ span.adm-partie__case { cursor: default; }
 .pr-quand small { color: var(--gris); font-weight: 500; margin-left: 4px; }
 .pr-salle { font-size: 13px; color: var(--gris); }
 .pr-salle a { color: var(--orange); font-weight: 600; }
+
+.pr-carte--mienne { border-color: var(--orange); background: linear-gradient(110deg, rgba(245,122,0,.28), var(--carte) 65%); }
+.pr-carte--mienne .pr-equipe { color: var(--orange); }

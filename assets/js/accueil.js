@@ -95,7 +95,7 @@ function carteMatch(g, visits) {
 
 // ---------- Tournois en cours (visible des visiteurs) ----------
 
-// Prochaines rencontres (tout le monde) : la prochaine de chaque équipe ; pour un membre, son équipe d'abord
+// Prochaines rencontres (tout le monde) : la prochaine de chaque équipe ; celle du joueur connecté est mise en valeur
 async function chargerProchaines() {
   const bloc = document.getElementById('bloc-prochaines');
   if (!bloc) return;
@@ -110,11 +110,13 @@ async function chargerProchaines() {
   ]);
   if (rr.error || rt.error) { bloc.hidden = true; return; }
   const mesEquipes = new Set((rm.data || []).map((m) => m.team_id));
+  const ORDRE = ['dolina 1', 'dolina 2', 'dolinos'];
+  const rang = (nom) => { const i = ORDRE.indexOf(nom.trim().toLowerCase()); return i < 0 ? 99 : i; };
   const prochaines = rt.data
     .map((t) => ({ t, r: rr.data.find((r) => r.team_id === t.id && (r.date_fin || r.date_match) >= auj) }))
     .filter((x) => x.r)
-    // Mon équipe d'abord, puis par date
-    .sort((a, b) => (mesEquipes.has(b.t.id) - mesEquipes.has(a.t.id)) || a.r.date_match.localeCompare(b.r.date_match));
+    // Ordre fixe : Dolina 1, Dolina 2, puis Dolinos (l'équipe du joueur est seulement mise en valeur)
+    .sort((a, b) => rang(a.t.name) - rang(b.t.name) || a.t.sort_order - b.t.sort_order);
   if (!prochaines.length) { bloc.hidden = true; return; }
   const jour = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
   const court = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
@@ -131,7 +133,7 @@ async function chargerProchaines() {
     return `
       <article class="pr-carte${mesEquipes.has(t.id) ? ' pr-carte--mienne' : ''}${aujourdhui ? ' pr-carte--jour' : ''}">
         <div class="pr-carte__haut">
-          <span class="pr-equipe">${esc(t.name)}${mesEquipes.has(t.id) ? ' <small>mon équipe</small>' : ''}</span>
+          <span class="pr-equipe">${esc(t.name)}</span>
           <span class="eq-badge${r.domicile ? ' eq-badge--dom' : ''}">${r.domicile ? 'Domicile' : 'Extérieur'}</span>
         </div>
         <a class="pr-affiche" href="equipes.html#${encodeURIComponent(t.name)}">${r.domicile ? 'reçoit' : 'chez'} <strong>${esc(r.adversaire)}</strong></a>
