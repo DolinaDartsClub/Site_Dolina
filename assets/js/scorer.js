@@ -23,6 +23,7 @@ let nomsCamps = {};       // side -> nom affiché
 let botSide = null;       // camp du dartbot (partie contre le bot)
 let reglageBot = null;
 let minuterieBot = null;
+const DELAI_BOT = 5000;
 let joueursCamps = {};    // side -> [noms des joueurs dans l'ordre de lancer]
 let visits = [];
 let etat = null;
@@ -391,15 +392,15 @@ function tourDuBot() {
 
 function planifierBot() {
   if (!tourDuBot() || enAttente || minuterieBot || game.status !== 'live') return;
-  // Un peu plus long avec l'annonce vocale, pour laisser finir la phrase
-  minuterieBot = setTimeout(jouerBot, reglageVoix().actif ? 2600 : 1300);
+  // 5 secondes : le temps de lire le score et de laisser l'annonce vocale finir
+  minuterieBot = setTimeout(jouerBot, DELAI_BOT);
 }
 
 function jouerBot() {
   minuterieBot = null;
   if (!tourDuBot() || enAttente || game.status !== 'live') return;
   const reste = etat.reste[botSide];
-  const v = voleeBot(reste, reglageBot);
+  const v = voleeBot(reste, reglageBot, Math.random, etat.stats[botSide]);
   enAttente = { score: v.score, reste, nature: v.nature, detail: { flechettes: v.flechettes, auDouble: v.auDouble } };
   enregistrer();
   if (v.nature === 'normale') afficherEvenement(`Dartbot : ${v.detail.join(' · ')}`);

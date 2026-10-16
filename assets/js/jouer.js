@@ -4,7 +4,7 @@
 
 import { BOT_DEFAUT, nomCampBot, bullBot } from './dartbot.js?v=__VERSION__';
 import { cibleSvg, pointCible, marque } from './cible.js?v=__VERSION__';
-import { reglageVoix, definirVoix, voixDisponible, dire } from './voix.js?v=__VERSION__';
+import { reglageVoix, definirVoix, voixDisponible, dire, voixDeLaLangue, quandVoixChangent, tonDuScore } from './voix.js?v=__VERSION__';
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie, supprimerPartie, avatar, brancherTypeMatch } from './app.js?v=__VERSION__';
 
 const MAX_JOUEURS = 4;
@@ -297,7 +297,15 @@ function majVoix() {
   const r = reglageVoix();
   const val = r.actif ? r.langue : 'off';
   document.querySelectorAll('[data-voix-val]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.voixVal === val)));
+  // Liste des voix de l'appareil pour la langue choisie (la plus naturelle en premier)
+  const liste = r.actif ? voixDeLaLangue(r.langue) : [];
+  document.getElementById('voix-reglage').hidden = !liste.length;
+  document.getElementById('voix-nom').innerHTML = `<option value="">Automatique · ${esc(liste[0]?.name || '')}</option>`
+    + liste.map((v) => `<option value="${esc(v.name)}"${v.name === r.voix ? ' selected' : ''}>${esc(v.name)}</option>`).join('');
 }
+const phraseTest = (langue) => (langue === 'en'
+  ? ['Game on!', { texte: 'One hundred and forty!', ...tonDuScore(140) }]
+  : ['Annonce vocale activée.', { texte: 'Cent quarante !', ...tonDuScore(140) }]);
 if (!voixDisponible()) {
   document.getElementById('bloc-voix').hidden = true;
 } else {
@@ -306,11 +314,20 @@ if (!voixDisponible()) {
     const b = e.target.closest('[data-voix-val]');
     if (!b) return;
     const v = b.dataset.voixVal;
-    definirVoix(v === 'off' ? { actif: false, langue: reglageVoix().langue } : { actif: true, langue: v });
+    definirVoix(v === 'off' ? { actif: false, langue: reglageVoix().langue } : { actif: true, langue: v, voix: v === reglageVoix().langue ? reglageVoix().voix : '' });
     majVoix();
-    if (v === 'fr') dire('Annonce vocale activée.', 'fr');
-    else if (v === 'en') dire('Game on!', 'en');
+    if (v !== 'off') dire(phraseTest(v), v);
   });
+  document.getElementById('voix-nom').addEventListener('change', (e) => {
+    const r = reglageVoix();
+    definirVoix({ ...r, voix: e.target.value });
+    dire(phraseTest(r.langue), r.langue);
+  });
+  document.getElementById('voix-test').addEventListener('click', () => {
+    const r = reglageVoix();
+    dire(phraseTest(r.langue), r.langue);
+  });
+  quandVoixChangent(majVoix);
 }
 
 document.getElementById('btn-guide').addEventListener('click', (e) => {

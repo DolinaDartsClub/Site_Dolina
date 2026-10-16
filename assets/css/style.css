@@ -1345,3 +1345,7 @@ details.carte-info:not([open]) { gap: 0; }
 .cible-fleche--bot { animation: fleche-arrive .35s ease-out; transform-box: fill-box; transform-origin: center; }
 @keyframes fleche-arrive { from { opacity: 0; transform: scale(2.2); } to { opacity: 1; transform: scale(1); } }
 .bull-bot__actions .bouton { flex: 1; }
+
+.voix-reglage { flex: 1 1 100%; display: flex; gap: 8px; align-items: flex-end; }
+.voix-reglage__choix { flex: 1; min-width: 0; margin: 0; }
+.voix-reglage__choix select { width: 100%; }

@@ -15,7 +15,7 @@ function manches(reglage, n, rng) {
   for (let k = 0; k < n; k++) {
     let reste = 501;
     for (let t = 0; t < 200 && reste > 0; t++) {
-      const v = voleeBot(reste, reglage, rng);
+      const v = voleeBot(reste, reglage, rng, { finishs: fin, auDouble: auD });
       if (verifierVolee(v.score, reste) || natureVolee(v.score, reste) !== v.nature) invalides++;
       if (v.nature !== 'bust') points += v.score;
       flech += v.nature === 'finish' ? v.flechettes : 3;
@@ -36,6 +36,13 @@ for (const [moyenne, doubles] of [[30, 15], [40, 25], [50, 30], [60, 35], [75, 4
   verifier(Math.abs(r.moy - moyenne) <= Math.max(3, moyenne * 0.08), `${moyenne} : moyenne ${r.moy.toFixed(1)} trop loin`);
   verifier(Math.abs(r.pctD - doubles) <= 8, `${moyenne} : doubles ${r.pctD.toFixed(1)} % trop loin de ${doubles}`);
   verifier(r.varies > 15, `${moyenne} : scores pas assez variés`);
+}
+// Match court (3 manches) : la réussite au double reste proche du réglage
+for (const doubles of [18, 40]) {
+  let loin = 0;
+  for (let m = 0; m < 3000; m++) { const r = manches({ moyenne: 55, doubles }, 3, rng); if (Math.abs(r.pctD - doubles) > 20) loin++; }
+  console.log(`match en 3 manches, doubles ${doubles} % : ${(loin / 30).toFixed(1)} % des matchs à plus de 20 points du réglage`);
+  verifier(loin / 3000 < 0.01, `doubles ${doubles} % : trop de matchs loin du réglage`);
 }
 verifier(JSON.stringify(lireReglageBot(nomCampBot({ moyenne: 62, doubles: 33 }))) === '{"moyenne":62,"doubles":33}', 'relecture du réglage');
 verifier(nomCampBot({ moyenne: 110, doubles: 80 }).length <= 40, 'nom du camp ≤ 40 caractères');

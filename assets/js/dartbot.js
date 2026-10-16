@@ -89,15 +89,28 @@ function viser(reste, d) {
   return reste > 21 ? '20' : String(Math.max(1, reste - 2));
 }
 
+// Réussite au double « corrigée » : le hasard pur donne parfois 60 % sur un match court
+// pour un bot réglé à 18 %. On rapproche donc la chance de chaque fléchette de l'écart
+// entre la réussite visée et la réussite déjà obtenue dans la partie.
+function chanceDouble(cible, finishs, flechettes) {
+  const deficit = cible * flechettes - finishs;   // > 0 : le bot est en dessous de son réglage
+  return borne(cible + 0.6 * deficit, 0.02, 0.92);
+}
+
 // Une volée du bot. Renvoie { score, nature, flechettes, auDouble, detail: ['T20', '19', …] }
-export function voleeBot(reste, reglage, rng = Math.random) {
+// historique : { finishs, auDouble } du bot depuis le début de la partie (pour la réussite au double)
+export function voleeBot(reste, reglage, rng = Math.random, historique = { finishs: 0, auDouble: 0 }) {
   const p = profil(reglage);
   let r = reste;
   let auDouble = 0;
   const detail = [];
   for (let d = 3; d >= 1; d--) {
     const cible = viser(r, d);
-    if ((cible.startsWith('D') || cible === 'Bull') && suggestionFinish(r)?.length === 1) auDouble += 1;
+    const surFinish = (cible.startsWith('D') || cible === 'Bull') && suggestionFinish(r)?.length === 1;
+    if (surFinish) {
+      p.pD = chanceDouble(reglage.doubles / 100, historique.finishs || 0, (historique.auDouble || 0) + auDouble);
+      auDouble += 1;
+    }
     const l = lancer(cible, p, rng);
     detail.push(l.v === 0 ? '0' : (l.double ? (l.v === 50 ? 'Bull' : `D${l.v / 2}`) : String(l.v)));
     const apres = r - l.v;
