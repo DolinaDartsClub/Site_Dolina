@@ -1741,3 +1741,6 @@ span.adm-partie__case { cursor: default; }
 .mp-filtres > .ld .ld-bouton, .rc-filtres > .ld .ld-bouton { width: 100%; }
 .mp-filtres .ld-libelle, .rc-filtres .ld-libelle { min-width: 72px; display: inline-block; text-align: left; }
 .mp-filtres .ld-chevron, .rc-filtres .ld-chevron { margin-left: auto; }
+
+.accueil-droite { display: grid; gap: inherit; align-content: start; min-width: 0; }
+.page--accueil .accueil-droite { gap: 28px; }
