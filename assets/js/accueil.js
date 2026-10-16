@@ -95,6 +95,54 @@ function carteMatch(g, visits) {
 
 // ---------- Tournois en cours (visible des visiteurs) ----------
 
+// Prochaines rencontres (membres connectés) : la prochaine de chaque équipe
+async function chargerProchaines() {
+  const bloc = document.getElementById('bloc-prochaines');
+  if (!bloc) return;
+  const moi = await profilConnecte().catch(() => null);
+  if (!moi || moi.status !== 'active') { bloc.hidden = true; return; }
+  const auj = new Date().toLocaleDateString('fr-CA');
+  const depuis = new Date(Date.now() - 25 * 86400000).toLocaleDateString('fr-CA');
+  const [rr, rt, rm] = await Promise.all([
+    supabase.from('rencontres').select('id, team_id, date_match, date_fin, heure_match, heure_rdv, journee, adversaire, domicile, salles(nom, adresse, lien_carte)')
+      .is('score_nous', null).gte('date_match', depuis).order('date_match').order('heure_match', { nullsFirst: false }).limit(40),
+    supabase.from('teams').select('id, name, sort_order').order('sort_order'),
+    supabase.from('team_members').select('team_id').eq('profile_id', moi.id).eq('status', 'accepted'),
+  ]);
+  if (rr.error || rt.error) { bloc.hidden = true; return; }
+  const mesEquipes = new Set((rm.data || []).map((m) => m.team_id));
+  const prochaines = rt.data
+    .map((t) => ({ t, r: rr.data.find((r) => r.team_id === t.id && (r.date_fin || r.date_match) >= auj) }))
+    .filter((x) => x.r)
+    // Mon équipe d'abord, puis par date
+    .sort((a, b) => (mesEquipes.has(b.t.id) - mesEquipes.has(a.t.id)) || a.r.date_match.localeCompare(b.r.date_match));
+  if (!prochaines.length) { bloc.hidden = true; return; }
+  const jour = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+  const court = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+  const d = (x) => new Date(`${x}T12:00:00`);
+  const hm = (t) => (t ? t.slice(0, 5).replace(':', 'h') : '');
+  const carte = (s) => s.lien_carte || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.adresse)}`;
+  document.getElementById('prochaines').innerHTML = prochaines.map(({ t, r }) => {
+    const periode = r.date_fin && r.date_fin !== r.date_match;
+    const aujourdhui = !periode && r.date_match === auj;
+    const quand = periode
+      ? `Entre le ${court.format(d(r.date_match))} et le ${court.format(d(r.date_fin))}`
+      : (aujourdhui ? 'Aujourd\'hui' : jour.format(d(r.date_match)));
+    const heures = [r.heure_match && hm(r.heure_match), r.heure_rdv && `RDV ${hm(r.heure_rdv)}`].filter(Boolean).join(' · ');
+    return `
+      <article class="pr-carte${mesEquipes.has(t.id) ? ' pr-carte--mienne' : ''}${aujourdhui ? ' pr-carte--jour' : ''}">
+        <div class="pr-carte__haut">
+          <span class="pr-equipe">${esc(t.name)}${mesEquipes.has(t.id) ? ' <small>mon équipe</small>' : ''}</span>
+          <span class="eq-badge${r.domicile ? ' eq-badge--dom' : ''}">${r.domicile ? 'Domicile' : 'Extérieur'}</span>
+        </div>
+        <a class="pr-affiche" href="equipes.html#${encodeURIComponent(t.name)}">${r.domicile ? 'reçoit' : 'chez'} <strong>${esc(r.adversaire)}</strong></a>
+        <span class="pr-quand">${esc(quand)}${heures ? ` · ${esc(heures)}` : ''}${periode ? ' <small>date à confirmer</small>' : ''}${r.journee ? ` <small>${esc(r.journee)}</small>` : ''}</span>
+        ${r.salles ? `<span class="pr-salle">${esc(r.salles.nom)} · <a href="${esc(carte(r.salles))}" target="_blank" rel="noopener">Itinéraire</a></span>` : ''}
+      </article>`;
+  }).join('') + '<a class="res-tout" href="equipes.html">Tout le calendrier →</a>';
+  bloc.hidden = false;
+}
+
 // Derniers résultats des équipes (championnat CPARD, script 030)
 async function chargerResultats() {
   const bloc = document.getElementById('bloc-resultats');
@@ -288,6 +336,7 @@ supabase
   .subscribe();
 
 chargerTournois();
+chargerProchaines();
 chargerResultats();
 
 chargerMatchs();

@@ -1690,3 +1690,19 @@ span.adm-partie__case { cursor: default; }
 .cap-ligne__actions { display: flex; gap: 6px; }
 .cap-bloc-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .cap-bloc-tete h2 { margin: 0; }
+
+/* Accueil : prochaines rencontres (membres) */
+.prochaines { display: grid; gap: 8px; }
+.pr-carte { display: grid; gap: 4px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--bord); background: var(--carte); }
+.pr-carte--mienne { border-color: rgba(245,122,0,.55); background: linear-gradient(90deg, var(--orange-fond), var(--carte) 70%); }
+.pr-carte--jour { box-shadow: 0 0 0 2px var(--orange); }
+.pr-carte__haut { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pr-equipe { font-family: var(--police-titre); font-weight: 700; font-size: 18px; text-transform: uppercase; }
+.pr-equipe small { font-family: var(--police); font-size: 11px; font-weight: 700; color: var(--orange); text-transform: none; margin-left: 4px; }
+.pr-affiche { color: var(--gris-clair); text-decoration: none; font-size: 15px; }
+.pr-affiche strong { color: var(--blanc); font-size: 17px; }
+.pr-affiche:hover strong { color: var(--orange); }
+.pr-quand { font-weight: 600; color: var(--orange-clair); font-size: 14px; }
+.pr-quand small { color: var(--gris); font-weight: 500; margin-left: 4px; }
+.pr-salle { font-size: 13px; color: var(--gris); }
+.pr-salle a { color: var(--orange); font-weight: 600; }
