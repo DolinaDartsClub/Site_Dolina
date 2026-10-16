@@ -183,22 +183,94 @@ async function chargerArticles() {
     return;
   }
 
-  zone.innerHTML = data.map((a) => {
+  // Bandeau d'annonces qui défile tout seul toutes les 5 secondes
+  const annonces = data.slice(0, 10);
+  zone.innerHTML = `
+    <div class="actus" role="region" aria-roledescription="carrousel" aria-label="Actualités du club">
+      <div class="actus__piste" tabindex="0">
+        ${annonces.map((a, i) => {
     const lien = `article.html?id=${encodeURIComponent(a.id)}`;
-    const image = a.image_path
-      ? `<a href="${lien}" tabindex="-1" aria-hidden="true"><img class="article__image" src="${esc(urlImage(a.image_path))}" alt="" loading="lazy"></a>`
-      : '';
     const extrait = a.body && a.body.length > 220 ? `${a.body.slice(0, 220).trim()}…` : a.body;
     return `
-      <article class="article">
-        ${image}
-        <span class="etiquette etiquette--${esc(a.category)}">${esc(CATEGORIES[a.category] || a.category)}</span>
-        <h3 class="article__titre"><a class="lien-titre" href="${lien}">${esc(a.title)}</a></h3>
-        <span class="article__meta">${esc(dateFr(a.published_at))}</span>
-        ${extrait ? `<p class="article__texte">${esc(extrait)}</p>` : ''}
-        <a class="match__lien" href="${lien}">Lire et partager →</a>
-      </article>`;
-  }).join('');
+        <article class="actu" aria-roledescription="annonce" aria-label="${i + 1} sur ${annonces.length}">
+          <a class="actu__visuel${a.image_path ? '' : ' actu__visuel--vide'}" href="${lien}" tabindex="-1" aria-hidden="true">
+            ${a.image_path ? `<img src="${esc(urlImage(a.image_path))}" alt="" loading="${i ? 'lazy' : 'eager'}">` : '<img src="assets/img/logo.png" alt="">'}
+            <span class="etiquette etiquette--${esc(a.category)}">${esc(CATEGORIES[a.category] || a.category)}</span>
+          </a>
+          <div class="actu__corps">
+            <span class="article__meta">${esc(dateFr(a.published_at))}</span>
+            <h3 class="article__titre"><a class="lien-titre" href="${lien}">${esc(a.title)}</a></h3>
+            ${extrait ? `<p class="actu__texte">${esc(extrait)}</p>` : ''}
+            <a class="match__lien" href="${lien}">Lire et partager →</a>
+          </div>
+        </article>`;
+  }).join('')}
+      </div>
+      ${annonces.length > 1 ? `
+      <div class="actus__nav">
+        <button type="button" class="actus__fleche" data-actu="-1" aria-label="Annonce précédente"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <div class="actus__points">${annonces.map((_, i) => `<button type="button" data-point-actu="${i}" aria-label="Annonce ${i + 1}"${i === 0 ? ' aria-current="true"' : ''}><span></span></button>`).join('')}</div>
+        <button type="button" class="actus__fleche" data-actu="1" aria-label="Annonce suivante"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>` : ''}
+    </div>`;
+  if (annonces.length > 1) carrouselActus(zone.querySelector('.actus'));
+}
+
+// Défile toutes les 5 s ; pause au survol, au toucher ou au clavier ; glissement du doigt natif
+function carrouselActus(racine) {
+  const piste = racine.querySelector('.actus__piste');
+  const slides = [...piste.children];
+  const points = [...racine.querySelectorAll('[data-point-actu]')];
+  const calme = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  let actuelle = 0;
+  let minuteur = null;
+  let enPause = false;
+  const aller = (i) => {
+    actuelle = (i + slides.length) % slides.length;
+    piste.scrollTo({ left: slides[actuelle].offsetLeft - piste.offsetLeft, behavior: calme ? 'auto' : 'smooth' });
+  };
+  const marquer = () => {
+    points.forEach((b, k) => (k === actuelle ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
+    racine.style.setProperty('--actu-duree', enPause || calme ? '0s' : '5s');
+    racine.classList.remove('actus--anim'); void racine.offsetWidth; racine.classList.add('actus--anim');
+  };
+  const lancer = () => {
+    clearInterval(minuteur);
+    enPause = false;
+    marquer();
+    if (!calme) minuteur = setInterval(() => aller(actuelle + 1), 5000);
+  };
+  const arreter = () => { clearInterval(minuteur); enPause = true; racine.classList.add('actus--pause'); };
+  const reprendre = () => { racine.classList.remove('actus--pause'); lancer(); };
+  let attenteScroll = null;
+  piste.addEventListener('scroll', () => {
+    clearTimeout(attenteScroll);
+    attenteScroll = setTimeout(() => {
+      const i = Math.round(piste.scrollLeft / piste.clientWidth);
+      if (i !== actuelle) { actuelle = Math.max(0, Math.min(slides.length - 1, i)); }
+      marquer();
+    }, 80);
+  }, { passive: true });
+  racine.addEventListener('click', (e) => {
+    const f = e.target.closest('[data-actu]');
+    const p = e.target.closest('[data-point-actu]');
+    if (f) aller(actuelle + Number(f.dataset.actu));
+    else if (p) aller(Number(p.dataset.pointActu));
+    else return;
+    lancer();
+  });
+  racine.addEventListener('mouseenter', arreter);
+  racine.addEventListener('mouseleave', reprendre);
+  racine.addEventListener('focusin', arreter);
+  racine.addEventListener('focusout', (e) => { if (!racine.contains(e.relatedTarget)) reprendre(); });
+  piste.addEventListener('touchstart', arreter, { passive: true });
+  piste.addEventListener('touchend', () => setTimeout(reprendre, 1500), { passive: true });
+  piste.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); aller(actuelle + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); aller(actuelle - 1); }
+  });
+  document.addEventListener('visibilitychange', () => (document.hidden ? arreter() : reprendre()));
+  lancer();
 }
 
 // ---------- Temps réel : on recharge les matchs à chaque volée ----------
