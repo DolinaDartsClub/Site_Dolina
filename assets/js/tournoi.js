@@ -407,10 +407,14 @@ function blocCible(k) {
         </div>`;
 }
 
+// Filtre des poules sur téléphone (une poule à la fois) ; null = pas encore choisi
+let filtrePoule = null;
+
 function vuePoules() {
   const nbPoules = t.pools_count || Math.max(0, ...inscrits.map((e) => e.pool_no || 0));
   if (!nbPoules) return '<p class="vide">Les poules apparaîtront au lancement du tournoi.</p>';
   const mi = monInscription();
+  if (filtrePoule === null) filtrePoule = mi?.pool_no ? String(mi.pool_no) : '1';
   const blocs = [];
   for (let k = 1; k <= nbPoules; k++) {
     const membres = inscrits.filter((e) => e.pool_no === k).sort((a, b) => (a.seed || 0) - (b.seed || 0));
@@ -433,7 +437,7 @@ function vuePoules() {
     const journees = [...new Set(mPoule.map((m) => m.round_no))].sort((a, b) => a - b);
     const joues = mPoule.filter((m) => m.status === 'done').length;
     blocs.push(`
-      <section class="p-poule${maPoule ? ' p-poule--moi' : ''}">
+      <section class="p-poule${maPoule ? ' p-poule--moi' : ''}${filtrePoule !== 'tout' && Number(filtrePoule) !== k ? ' p-poule--cachee' : ''}" data-poule-no="${k}">
         <header class="p-poule__haut">
           <h3>Poule ${lettrePoule(k)}</h3>
           ${maPoule ? '<span class="m-moi">Ma poule</span>' : ''}
@@ -457,6 +461,10 @@ function vuePoules() {
   return `
     <p class="t-legende">${t.pool_qualifiers > 1 ? `Les ${t.pool_qualifiers} premiers de chaque poule (surlignés) se qualifient` : 'Le premier de chaque poule (surligné) se qualifie'} pour la phase finale.
       Classement : ${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite ; à égalité, le plus de manches gagnées, puis le match entre les joueurs à égalité.</p>
+    <div class="mp-filtre p-filtre" role="group" aria-label="Choisir la poule affichée">
+      ${Array.from({ length: nbPoules }, (_, i) => i + 1).map((k) => `<button type="button" data-filtre-poule="${k}" aria-pressed="${filtrePoule === String(k)}">Poule ${lettrePoule(k)}${mi?.pool_no === k ? ' ★' : ''}</button>`).join('')}
+      <button type="button" data-filtre-poule="tout" aria-pressed="${filtrePoule === 'tout'}">Toutes</button>
+    </div>
     <div class="p-poules">${blocs.join('')}</div>`;
 }
 
@@ -718,6 +726,11 @@ function brancher() {
     setTimeout(() => { e.target.textContent = 'Partager'; }, 2000);
   });
 
+  zone.querySelectorAll('[data-filtre-poule]').forEach((b) => b.addEventListener('click', () => {
+    filtrePoule = b.dataset.filtrePoule;
+    zone.querySelectorAll('[data-filtre-poule]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    zone.querySelectorAll('.p-poule').forEach((p) => p.classList.toggle('p-poule--cachee', filtrePoule !== 'tout' && p.dataset.pouleNo !== filtrePoule));
+  }));
   zone.querySelectorAll('[data-retirer]').forEach((b) => b.addEventListener('click', () => retirer(b.dataset.retirer, !!b.dataset.moi || parId.get(b.dataset.retirer)?.profile_id === moi?.id)));
   zone.querySelector('[data-action="basculer"]')?.addEventListener('click', basculer);
   zone.querySelector('[data-action="supprimer"]')?.addEventListener('click', supprimer);

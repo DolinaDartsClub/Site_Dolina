@@ -1193,3 +1193,7 @@ details.carte-info:not([open]) { gap: 0; }
 .c-cible__titre span { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--gris); }
 .c-cible__suite { margin: 0; font-size: 13px; color: var(--gris-clair); line-height: 1.45; }
 .p-cible { display: grid; gap: 6px; margin-top: 10px; }
+/* Onglet Poules : filtre par poule sur téléphone uniquement */
+.p-filtre { margin-bottom: 12px; }
+@media (min-width: 900px) { .p-filtre { display: none; } }
+@media (max-width: 899px) { .p-poule--cachee { display: none; } }
