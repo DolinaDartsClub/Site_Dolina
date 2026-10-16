@@ -231,7 +231,61 @@ zoneArticles.addEventListener('click', (e) => {
 
 document.getElementById('actu-nouvelle').addEventListener('click', () => ouvrir(null));
 
+// ---------- Article lié à une rencontre (bouton « Nouvel article » de la page Équipes) ----------
+
+const fmtDate = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+const hm = (t) => (t ? t.slice(0, 5).replace(':', 'h') : '');
+
+async function brouillonRencontre(id) {
+  const { data: r } = await supabase.from('rencontres').select('*, teams(name), salles(nom, adresse)').eq('id', id).maybeSingle();
+  if (!r) return null;
+  const equipe = r.teams?.name || 'Dolina';
+  const journee = r.journee ? `Journée ${r.journee.replace(/^J/i, '')}` : 'Championnat';
+  const poule = [r.division && `Division ${r.division}`, r.poule && `Poule ${r.poule}`].filter(Boolean).join(' · ');
+  const contexte = `${journee} du championnat par équipes CPARD${poule ? ` (${poule})` : ''}`;
+  const lieu = r.domicile ? 'à domicile' : `chez ${r.adversaire}`;
+  const joue = r.score_nous !== null && r.score_nous !== undefined;
+  if (joue) {
+    const [n, e] = [r.score_nous, r.score_eux];
+    const titre = n > e ? `Victoire de ${equipe} face à ${r.adversaire} (${n}-${e})`
+      : n < e ? `Défaite de ${equipe} face à ${r.adversaire} (${n}-${e})`
+        : `Match nul entre ${equipe} et ${r.adversaire} (${n}-${e})`;
+    const phrase = n > e ? `${equipe} s'impose ${n} à ${e} ${lieu}.`
+      : n < e ? `${equipe} s'incline ${n} à ${e} ${lieu}.`
+        : `${equipe} et ${r.adversaire} se quittent sur un nul, ${n} partout, ${r.domicile ? 'à domicile' : 'à l\'extérieur'}.`;
+    return {
+      category: 'resultat',
+      title: titre,
+      body: `${contexte} : ${phrase}\n\n[Les temps forts du match, les joueurs à féliciter…]\n\nBravo à toute l'équipe !`,
+    };
+  }
+  const quand = r.date_fin && r.date_fin !== r.date_match
+    ? `entre le ${fmtDate.format(new Date(`${r.date_match}T12:00:00`))} et le ${fmtDate.format(new Date(`${r.date_fin}T12:00:00`))} (date à confirmer)`
+    : `le ${fmtDate.format(new Date(`${r.date_match}T12:00:00`))}${r.heure_match ? ` à ${hm(r.heure_match)}` : ''}`;
+  const lignes = [
+    `${contexte} : ${equipe} ${r.domicile ? 'reçoit' : 'se déplace chez'} ${r.adversaire} ${quand}.`,
+    r.salles ? `Lieu : ${r.salles.nom}, ${r.salles.adresse}.` : '',
+    r.heure_rdv ? `Rendez-vous à ${hm(r.heure_rdv)}.` : '',
+    r.domicile ? 'Venez nombreux encourager l\'équipe !' : 'Allez Dolina !',
+  ].filter(Boolean);
+  return {
+    category: 'annonce',
+    title: `${equipe} ${r.domicile ? 'reçoit' : 'chez'} ${r.adversaire} · ${journee}`,
+    body: lignes.join('\n\n'),
+  };
+}
+
 export async function initActus(profil) {
   moi = profil;
   await charger();
+  const id = new URLSearchParams(location.search).get('rencontre');
+  if (!id) return;
+  history.replaceState(null, '', `${location.pathname}#actus`);
+  const brouillon = await brouillonRencontre(id);
+  if (!brouillon) return;
+  ouvrir(null);
+  form.title.value = brouillon.title;
+  form.category.value = brouillon.category;
+  form.body.value = brouillon.body;
+  message(zoneMsg, 'Article pré-rempli à partir de la rencontre : complétez le texte, ajoutez une photo, puis publiez.', 'ok');
 }

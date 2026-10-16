@@ -141,6 +141,7 @@ function carteRencontre(r, gerer) {
         <div class="eq-rencontre__actions">
           ${!res && !aConfirmer(r) ? `<button type="button" class="bouton bouton--petit" data-agenda="${r.id}">Ajouter à mon agenda</button>` : ''}
           ${gerer ? `<button type="button" class="bouton bouton--petit" data-modifier="${r.id}">${res ? 'Modifier' : 'Modifier / score'}</button>` : ''}
+          ${moi?.role === 'admin' && moi.status === 'active' ? `<a class="bouton bouton--petit" href="admin.html?rencontre=${encodeURIComponent(r.id)}#actus">Nouvel article</a>` : ''}
         </div>
       </div>
       ${res ? `
