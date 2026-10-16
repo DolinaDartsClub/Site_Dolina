@@ -1528,3 +1528,45 @@ span.adm-partie__case { cursor: default; }
 @media (prefers-reduced-motion: reduce) { .adm-menu__liste, .adm-menu__item, .adm-menu--ouvert .adm-menu__item { transition: none; animation: none; } }
 @media (max-width: 480px) { .adm-menu__bouton > span:not(.compteur) { display: none; } .adm-barre__titre { font-size: 22px; } .adm-barre__titre .adm-menu__icone { width: 36px; height: 36px; padding: 7px; } }
 .adm-barre__titre .adm-menu__icone { width: 40px; height: 40px; padding: 8px; background: var(--orange); border-color: var(--orange); color: var(--noir); }
+
+/* ===================== Records du club ===================== */
+.rc-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.rc-lien { color: var(--orange); font-weight: 700; font-size: 14px; white-space: nowrap; }
+.rc-intro { margin-top: -4px; }
+.rc-filtres { display: grid; gap: 10px; margin: 12px 0 6px; }
+.rc-periode { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rc-saison select { min-height: 38px; }
+.rc-periode .mp-filtre small { font-size: 10px; opacity: .8; margin-left: 3px; }
+.rc-periode .mp-filtre button:disabled { opacity: .35; cursor: not-allowed; }
+.rc-periode-texte { margin: 0 0 14px; font-size: 13px; color: var(--gris); }
+.rc-grille { display: grid; gap: 16px; }
+@media (min-width: 900px) { .rc-grille { grid-template-columns: 1fr 1fr; align-items: start; } }
+.rc-carte { display: grid; gap: 14px; }
+.rc-carte__titre { display: flex; align-items: center; gap: 10px; margin: 0; font-family: var(--police-titre); font-size: 22px; text-transform: uppercase; }
+.rc-carte__titre svg { width: 26px; height: 26px; color: var(--orange); }
+.rc-podium { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 8px; align-items: end; }
+.rc-podium__place--1 { order: 2; } .rc-podium__place--2 { order: 1; } .rc-podium__place--3 { order: 3; }
+.rc-podium__lien { display: grid; justify-items: center; gap: 4px; padding: 12px 6px 10px; border-radius: 12px; border: 1px solid var(--bord); background: var(--noir-2); color: var(--blanc); text-decoration: none; text-align: center; min-width: 0; position: relative; }
+.rc-podium__place--1 .rc-podium__lien { border-color: var(--orange); background: radial-gradient(120% 80% at 50% 0%, rgba(245,122,0,.25), transparent 70%), var(--noir-2); padding-top: 18px; }
+.rc-podium__lien:hover { border-color: var(--orange); }
+.rc-rang { font-family: var(--police-titre); font-weight: 700; font-size: 14px; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: #2a2a2a; color: var(--gris-clair); flex: none; }
+.rc-podium__place--1 .rc-rang { background: var(--orange); color: var(--noir); }
+.rc-podium__place--2 .rc-rang { background: #c9c9c9; color: var(--noir); }
+.rc-podium__place--3 .rc-rang { background: #b0703a; color: var(--noir); }
+.rc-podium__nom { font-weight: 700; font-size: 14px; overflow-wrap: anywhere; line-height: 1.2; }
+.rc-valeur { font-family: var(--police-titre); font-weight: 700; font-size: 26px; color: var(--blanc); line-height: 1; }
+.rc-valeur small { display: block; font-family: var(--police); font-size: 11px; font-weight: 500; color: var(--gris); }
+.rc-podium__place--1 .rc-valeur { color: var(--orange); font-size: 34px; }
+.rc-detail { font-size: 11px; color: var(--gris); line-height: 1.3; }
+.rc-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rc-liste a { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--bord); color: var(--blanc); text-decoration: none; }
+.rc-liste a:hover { border-color: var(--orange); }
+.rc-liste__nom { flex: 1; min-width: 0; display: grid; font-weight: 600; }
+.rc-liste__nom small { color: var(--gris); font-weight: 400; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-liste .rc-valeur { font-size: 20px; }
+@media (max-width: 420px) { .rc-podium .avatar--grand { width: 56px; height: 56px; font-size: 20px; } .rc-valeur { font-size: 22px; } .rc-podium__place--1 .rc-valeur { font-size: 28px; } }
+
+.rc-periode .mp-filtre { min-width: 0; flex: 1 1 100%; }
+.rc-saison select { appearance: none; padding: 6px 34px 6px 14px; border-radius: 999px; border: 1px solid var(--bord-fort); background: var(--carte) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f57a00' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 16px; color: var(--blanc); font: 600 14px var(--police); }
+.rc-saison select:disabled { opacity: .45; }
+.page--records { overflow-x: clip; }

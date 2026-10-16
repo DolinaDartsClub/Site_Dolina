@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Records du club – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/records.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom">Records</span>
+      <span class="entete__sous">Dolina Darts Club</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page page--records">
+  <div id="acces" hidden></div>
+  <div id="contenu" hidden>
+    <div class="rc-tete">
+      <h1 class="section__titre">Records du club</h1>
+      <a class="rc-lien" href="classement.html">Classement →</a>
+    </div>
+    <p class="intro rc-intro">Meilleure moyenne sur une partie et plus haut finish de chaque joueur. Mêmes parties que le classement : 301 et 501 terminées, en individuel, hors matchs amicaux et dartbot.</p>
+    <div class="rc-filtres">
+      <div class="rc-periode">
+        <label class="rc-saison"><span class="visuellement-cache">Saison</span><select id="rc-saison"></select></label>
+        <div class="mp-filtre" role="group" aria-label="Période" id="rc-trimestres"></div>
+      </div>
+      <div class="mp-filtre" role="group" aria-label="Jeu" id="rc-jeu">
+        <button type="button" data-jeu="" aria-pressed="true">301 et 501</button>
+        <button type="button" data-jeu="501" aria-pressed="false">501</button>
+        <button type="button" data-jeu="301" aria-pressed="false">301</button>
+      </div>
+    </div>
+    <p class="rc-periode-texte" id="rc-periode-texte" aria-live="polite"></p>
+    <div class="rc-grille" id="rc-grille" aria-live="polite"></div>
+  </div>
+</main>
+
+</body>
+</html>

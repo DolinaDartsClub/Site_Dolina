@@ -269,7 +269,7 @@ const ICONES_NAV = [
   ['contact.html', 'Nous contacter', '<path d="M4 5h16v14H4z"/><path d="M4 6l8 7 8-7"/>'],
 ];
 // Pages rattachées à une rubrique (pour la mettre en avant)
-const RUBRIQUES = { 'scorer.html': 'jouer.html', 'live.html': './', 'mes-parties.html': 'jouer.html', 'tournoi.html': 'tournois.html', 'tournoi-creer.html': 'tournois.html', 'face-a-face.html': 'classement.html', 'profil.html': 'classement.html', 'article.html': './' };
+const RUBRIQUES = { 'scorer.html': 'jouer.html', 'live.html': './', 'mes-parties.html': 'jouer.html', 'tournoi.html': 'tournois.html', 'tournoi-creer.html': 'tournois.html', 'face-a-face.html': 'classement.html', 'records.html': 'classement.html', 'equipes.html': 'equipes.html', 'profil.html': 'classement.html', 'article.html': './' };
 
 function ajouterBarreIcones() {
   const entete = document.querySelector('.entete');
