@@ -1217,3 +1217,25 @@ details.carte-info:not([open]) { gap: 0; }
 .diaporama__points button { width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
 .diaporama__points button::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.55); box-shadow: 0 0 2px rgba(0, 0, 0, 0.6); }
 .diaporama__points button[aria-current="true"]::before { background: var(--orange); width: 11px; height: 11px; }
+
+/* ---------- Barre d'icônes en haut (ordinateur, tout le site) ---------- */
+.nav-icones { display: none; }
+@media (min-width: 900px) {
+  .nav-icones { display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 999px; background: #1b1b1b; border: 1px solid var(--bord); }
+  .nav-icones__item { display: inline-flex; align-items: center; height: 40px; padding: 0 10px; border-radius: 999px; color: var(--gris-clair); text-decoration: none; overflow: hidden; white-space: nowrap;
+    transition: background-color .25s ease, color .25s ease, padding .35s cubic-bezier(.2, .8, .2, 1.2); }
+  .nav-icones__item svg { width: 21px; height: 21px; flex-shrink: 0; transition: transform .35s cubic-bezier(.2, .8, .2, 1.4); }
+  .nav-icones__texte { display: inline-block; max-width: 0; opacity: 0; margin-left: 0; font-weight: 600; font-size: 14px; transform: translateX(-6px);
+    transition: max-width .4s cubic-bezier(.2, .8, .2, 1), opacity .25s ease .05s, margin-left .4s cubic-bezier(.2, .8, .2, 1), transform .4s cubic-bezier(.2, .8, .2, 1); }
+  .nav-icones__item:hover, .nav-icones__item:focus-visible { color: var(--blanc); background: #2a2a2a; padding: 0 14px; }
+  .nav-icones__item:hover svg, .nav-icones__item:focus-visible svg { transform: scale(1.12) rotate(-6deg); }
+  .nav-icones__item:hover .nav-icones__texte, .nav-icones__item:focus-visible .nav-icones__texte { max-width: 140px; opacity: 1; margin-left: 8px; transform: none; }
+  .nav-icones__item[aria-current="page"] { color: var(--noir); background: var(--orange); }
+  .nav-icones__item[aria-current="page"]:hover { background: var(--orange-clair); color: var(--noir); }
+  .nav-icones__item--bientot { opacity: .45; cursor: default; }
+  /* La barre a déjà l'Accueil : le gros bouton Accueil n'est plus utile sur ordinateur */
+  .entete:has(.nav-icones) .bouton--accueil { display: none; }
+}
+@media (min-width: 900px) and (prefers-reduced-motion: reduce) {
+  .nav-icones__item, .nav-icones__item svg, .nav-icones__texte { transition: none; }
+}

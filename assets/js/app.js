@@ -258,6 +258,37 @@ function ajouterBoutonAccueil() {
 }
 ajouterBoutonAccueil();
 
+// Barre d'icônes en haut (ordinateur) sur tout le site : le texte s'affiche au survol
+const ICONES_NAV = [
+  ['./', 'Accueil', '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'],
+  ['jouer.html', 'Jouer', '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'],
+  ['tournois.html', 'Tournois', '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>'],
+  ['stats.html', 'Mes stats', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],
+  ['classement.html', 'Classement', '<path d="M8 21V11H3v10M15 21V4h-6v17M21 21v-7h-6v7M2 21h20"/>'],
+  [null, 'Club · bientôt', '<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7M17 4a4 4 0 0 1 0 8M22 21c0-3-2-6-5-6.5"/>'],
+  ['contact.html', 'Nous contacter', '<path d="M4 5h16v14H4z"/><path d="M4 6l8 7 8-7"/>'],
+];
+// Pages rattachées à une rubrique (pour la mettre en avant)
+const RUBRIQUES = { 'scorer.html': 'jouer.html', 'live.html': './', 'mes-parties.html': 'jouer.html', 'tournoi.html': 'tournois.html', 'tournoi-creer.html': 'tournois.html', 'face-a-face.html': 'classement.html', 'profil.html': 'classement.html', 'article.html': './' };
+
+function ajouterBarreIcones() {
+  const entete = document.querySelector('.entete');
+  if (!entete || entete.querySelector('.nav-icones') || document.body.classList.contains('sans-nav')) return;
+  const page = location.pathname.split('/').pop() || './';
+  const actuelle = page === 'index.html' ? './' : (RUBRIQUES[page] || page);
+  const nav = document.createElement('nav');
+  nav.className = 'nav-icones';
+  nav.setAttribute('aria-label', 'Navigation principale');
+  nav.innerHTML = ICONES_NAV.map(([href, libelle, svg]) => {
+    const icone = `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${svg}</svg>`;
+    if (!href) return `<span class="nav-icones__item nav-icones__item--bientot" title="${libelle}">${icone}<span class="nav-icones__texte">${libelle}</span></span>`;
+    return `<a class="nav-icones__item" href="${href}"${href === actuelle ? ' aria-current="page"' : ''}>${icone}<span class="nav-icones__texte">${libelle}</span></a>`;
+  }).join('');
+  const marque = entete.querySelector('.entete__marque');
+  if (marque) marque.after(nav); else entete.prepend(nav);
+}
+ajouterBarreIcones();
+
 // En-tête : « Connexion » devient « Mon compte » quand on est connecté
 async function brancherEntete() {
   const lien = document.getElementById('lien-compte');
