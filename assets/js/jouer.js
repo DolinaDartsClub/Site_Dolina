@@ -2,7 +2,7 @@
 //  Jouer : création d'un match X01 et reprise des parties en cours
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie, supprimerPartie, avatar } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie, supprimerPartie, avatar, brancherTypeMatch } from './app.js?v=__VERSION__';
 
 const MAX_JOUEURS = 4;
 const DUREE_REPRISE_H = 24;
@@ -16,6 +16,7 @@ let membres = [];
 const choix = { variant: '501', mode: 'single', public: true, guide: true };
 let joueurs = [];          // { type: 'membre' | 'invite', id?, nom }
 let affectation = {};      // index du joueur -> 1 | 2 (doublettes)
+const typeMatch = brancherTypeMatch(document.getElementById('type-match'));
 
 // ---------- Accès ----------
 
@@ -316,6 +317,7 @@ function verifier() {
     const s = Number(f.start_score.value);
     if (!Number.isInteger(s) || s < 2 || s > 9999) return 'Le score de départ doit être un nombre entre 2 et 9999.';
   }
+  if (typeMatch.manque()) return typeMatch.manque();
   if (!joueurs.length) return 'Ajoutez au moins un joueur.';
   if (choix.mode === 'double') {
     if (joueurs.length !== 4) return 'En double 2v2, il faut 4 joueurs.';
@@ -360,8 +362,14 @@ async function creerPartie(premier) {
     visibility: choix.public ? 'public' : 'private',
     first_side: premier,
     show_checkout: choix.guide,
+    match_type: typeMatch.valeur() || 'club',
   };
   let { data: game, error } = await supabase.from('games').insert(ligneGame).select('id').single();
+  // Base pas encore à jour (script 029 non exécuté) : on crée la partie sans le type
+  if (error && /match_type/.test(error.message || '')) {
+    delete ligneGame.match_type;
+    ({ data: game, error } = await supabase.from('games').insert(ligneGame).select('id').single());
+  }
   // Base pas encore à jour (script 015 non exécuté) : on crée la partie sans l'option
   if (error && /show_checkout/.test(error.message || '')) {
     delete ligneGame.show_checkout;

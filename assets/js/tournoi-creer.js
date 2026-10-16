@@ -4,7 +4,7 @@
 //  tournoi-creer.html?id=…      → modifier les paramètres (organisateur)
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, brancherTypeMatch } from './app.js?v=__VERSION__';
 import { FORMATS, MODES, STATUTS } from './tournoi-commun.js?v=__VERSION__';
 
 const form = document.getElementById('form-tournoi');
@@ -14,6 +14,7 @@ const zoneAcces = document.getElementById('acces');
 const idModif = new URLSearchParams(location.search).get('id');
 
 const choix = { team_mode: 'single', format: 'knockout' };
+const typeMatch = brancherTypeMatch(document.getElementById('type-match'));
 let existant = null;      // tournoi modifié
 let nbInscrits = 0;
 let envoi = false;
@@ -63,6 +64,7 @@ function remplir(t) {
   f.third_place.checked = t.third_place;
   f.public_matches.checked = t.public_matches;
   f.show_checkout.checked = t.show_checkout !== false;
+  if (t.match_type) typeMatch.definir(t.match_type);
   choix.team_mode = t.team_mode;
   choix.format = t.format;
   majOptionsPoules();
@@ -152,10 +154,12 @@ function lire() {
     third_place: f.third_place.checked,
     public_matches: f.public_matches.checked,
     show_checkout: f.show_checkout.checked,
+    match_type: typeMatch.valeur() || 'club',
   };
 }
 
 function verifier(v) {
+  if (typeMatch.manque()) return typeMatch.manque();
   if (v.name.length < 2) return 'Donnez un nom au tournoi (2 caractères minimum).';
   if (!Number.isInteger(v.max_participants) || v.max_participants < 2 || v.max_participants > 64) return 'Le nombre de places doit être compris entre 2 et 64.';
   if (existant && v.max_participants < nbInscrits) return `Il y a déjà ${nbInscrits} inscrits : le nombre de places ne peut pas être inférieur.`;
@@ -186,6 +190,7 @@ form.addEventListener('submit', (e) => {
   lignes.push(['Match pour la 3e place', v.third_place ? 'Oui' : 'Non']);
   lignes.push(['Matchs', v.public_matches ? 'Publics (visibles dans « Matchs en cours »)' : 'Privés']);
   lignes.push(['Guide de finish', v.show_checkout ? 'Affiché dans le scorer' : 'Masqué']);
+  lignes.push(['Type', { club: 'Tournoi de club (compte au classement)', ligue: 'Ligue (compte au classement)', amical: 'Amical (ne compte pas au classement)' }[v.match_type] || 'Club']);
   lignes.push(['Format des matchs', 'Choisi au lancement de chaque phase']);
   if (!existant) lignes.push(['Statut à la création', esc(STATUTS[ouvrir ? 'open' : 'draft'].libelle) + (ouvrir ? ' : le code est utilisable tout de suite' : ' : vous ouvrirez les inscriptions plus tard')]);
   document.getElementById('recap-liste').innerHTML = lignes.map(([k, val]) => `<dt>${k}</dt><dd>${val}</dd>`).join('');
@@ -214,6 +219,12 @@ document.getElementById('btn-confirmer').addEventListener('click', async () => {
       .select('id').single();
   }
   // Base pas encore à jour (script 015 non exécuté) : enregistrement sans l'option « guide de finish »
+  if (res.error && /match_type/.test(res.error.message || '')) {
+    delete v.match_type;
+    res = existant
+      ? await supabase.from('tournaments').update(v).eq('id', existant.id).select('id').single()
+      : await supabase.from('tournaments').insert({ ...v, status: form.elements.ouvrir.checked ? 'open' : 'draft' }).select('id').single();
+  }
   if (res.error && /show_checkout/.test(res.error.message || '')) {
     const { show_checkout: _ignore, ...sansGuide } = v;
     res = existant

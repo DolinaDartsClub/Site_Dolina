@@ -1239,3 +1239,23 @@ details.carte-info:not([open]) { gap: 0; }
 @media (min-width: 900px) and (prefers-reduced-motion: reduce) {
   .nav-icones__item, .nav-icones__item svg, .nav-icones__texte { transition: none; }
 }
+
+/* ---------- Lieu (club / extérieur) et type de match ---------- */
+.puce-lieu { gap: 6px; padding: 0 12px; }
+.puce-lieu svg { width: 19px; height: 19px; flex-shrink: 0; }
+.puce-lieu[data-lieu="exterieur"] { border-color: #6b8afd; color: #9fb3ff; }
+.puce-lieu[data-lieu=""] { border-style: dashed; }
+@media (max-width: 420px) { .entete .puce-lieu { width: 44px; padding: 0; } .puce-lieu span { display: none; } }
+.lieu-fenetre h2 { margin: 0; }
+.lieu-choix { display: grid; gap: 4px; text-align: left; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--bord-fort); background: var(--noir); color: var(--blanc); font: inherit; cursor: pointer; }
+.lieu-choix strong { font-size: 18px; }
+.lieu-choix small { color: var(--gris-clair); font-size: 13px; line-height: 1.4; }
+.lieu-choix:hover, .lieu-choix:focus-visible { border-color: var(--orange); }
+.lieu-choix--actuel { border-color: var(--orange); background: var(--orange-fond); }
+.lieu-note { margin: 0; font-size: 12px; color: var(--gris); }
+.lieu-note__picto { width: 14px; height: 14px; vertical-align: -2px; }
+.type-match__aide { display: block; margin-top: 6px; font-size: 13px; color: var(--gris-clair); }
+.type-match__aide .lien-discret { margin-left: 6px; font-size: 13px; }
+.type-match { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; vertical-align: middle; }
+.type-match--ligue { background: #1e2a55; color: #a9bbff; border: 1px solid #3a4f9a; }
+.type-match--amical { background: #262626; color: var(--gris-clair); border: 1px solid var(--bord-fort); }

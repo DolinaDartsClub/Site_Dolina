@@ -6,11 +6,11 @@
 //  (aujourd'hui toujours « match »), affiché sur la carte et filtrable.
 // =====================================================================
 
-import { supabase, esc, formatPartie, etatPartie, profilConnecte } from './app.js?v=__VERSION__';
+import { supabase, esc, formatPartie, etatPartie, profilConnecte, etiquetteType } from './app.js?v=__VERSION__';
 
 const PAR_PAGE = 20;
 const DUREE_REPRISE_H = 24;
-let COLONNES = 'tournament_match_id, id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, visibility, created_by, created_at, finished_at, game_sides(side, name, is_bot), game_players(side, profile_id, display_name, throw_order)';
+let COLONNES = 'match_type, tournament_match_id, id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, visibility, created_by, created_at, finished_at, game_sides(side, name, is_bot), game_players(side, profile_id, display_name, throw_order)';
 
 const zoneAcces = document.getElementById('acces');
 const contenu = document.getElementById('contenu');
@@ -67,6 +67,10 @@ async function chargerPage() {
   ]);
   let [jouees, creees] = await lire();
   // Base sans les tournois (script 016 non exécuté) : on relit sans la colonne du tournoi
+  if (jouees.error && /match_type/.test(jouees.error.message || '')) {
+    COLONNES = COLONNES.replace('match_type, ', '');
+    [jouees, creees] = await lire();
+  }
   if (jouees.error && /tournament_match_id/.test(jouees.error.message || '')) {
     COLONNES = COLONNES.replace('tournament_match_id, ', '');
     [jouees, creees] = await lire();
@@ -165,7 +169,7 @@ function carte(g) {
         <span class="mp-resultat mp-resultat--${res.cle}">${esc(res.texte)}</span>
       </header>
       <ul class="mp-camps">${lignes}</ul>
-      <p class="mp-carte__format">${esc(formatPartie(g))}${g.sets_n ? ' · score en sets' : ''}${g.visibility === 'private' ? ' · privée' : ''}</p>
+      <p class="mp-carte__format">${etiquetteType(g.match_type)} ${esc(formatPartie(g))}${g.sets_n ? ' · score en sets' : ''}${g.visibility === 'private' ? ' · privée' : ''}</p>
       <div class="actions">${actions.join('')}</div>
     </article>`;
 }
