@@ -95,19 +95,18 @@ function carteMatch(g, visits) {
 
 // ---------- Tournois en cours (visible des visiteurs) ----------
 
-// Prochaines rencontres (membres connectés) : la prochaine de chaque équipe
+// Prochaines rencontres (tout le monde) : la prochaine de chaque équipe ; pour un membre, son équipe d'abord
 async function chargerProchaines() {
   const bloc = document.getElementById('bloc-prochaines');
   if (!bloc) return;
   const moi = await profilConnecte().catch(() => null);
-  if (!moi || moi.status !== 'active') { bloc.hidden = true; return; }
   const auj = new Date().toLocaleDateString('fr-CA');
   const depuis = new Date(Date.now() - 25 * 86400000).toLocaleDateString('fr-CA');
   const [rr, rt, rm] = await Promise.all([
     supabase.from('rencontres').select('id, team_id, date_match, date_fin, heure_match, heure_rdv, journee, adversaire, domicile, salles(nom, adresse, lien_carte)')
       .is('score_nous', null).gte('date_match', depuis).order('date_match').order('heure_match', { nullsFirst: false }).limit(40),
     supabase.from('teams').select('id, name, sort_order').order('sort_order'),
-    supabase.from('team_members').select('team_id').eq('profile_id', moi.id).eq('status', 'accepted'),
+    moi?.status === 'active' ? supabase.from('team_members').select('team_id').eq('profile_id', moi.id).eq('status', 'accepted') : Promise.resolve({ data: [] }),
   ]);
   if (rr.error || rt.error) { bloc.hidden = true; return; }
   const mesEquipes = new Set((rm.data || []).map((m) => m.team_id));
