@@ -1349,3 +1349,20 @@ details.carte-info:not([open]) { gap: 0; }
 .voix-reglage { flex: 1 1 100%; display: flex; gap: 8px; align-items: flex-end; }
 .voix-reglage__choix { flex: 1; min-width: 0; margin: 0; }
 .voix-reglage__choix select { width: 100%; }
+
+/* Fin de partie : victoire ou défaite */
+.fin__resultat { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: -4px; }
+.fin__icone { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; }
+.fin__icone svg { width: 38px; height: 38px; }
+.fin__mot { font-family: var(--police-titre); font-weight: 700; font-size: 24px; letter-spacing: .12em; text-transform: uppercase; }
+.fin--victoire { border-color: var(--orange); background: radial-gradient(120% 70% at 50% 0%, rgba(245,122,0,.32), transparent 65%), var(--carte); box-shadow: 0 0 0 1px rgba(245,122,0,.35), 0 0 48px rgba(245,122,0,.35); animation: fin-pop .45s cubic-bezier(.2,1.4,.4,1); }
+.fin--victoire .fin__icone { background: var(--orange); color: var(--noir); box-shadow: 0 0 0 6px rgba(245,122,0,.18), 0 0 28px rgba(245,122,0,.6); animation: fin-brille 1.8s ease-in-out infinite; }
+.fin--victoire .fin__mot { color: var(--orange-clair); }
+.fin--victoire .titre-game-shot { text-shadow: 0 0 18px rgba(245,122,0,.55); }
+.fin--defaite { border-color: var(--bord-fort); background: linear-gradient(180deg, rgba(255,255,255,.05), transparent 45%), var(--carte); animation: fin-pop .35s ease-out; }
+.fin--defaite .fin__icone { background: #2a2a2a; color: var(--gris-clair); border: 2px solid var(--bord-fort); }
+.fin--defaite .fin__mot { color: var(--gris-clair); }
+.fin--defaite .titre-game-shot { color: var(--gris-clair); }
+@keyframes fin-pop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes fin-brille { 50% { box-shadow: 0 0 0 10px rgba(245,122,0,.08), 0 0 40px rgba(245,122,0,.8); } }
+@media (prefers-reduced-motion: reduce) { .fin--victoire, .fin--defaite, .fin--victoire .fin__icone { animation: none; } }

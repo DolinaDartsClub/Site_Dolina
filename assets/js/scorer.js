@@ -20,6 +20,7 @@ const zoneMsg = $('message');
 let game = null;
 let camps = [];           // numéros des camps
 let nomsCamps = {};       // side -> nom affiché
+let moi = null;
 let botSide = null;       // camp du dartbot (partie contre le bot)
 let reglageBot = null;
 let minuterieBot = null;
@@ -36,7 +37,7 @@ let tournoi = null;        // match de tournoi : { match_no, status, tournament_
 // ---------- Chargement ----------
 
 async function init() {
-  const moi = await profilConnecte();
+  moi = await profilConnecte();
   if (!moi) return location.replace('connexion.html');
   const { data, error } = await supabase
     .from('games')
@@ -234,9 +235,24 @@ function afficherFin() {
     $('fin-annuler').hidden = valide;
     if (!valide) $('fin-texte').textContent = 'Vérifiez le score puis validez : le résultat sera enregistré dans le tournoi.';
   }
-  $('fin-gagnant').textContent = `${nomsCamps[etat.gagnant]} gagne ${game.sets_n
-    ? camps.map((s) => etat.sets[s]).join(' – ') + ' (sets)'
-    : camps.map((s) => etat.manches[s]).join(' – ')}`;
+  // Score du gagnant en premier (« Dartbot gagne 2 – 0 »)
+  const ordre = camps.length === 2 ? [etat.gagnant, ...camps.filter((c) => c !== etat.gagnant)] : camps;
+  const compte = game.sets_n ? etat.sets : etat.manches;
+  $('fin-gagnant').textContent = `${nomsCamps[etat.gagnant]} gagne ${ordre.map((c) => compte[c]).join(' – ')}${game.sets_n ? ' (sets)' : ''}`;
+
+  // Victoire ou défaite, du point de vue de celui qui tient le scorer (s'il joue)
+  const monCamp = game.game_players.find((p) => p.profile_id && p.profile_id === moi?.id)?.side;
+  const boite = $('fen-fin').querySelector('.fenetre__boite');
+  boite.classList.remove('fin--victoire', 'fin--defaite');
+  $('fin-resultat').hidden = !monCamp;
+  if (monCamp) {
+    const gagne = monCamp === etat.gagnant;
+    boite.classList.add(gagne ? 'fin--victoire' : 'fin--defaite');
+    $('fin-mot').textContent = gagne ? 'Victoire !' : 'Défaite';
+    $('fin-icone').innerHTML = gagne
+      ? '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h18v10a9 9 0 0 1-18 0z"/><path d="M15 11H8v3a7 7 0 0 0 7 7M33 11h7v3a7 7 0 0 1-7 7"/><path d="M24 26v8M17 41h14M19 41l1-7h8l1 7"/></svg>'
+      : '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="17"/><circle cx="24" cy="24" r="10"/><circle cx="24" cy="24" r="3"/><path d="M38 10 30 18"/><path d="M38 10l1-5M38 10l5-1"/></svg>';
+  }
   $('fen-fin').hidden = false;
 }
 
