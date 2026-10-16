@@ -1744,3 +1744,27 @@ span.adm-partie__case { cursor: default; }
 
 .accueil-droite { display: grid; gap: inherit; align-content: start; min-width: 0; }
 .page--accueil .accueil-droite { gap: 28px; }
+
+/* ===================== Accueil (téléphone) : raccourcis vers les rubriques ===================== */
+.raccourcis-accueil { display: none; }
+@media (max-width: 899px) {
+  .raccourcis-accueil {
+    position: sticky; top: var(--entete-h, 64px); z-index: 9;
+    display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+    padding: 8px var(--gouttiere) 10px; margin-bottom: -6px;
+    background: linear-gradient(to bottom, var(--noir) 75%, rgba(20,20,20,0));
+    transition: transform .28s ease, opacity .2s ease;
+  }
+  .raccourcis-accueil::-webkit-scrollbar { display: none; }
+  .raccourcis-accueil--cache { transform: translateY(-115%); opacity: 0; pointer-events: none; }
+  .raccourcis-accueil a {
+    flex: none; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--bord-fort);
+    background: var(--carte); color: var(--gris-clair); font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .raccourcis-accueil a[aria-current="true"] { background: var(--orange); border-color: var(--orange); color: var(--noir); }
+  .page--accueil > section, .page--accueil > div > section { scroll-margin-top: calc(var(--entete-h, 64px) + 56px); }
+}
+@media (max-width: 899px) and (prefers-reduced-motion: reduce) { .raccourcis-accueil { transition: none; } }
+
+@media (max-width: 899px) { body.raccourcis-visibles .entete::after { opacity: 0; } .entete::after { transition: opacity .2s; } }

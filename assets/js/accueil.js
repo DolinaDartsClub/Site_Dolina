@@ -398,3 +398,74 @@ chargerArticles();
     if (minutes >= 19 * 60) ceSoir.textContent = 'Entraînement en cours !';
   }
 }());
+
+// ---------- Raccourcis vers les rubriques (téléphone) ----------
+// Barre de pastilles sous l'en-tête : visible en haut de page, cachée quand on descend,
+// elle réapparaît dès qu'on remonte. La rubrique affichée est mise en avant.
+(function raccourcis() {
+  const barre = document.getElementById('raccourcis-accueil');
+  if (!barre) return;
+  const RUBRIQUES = [
+    ['entrainements', 'Entraînements'],
+    ['bloc-tournois', 'Tournois'],
+    ['bloc-prochaines', 'Rencontres'],
+    ['bloc-resultats', 'Résultats'],
+    ['actualites', 'Actualités'],
+    ['matchs-en-cours', 'En direct'],
+    ['rejoindre', 'Nous rejoindre'],
+  ];
+  let actif = null;
+  const dessiner = () => {
+    const presentes = RUBRIQUES.filter(([id]) => { const el = document.getElementById(id); return el && !el.hidden; });
+    const html = presentes.map(([id, nom]) => `<a href="#${id}" data-rubrique="${id}"${id === actif ? ' aria-current="true"' : ''}>${nom}</a>`).join('');
+    if (barre.innerHTML !== html) barre.innerHTML = html;
+    return presentes;
+  };
+  dessiner();
+  document.body.classList.add('raccourcis-visibles');
+  // Les blocs Tournois, Rencontres, Résultats apparaissent après chargement
+  new MutationObserver(dessiner).observe(document.querySelector('main'), { subtree: true, attributes: true, attributeFilter: ['hidden'] });
+
+  // Rubrique en cours de lecture
+  const observateur = new IntersectionObserver((entrees) => {
+    const visibles = entrees.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (!visibles.length) return;
+    actif = visibles[0].target.id;
+    barre.querySelectorAll('a').forEach((a) => {
+      const oui = a.dataset.rubrique === actif;
+      if (oui) { a.setAttribute('aria-current', 'true'); a.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); } else a.removeAttribute('aria-current');
+    });
+  }, { rootMargin: '-35% 0px -55% 0px' });
+  RUBRIQUES.forEach(([id]) => { const el = document.getElementById(id); if (el) observateur.observe(el); });
+
+  // Montrer en remontant, cacher en descendant
+  let dernier = window.scrollY;
+  let enAttente = false;
+  let auto = 0;   // défilement lancé par un clic sur une pastille : la barre reste visible
+  window.addEventListener('scroll', () => {
+    if (enAttente) return;
+    enAttente = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      if (Date.now() < auto) { dernier = y; enAttente = false; return; }
+      if (y < 80 || y < dernier - 6) barre.classList.remove('raccourcis-accueil--cache');
+      else if (y > dernier + 6) barre.classList.add('raccourcis-accueil--cache');
+      document.body.classList.toggle('raccourcis-visibles', !barre.classList.contains('raccourcis-accueil--cache'));
+      dernier = y;
+      enAttente = false;
+    });
+  }, { passive: true });
+
+  // Clic : défilement doux, en tenant compte de l'en-tête et de la barre
+  barre.addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-rubrique]');
+    if (!a) return;
+    e.preventDefault();
+    const cible = document.getElementById(a.dataset.rubrique);
+    const decalage = (document.querySelector('.entete')?.offsetHeight || 64) + barre.offsetHeight + 8;
+    auto = Date.now() + 1200;
+    barre.classList.remove('raccourcis-accueil--cache');
+    document.body.classList.add('raccourcis-visibles');
+    window.scrollTo({ top: cible.getBoundingClientRect().top + window.scrollY - decalage, behavior: 'smooth' });
+  });
+}());
