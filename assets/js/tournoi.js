@@ -5,7 +5,7 @@
 //  organisateur, participant, ou spectateur (tournoi lancé à matchs publics).
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie, avatar, etiquetteType } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie, avatar } from './app.js?v=__VERSION__';
 import { chargerMembres } from './tournoi-commun.js?v=__VERSION__';
 import qrcode from './vendor/qrcode.js?v=__VERSION__';
 import {
@@ -57,11 +57,6 @@ async function charger() {
   }
   role = data.role;
   t = data.tournoi;
-  // Type du tournoi (club, ligue, amical) : lu à part, la fiche détaillée ne le contient pas
-  if (moi && t.match_type === undefined) {
-    const { data: ty } = await supabase.from('tournaments').select('match_type').eq('id', id).maybeSingle();
-    t.match_type = ty?.match_type || 'club';
-  }
   inscrits = data.inscrits || [];
   matchs = data.matchs || [];
   parId = new Map(inscrits.map((e) => [e.id, e]));
@@ -100,7 +95,7 @@ function afficher() {
 
   zone.innerHTML = `
     <section class="t-entete">
-      <div class="t-entete__haut">${badgeStatut(t.status)}${etiquetteType(t.match_type)}${orga ? '<span class="t-role">Organisateur</span>' : ''}${mi ? '<span class="t-role t-role--joueur">Inscrit</span>' : ''}${role === 'spectateur' ? '<span class="t-role">Spectateur</span>' : ''}</div>
+      <div class="t-entete__haut">${badgeStatut(t.status)}${orga ? '<span class="t-role">Organisateur</span>' : ''}${mi ? '<span class="t-role t-role--joueur">Inscrit</span>' : ''}${role === 'spectateur' ? '<span class="t-role">Spectateur</span>' : ''}</div>
       <h1 class="t-titre">${esc(t.name)}</h1>
       <p class="t-sous">${esc(resumeFormat(t))} · organisé par ${esc(t.organisateur || '—')}</p>
       ${t.description ? `<p class="t-description">${esc(t.description)}</p>` : ''}
