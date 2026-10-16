@@ -1648,3 +1648,22 @@ span.adm-partie__case { cursor: default; }
 .actus--pause .actus__points button[aria-current="true"] span { animation: none; transform: scaleX(1); }
 @keyframes actu-progres { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { .actu__visuel img { transition: none; } .actus__points button[aria-current="true"] span { animation: none !important; } }
+
+/* ===================== Menu « Mon compte » (admin, capitaine) ===================== */
+.mc { position: relative; display: inline-flex; flex: none; }
+.mc .lien-compte { position: relative; }
+.mc-pastille { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; font-size: 11px; padding: 0 5px; box-shadow: 0 0 0 2px var(--noir); }
+.mc-liste { position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; width: 250px; display: grid; gap: 2px; padding: 6px; border-radius: 14px; border: 1px solid var(--bord-fort); background: rgba(26,26,26,.98); backdrop-filter: blur(10px); box-shadow: 0 16px 44px rgba(0,0,0,.6); transform-origin: top right; opacity: 0; transform: translateY(-6px) scale(.96); visibility: hidden; pointer-events: none; transition: opacity .15s ease, transform .2s cubic-bezier(.2,1.2,.4,1), visibility 0s .2s; }
+.mc--ouvert .mc-liste { opacity: 1; transform: none; visibility: visible; pointer-events: auto; transition: opacity .15s ease, transform .2s cubic-bezier(.2,1.2,.4,1), visibility 0s; }
+.mc-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 10px; border: 0; border-radius: 10px; background: none; color: var(--gris-clair); font: 600 15px var(--police); text-decoration: none; text-align: left; cursor: pointer; }
+.mc-item span { flex: 1; display: grid; }
+.mc-item small { font-size: 12px; font-weight: 500; color: var(--gris); }
+.mc-item:hover, .mc-item:focus-visible { background: #262626; color: var(--blanc); outline: none; }
+.mc-item--ici { color: var(--blanc); background: var(--orange-fond); }
+.mc-icone { width: 32px; height: 32px; padding: 7px; border-radius: 9px; background: #232323; border: 1px solid var(--bord); color: var(--orange); flex: none; }
+.mc-item--ici .mc-icone { background: var(--orange); color: var(--noir); border-color: var(--orange); }
+.mc-item--sortie .mc-icone { color: var(--gris-clair); }
+.mc-item .compteur { flex: none; }
+.mc-liste hr { border: 0; border-top: 1px solid var(--bord); margin: 4px 6px; }
+@media (prefers-reduced-motion: reduce) { .mc-liste { transition: none; } }
+.lien-compte .mc-pastille { display: inline-grid !important; place-items: center; }

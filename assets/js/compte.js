@@ -95,7 +95,7 @@ async function afficher() {
 
   // ----- Bloc capitaine -----
   const blocCapitaine = monEquipe ? `
-    <div class="carte-info">
+    <div class="carte-info" id="capitaine">
       <h2>Capitaine · ${esc(monEquipe.name)}</h2>
       ${demandes.length ? demandes.map((d) => {
         const p = d.profiles || {};

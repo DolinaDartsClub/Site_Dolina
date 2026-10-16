@@ -302,8 +302,75 @@ async function brancherEntete() {
   if (!session && /\/(index\.html)?$/.test(location.pathname)) lien.classList.add('lien-compte--texte');
   lien.setAttribute('aria-label', libelle);
   lien.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>${libelle}</span>`;
+  if (session) menuCompte(lien, session.user.id);
 }
 brancherEntete();
+
+// « Mon compte » devient un petit menu pour un admin ou un capitaine :
+// mon profil, espace capitaine (+ calendrier de l'équipe), espace admin, déconnexion
+const ICONES_COMPTE = {
+  profil: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  capitaine: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  calendrier: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  admin: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  sortie: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+};
+const iconeCompte = (k) => `<svg class="mc-icone" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONES_COMPTE[k]}</svg>`;
+
+async function menuCompte(lien, uid) {
+  const [rp, rt] = await Promise.all([
+    supabase.from('profiles').select('role, status').eq('id', uid).maybeSingle(),
+    supabase.from('teams').select('name').eq('captain_id', uid).maybeSingle(),
+  ]);
+  const actif = rp.data?.status === 'active';
+  const admin = actif && rp.data?.role === 'admin';
+  const equipe = actif ? rt.data : null;
+  if (!admin && !equipe) return;   // simple membre : le lien mène directement à Mon compte
+
+  // Admin : nombre de choses à traiter (inscriptions, demandes d'équipe, messages)
+  let aTraiter = 0;
+  if (admin) {
+    const compte = (r) => r.count || 0;
+    const [a, b, c] = await Promise.all([
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('team_members').select('team_id', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('contact_requests').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+    ]);
+    aTraiter = compte(a) + compte(b) + compte(c);
+  }
+  const page = location.pathname.split('/').pop() || 'index.html';
+  const item = (href, icone, texte, extra = '') => `<a class="mc-item${page === href.split('#')[0] ? ' mc-item--ici' : ''}" role="menuitem" href="${href}">${iconeCompte(icone)}<span>${texte}</span>${extra}</a>`;
+  const menu = document.createElement('div');
+  menu.className = 'mc';
+  menu.innerHTML = `
+    <div class="mc-liste" role="menu" aria-label="Mon compte">
+      ${item('compte.html', 'profil', 'Mon profil')}
+      ${equipe ? item('compte.html#capitaine', 'capitaine', `Espace capitaine <small>${esc(equipe.name)}</small>`) : ''}
+      ${equipe ? item(`equipes.html#${encodeURIComponent(equipe.name)}`, 'calendrier', 'Calendrier de l\'équipe') : ''}
+      ${admin ? item('admin.html', 'admin', 'Espace admin', aTraiter ? `<span class="compteur">${aTraiter}</span>` : '') : ''}
+      <hr>
+      <button type="button" class="mc-item mc-item--sortie" role="menuitem" data-deconnexion>${iconeCompte('sortie')}<span>Déconnexion</span></button>
+    </div>`;
+  lien.after(menu);
+  menu.prepend(lien);
+  lien.setAttribute('aria-haspopup', 'menu');
+  lien.setAttribute('aria-expanded', 'false');
+  if (aTraiter) lien.insertAdjacentHTML('beforeend', `<span class="compteur mc-pastille" aria-label="${aTraiter} à traiter">${aTraiter}</span>`);
+  const ouvrir = (oui) => { menu.classList.toggle('mc--ouvert', oui); lien.setAttribute('aria-expanded', String(oui)); };
+  lien.addEventListener('click', (e) => {
+    e.preventDefault();
+    ouvrir(!menu.classList.contains('mc--ouvert'));
+    if (menu.classList.contains('mc--ouvert')) menu.querySelector('.mc-item')?.focus({ preventScroll: true });
+  });
+  document.addEventListener('click', (e) => { if (!menu.contains(e.target)) ouvrir(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu.classList.contains('mc--ouvert')) { ouvrir(false); lien.focus(); } });
+  menu.querySelector('[data-deconnexion]').addEventListener('click', async () => {
+    await supabase.auth.signOut().catch(() => {});
+    location.href = './';
+  });
+  // Ancre #capitaine sur la page actuelle : on y va sans recharger
+  menu.querySelectorAll('a[href^="compte.html#"]').forEach((a) => a.addEventListener('click', () => ouvrir(false)));
+}
 
 // Enregistre le service worker (installation du site comme une appli)
 if ('serviceWorker' in navigator) {
