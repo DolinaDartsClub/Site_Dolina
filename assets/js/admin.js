@@ -10,6 +10,7 @@ import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as
 import { initActus } from './admin-actus.js?v=__VERSION__';
 import { initDemandes } from './admin-demandes.js?v=__VERSION__';
 import { initMatchs } from './admin-matchs.js?v=__VERSION__';
+import { initExports } from './admin-exports.js?v=__VERSION__';
 import { initSauvegarde } from './admin-sauvegarde.js?v=__VERSION__';
 import { initTournois } from './admin-tournois.js?v=__VERSION__';
 
@@ -22,6 +23,7 @@ const vues = {
   actus: document.getElementById('vue-actus'),
   demandes: document.getElementById('vue-demandes'),
   tournois: document.getElementById('vue-tournois'),
+  exports: document.getElementById('vue-exports'),
   sauvegarde: document.getElementById('vue-sauvegarde'),
 };
 const listeMembres = document.getElementById('liste-membres');
@@ -479,6 +481,7 @@ async function init() {
   const depart = location.hash.slice(1);
   if (vues[depart]) document.querySelector(`[data-onglet="${depart}"]`).click();
   await Promise.all([charger(), initActus(moi), initDemandes(document.getElementById('message')), initSauvegarde(document.getElementById('message')), initTournois(document.getElementById('message')), initMatchs(document.getElementById('message'))]);
+  initExports(document.getElementById('message'));
 }
 
 init();

@@ -1567,6 +1567,20 @@ span.adm-partie__case { cursor: default; }
 @media (max-width: 420px) { .rc-podium .avatar--grand { width: 56px; height: 56px; font-size: 20px; } .rc-valeur { font-size: 22px; } .rc-podium__place--1 .rc-valeur { font-size: 28px; } }
 
 .rc-periode .mp-filtre { min-width: 0; flex: 1 1 100%; }
-.rc-saison select { appearance: none; padding: 6px 34px 6px 14px; border-radius: 999px; border: 1px solid var(--bord-fort); background: var(--carte) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f57a00' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 16px; color: var(--blanc); font: 600 14px var(--police); }
+.rc-saison select, .ex-periode select { appearance: none; padding: 6px 34px 6px 14px; border-radius: 999px; border: 1px solid var(--bord-fort); background: var(--carte) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f57a00' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 16px; color: var(--blanc); font: 600 14px var(--police); }
 .rc-saison select:disabled { opacity: .45; }
 .page--records { overflow-x: clip; }
+
+/* Admin : exports CSV */
+.ex-grille { display: grid; gap: 12px; }
+@media (min-width: 900px) { .ex-grille { grid-template-columns: 1fr 1fr; } }
+.ex-carte { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px 14px; align-items: start; }
+.ex-carte__icone { width: 44px; height: 44px; padding: 10px; border-radius: 12px; background: var(--orange-fond); color: var(--orange); border: 1px solid rgba(245,122,0,.4); }
+.ex-carte__texte { display: grid; gap: 6px; }
+.ex-carte__texte h3 { margin: 0; font-size: 17px; }
+.ex-carte__texte p { margin: 0; font-size: 13px; color: var(--gris-clair); }
+.ex-alerte { color: #ffd27a !important; }
+.ex-periode { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gris); }
+.ex-periode select { min-height: 36px; }
+.ex-bouton { grid-column: 2; justify-self: start; display: inline-flex; align-items: center; gap: 6px; }
+.ex-bouton svg { width: 18px; height: 18px; }
