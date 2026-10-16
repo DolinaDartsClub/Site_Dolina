@@ -623,3 +623,12 @@ document.addEventListener('keydown', (e) => {
     opts[(i + (e.key === 'ArrowDown' ? 1 : -1) + opts.length) % opts.length]?.focus();
   }
 });
+
+// Hauteur de l'en-tête collant (pour les effets de défilement et les éléments collés dessous)
+function majHauteurEntete() {
+  const h = document.querySelector('.entete')?.offsetHeight;
+  if (h) document.documentElement.style.setProperty('--entete-h', `${h}px`);
+}
+majHauteurEntete();
+window.addEventListener('resize', majHauteurEntete);
+window.addEventListener('load', majHauteurEntete);

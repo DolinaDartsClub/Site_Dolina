@@ -1709,3 +1709,28 @@ span.adm-partie__case { cursor: default; }
 
 .pr-carte--mienne { border-color: var(--orange); background: linear-gradient(110deg, rgba(245,122,0,.28), var(--carte) 65%); }
 .pr-carte--mienne .pr-equipe { color: var(--orange); }
+
+/* ===================== Défilement : le contenu s'efface sous l'en-tête et la barre du bas ===================== */
+.entete { background: var(--noir); }
+.entete::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 34px; pointer-events: none;
+  background: linear-gradient(to bottom, var(--noir) 0%, rgba(20,20,20,.75) 40%, rgba(20,20,20,0) 100%);
+}
+.nav-bas::before {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: 30px; pointer-events: none;
+  background: linear-gradient(to top, var(--noir-2) 0%, rgba(26,26,26,.7) 40%, rgba(26,26,26,0) 100%);
+}
+/* Les éléments qui passent sous l'en-tête s'estompent et remontent légèrement (navigateurs récents) */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    main :is(.section__titre, .match, .pr-carte, .res-ligne, .actus, .eq-rencontre, .adm-partie, .cap-ligne, .mt-ligne, .demande, .rc-carte, .t-carte, .horaires > *, .liste-cartes > .carte-info, .eq-joueur, .ligne-membre, .mp-partie) {
+      animation: sortie-haut linear both;
+      animation-timeline: view(block calc(var(--entete-h, 76px) - 10px) 0px);
+      animation-range: exit 0% exit 100%;
+    }
+  }
+}
+@keyframes sortie-haut {
+  0% { opacity: 1; transform: none; filter: none; }
+  100% { opacity: 0; transform: translateY(-14px) scale(.97); filter: blur(2px); }
+}
