@@ -141,6 +141,7 @@ function carteRencontre(r, gerer) {
       <div class="eq-rencontre__corps">
         <div class="eq-rencontre__haut">
           <span class="eq-badge${r.domicile ? ' eq-badge--dom' : ''}">${r.domicile ? 'Domicile' : 'Extérieur'}</span>
+          ${gerer && !res && finDe(r) < aujourdhui() ? `<span class="eq-badge eq-badge--retard">${aConfirmer(r) ? 'À mettre à jour' : 'À scorer'}</span>` : ''}
           ${meta ? `<span class="eq-meta">${esc(meta)}</span>` : ''}
         </div>
         <h3 class="eq-affiche">${esc(equipe?.name || '')} <span>${r.domicile ? 'reçoit' : 'chez'}</span> ${esc(r.adversaire)}</h3>

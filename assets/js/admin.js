@@ -10,6 +10,7 @@ import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as
 import { initActus } from './admin-actus.js?v=__VERSION__';
 import { initDemandes } from './admin-demandes.js?v=__VERSION__';
 import { initMatchs } from './admin-matchs.js?v=__VERSION__';
+import { blocRencontresRetard } from './retard.js?v=__VERSION__';
 import { initExports } from './admin-exports.js?v=__VERSION__';
 import { initSauvegarde } from './admin-sauvegarde.js?v=__VERSION__';
 import { initTournois } from './admin-tournois.js?v=__VERSION__';
@@ -199,6 +200,14 @@ function afficherMembres() {
 }
 
 // ---------- Équipes et capitaines ----------
+
+// Rencontres passées sans score : notification « À scorer » / « À mettre à jour »
+async function afficherRetards() {
+  const n = await blocRencontresRetard(document.getElementById('rencontres-retard'));
+  const c = document.getElementById('nb-rencontres');
+  c.textContent = n;
+  c.hidden = !n;
+}
 
 function afficherEquipes() {
   const actifs = profils.filter((p) => p.status === 'active');
@@ -439,7 +448,7 @@ document.addEventListener('keydown', (e) => {
 });
 // Pastille du bouton : total des choses à traiter (inscriptions, demandes, sauvegarde)
 function majAlerte() {
-  const n = ['nb-attente', 'nb-demandes', 'nb-sauvegarde'].reduce((t, id) => {
+  const n = ['nb-attente', 'nb-demandes', 'nb-sauvegarde', 'nb-rencontres'].reduce((t, id) => {
     const c = document.getElementById(id);
     if (!c || c.hidden) return t;
     return t + (Number(c.textContent) || (c.textContent.trim() === '!' ? 1 : 0));
@@ -478,6 +487,7 @@ async function init() {
   }
   document.getElementById('adm-barre').hidden = false;
   majAlerte();
+  afficherRetards();
   const depart = location.hash.slice(1);
   if (vues[depart]) document.querySelector(`[data-onglet="${depart}"]`).click();
   await Promise.all([charger(), initActus(moi), initDemandes(document.getElementById('message')), initSauvegarde(document.getElementById('message')), initTournois(document.getElementById('message')), initMatchs(document.getElementById('message'))]);

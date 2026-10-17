@@ -5,6 +5,7 @@
 // =====================================================================
 
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar } from './app.js?v=__VERSION__';
+import { blocRencontresRetard } from './retard.js?v=__VERSION__';
 
 const zone = document.getElementById('cap-zone');
 const zoneMsg = document.getElementById('message');
@@ -106,6 +107,8 @@ async function afficher() {
       </div>
     </section>
 
+    <div id="cap-retard"></div>
+
     <section class="section">
       <h2 class="section__titre">Demandes <span class="section__aide">${demandes.length ? `${demandes.length} en attente` : 'aucune en attente'}</span></h2>
       ${demandes.length ? `<ul class="cap-liste">${demandes.map((d) => {
@@ -131,6 +134,7 @@ async function afficher() {
           ${admin && m.profile_id !== t.captain_id ? `<span class="cap-ligne__actions"><button type="button" class="bouton bouton--petit" data-retirer="${m.profile_id}" data-nom="${esc(nomAffiche(m.profiles))}">Retirer</button></span>` : ''}
         </li>`).join('')}</ul>` : '<p class="vide">Aucun joueur dans l\'équipe pour l\'instant.</p>'}
     </section>`;
+  blocRencontresRetard(document.getElementById('cap-retard'), t.id);
 }
 
 zone.addEventListener('click', async (e) => {

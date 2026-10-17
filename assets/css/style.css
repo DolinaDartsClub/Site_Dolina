@@ -1891,3 +1891,14 @@ body { background: transparent; }
 .horaires__cta svg { width: 18px; height: 18px; }
 /* Admin, Demandes : moyen préféré */
 .dem-pref { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(245,122,0,.16); border: 1px solid rgba(245,122,0,.45); color: var(--blanc); font-weight: 700; font-size: 13px; }
+
+/* Rencontres passées sans score : « À scorer » / « À mettre à jour » */
+.retard { border-color: rgba(255, 196, 0, .55) !important; background: linear-gradient(135deg, rgba(255, 196, 0, .12), var(--verre, #1e1e1e) 60%) !important; margin-bottom: 16px; gap: 10px; }
+.retard__titre { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 17px; }
+.retard__icone { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #ffc400; color: var(--noir); font-weight: 900; flex: none; animation: fin-brille 2.4s ease-in-out infinite; }
+.retard__liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.retard__ligne { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--verre-bord, #2e2e2e); background: rgba(20, 20, 20, .35); }
+.retard__texte { flex: 1; min-width: 160px; display: grid; gap: 2px; }
+.retard__texte small { color: var(--gris); }
+.retard__badge, .eq-badge--retard { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; padding: 3px 9px; border-radius: 999px; background: #ffc400; color: var(--noir); border-color: #ffc400 !important; }
+.retard__ligne--maj .retard__badge { background: transparent; color: #ffc400; border: 1px solid #ffc400; }

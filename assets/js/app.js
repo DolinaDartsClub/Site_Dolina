@@ -33,6 +33,23 @@ export function formatPartie(g) {
   return `${jeu}${mode} · ${sets}${legs}`;
 }
 
+
+// Rencontres de championnat passées sans score (pour l'admin et les capitaines) :
+// date dépassée → « À scorer » ; période dépassée sans date fixée → « À mettre à jour »
+export async function rencontresEnRetard(equipe = null) {
+  const auj = new Date().toLocaleDateString('fr-CA');
+  let q = supabase.from('rencontres').select('id, team_id, date_match, date_fin, journee, adversaire, domicile, teams(name)')
+    .is('score_nous', null).lt('date_match', auj).order('date_match').limit(200);
+  if (equipe) q = q.eq('team_id', equipe);
+  const { data, error } = await q;
+  if (error) return [];
+  return (data || []).filter((r) => (r.date_fin || r.date_match) < auj).map((r) => ({
+    ...r,
+    etat: r.date_fin && r.date_fin !== r.date_match ? 'maj' : 'score',
+  }));
+}
+export const ETATS_RETARD = { score: 'À scorer', maj: 'À mettre à jour' };
+
 // Calcule l'état d'une partie X01 à partir de ses volées
 // (reste de chaque camp, manches et sets gagnés, camp au lancer)
 export function etatPartie(game, sides, visits) {
@@ -320,7 +337,7 @@ const iconeCompte = (k) => `<svg class="mc-icone" aria-hidden="true" viewBox="0 
 async function menuCompte(lien, uid) {
   const [rp, rt] = await Promise.all([
     supabase.from('profiles').select('role, status').eq('id', uid).maybeSingle(),
-    supabase.from('teams').select('name').eq('captain_id', uid).maybeSingle(),
+    supabase.from('teams').select('id, name').eq('captain_id', uid).maybeSingle(),
   ]);
   const actif = rp.data?.status === 'active';
   const admin = actif && rp.data?.role === 'admin';
@@ -336,8 +353,11 @@ async function menuCompte(lien, uid) {
       supabase.from('team_members').select('team_id', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('contact_requests').select('id', { count: 'exact', head: true }).eq('status', 'new'),
     ]);
-    aTraiter = compte(a) + compte(b) + compte(c);
+    aTraiter = compte(a) + compte(b) + compte(c) + (await rencontresEnRetard()).length;
   }
+  // Capitaine : rencontres de son équipe passées sans score
+  const retardCap = equipe && !admin ? (await rencontresEnRetard(equipe.id)).length : 0;
+  if (retardCap) aTraiter = retardCap;
   const page = location.pathname.split('/').pop() || 'index.html';
   const item = (href, icone, texte, extra = '') => `<a class="mc-item${page === href.split('#')[0] ? ' mc-item--ici' : ''}" role="menuitem" href="${href}">${iconeCompte(icone)}<span>${texte}</span>${extra}</a>`;
   const menu = document.createElement('div');
@@ -345,7 +365,7 @@ async function menuCompte(lien, uid) {
   menu.innerHTML = `
     <div class="mc-liste" role="menu" aria-label="Mon compte">
       ${item('compte.html', 'profil', 'Mon profil')}
-      ${equipe && !admin ? item('capitaine.html', 'capitaine', `Espace capitaine <small>${esc(equipe.name)}</small>`) : ''}
+      ${equipe && !admin ? item('capitaine.html', 'capitaine', `Espace capitaine <small>${esc(equipe.name)}${retardCap ? ' · à mettre à jour' : ''}</small>`, retardCap ? `<span class="compteur">${retardCap}</span>` : '') : ''}
       ${admin ? item(equipe ? `capitaine.html?equipe=${encodeURIComponent(equipe.name)}` : 'capitaine.html', 'capitaine', 'Espaces capitaines <small>toutes les équipes</small>') : ''}
       ${equipe ? item(`equipes.html#${encodeURIComponent(equipe.name)}`, 'calendrier', 'Calendrier de l\'équipe') : ''}
       ${admin ? item('admin.html', 'admin', 'Espace admin', aTraiter ? `<span class="compteur">${aTraiter}</span>` : '') : ''}
