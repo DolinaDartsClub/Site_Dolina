@@ -1902,3 +1902,56 @@ body { background: transparent; }
 .retard__texte small { color: var(--gris); }
 .retard__badge, .eq-badge--retard { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; padding: 3px 9px; border-radius: 999px; background: #ffc400; color: var(--noir); border-color: #ffc400 !important; }
 .retard__ligne--maj .retard__badge { background: transparent; color: #ffc400; border: 1px solid #ffc400; }
+
+/* ===================== Jouer → Compter une manche ===================== */
+.lien-compter { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(245,122,0,.45); background: linear-gradient(120deg, rgba(245,122,0,.22), var(--verre, #1e1e1e) 70%); color: var(--blanc); text-decoration: none; margin-bottom: 14px; }
+.lien-compter > span:nth-child(2) { flex: 1; display: grid; gap: 2px; }
+.lien-compter small { color: var(--gris-clair); font-size: 13px; }
+.lien-compter__icone { width: 40px; height: 40px; border-radius: 12px; background: var(--orange); color: var(--noir); display: grid; place-items: center; flex: none; }
+.lien-compter__icone svg { width: 22px; height: 22px; }
+.page--compter .pastille-choix { display: grid; place-items: center; gap: 2px; }
+.page--compter .pastille-choix small { font-size: 11px; font-weight: 500; opacity: .75; }
+.cp-records { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--verre-bord, #2e2e2e); background: var(--verre, #1e1e1e); }
+.cp-records h3 { margin: 0 0 8px; font-size: 14px; color: var(--gris-clair); }
+.cp-records ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.cp-records li { display: flex; gap: 8px; align-items: baseline; }
+.cp-records li span { flex: 1; }
+.cp-records b { color: var(--orange); }
+.cp-records small { color: var(--gris); }
+.cp-barre { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.cp-info { display: grid; justify-items: center; padding: 8px; border-radius: 12px; border: 1px solid var(--verre-bord, #2e2e2e); background: var(--verre, #1e1e1e); }
+.cp-info small { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+.cp-info b { font-family: var(--police-titre); font-size: 24px; }
+.cp-info--urgent b { color: #ff6b5a; animation: fin-brille 1s ease-in-out infinite; }
+.cp-reste-avant { text-align: center; color: var(--gris-clair); margin-bottom: 6px; }
+.cp-reste-avant b { font-family: var(--police-titre); font-size: 28px; color: var(--blanc); margin-left: 6px; }
+.cp-cible { display: flex; justify-content: center; }
+.cp-cible .cible-svg { max-width: 300px; cursor: default; }
+.cp-fleche { animation: fleche-arrive .35s ease-out; }
+.cp-fleches { display: flex; justify-content: center; gap: 8px; margin: 8px 0 0; }
+.cp-puce { padding: 4px 12px; border-radius: 999px; background: rgba(245,122,0,.18); border: 1px solid rgba(245,122,0,.45); font-weight: 700; }
+.cp-saisie { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.cp-champ input { font-family: var(--police-titre); font-size: 26px; text-align: center; }
+.cp-champ input:disabled { opacity: .35; }
+.cp-bust { grid-column: 1 / -1; }
+.cp-saisie [type=submit] { grid-column: 1 / -1; }
+.cp-correction { margin-top: 12px; display: grid; gap: 12px; padding: 14px; border-radius: 14px; border: 1px solid var(--verre-bord, #2e2e2e); background: var(--verre, #1e1e1e); animation: fin-pop .3s ease-out; }
+.cp-correction--juste { border-color: rgba(76, 201, 120, .6); background: linear-gradient(135deg, rgba(76,201,120,.16), var(--verre, #1e1e1e) 60%); }
+.cp-correction--faux { border-color: rgba(255, 107, 90, .55); background: linear-gradient(135deg, rgba(255,107,90,.14), var(--verre, #1e1e1e) 60%); }
+.cp-verdict { font-family: var(--police-titre); font-size: 24px; font-weight: 700; text-transform: uppercase; }
+.cp-verdict span { font-family: var(--police); font-size: 14px; color: var(--orange); text-transform: none; margin-left: 6px; }
+.cp-resultats { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cp-resultats li { display: flex; gap: 10px; align-items: center; }
+.cp-pastille { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; flex: none; }
+.cp-ok .cp-pastille { background: #4cc978; color: var(--noir); }
+.cp-ko .cp-pastille { background: #ff6b5a; color: var(--noir); }
+.cp-calcul { display: grid; gap: 4px; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,.25); }
+.cp-calcul h3 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--orange-clair); }
+.cp-calcul p { margin: 0; font-size: 15px; }
+.cp-conseil { color: var(--orange-clair); font-weight: 600; }
+.cp-fin { display: grid; gap: 12px; text-align: center; }
+.cp-fin h2 { font-family: var(--police-titre); font-size: 28px; text-transform: uppercase; margin: 0; }
+.cp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.cp-stats span { display: grid; padding: 10px 4px; border-radius: 12px; border: 1px solid var(--verre-bord, #2e2e2e); background: rgba(0,0,0,.2); font-size: 12px; color: var(--gris); }
+.cp-stats b { font-family: var(--police-titre); font-size: 26px; color: var(--orange); }
+.cp-fin .actions { justify-content: center; }

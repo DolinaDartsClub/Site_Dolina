@@ -48,3 +48,17 @@ export function marque({ x, y }, texte, classe) {
     <text x="${(x + (gauche ? -12 : 12)).toFixed(1)}" y="${(y - 10).toFixed(1)}" text-anchor="${gauche ? 'end' : 'start'}">${texte}</text>
   </g>`;
 }
+
+// Position (en mm) d'une fléchette sur la cible à partir de son libellé (T20, 5, D16, 25, Bull, 0)
+export function positionFleche(label, rng = Math.random) {
+  const entre = (a, b) => a + (b - a) * rng();
+  const polaire = (r, deg) => ({ x: r * Math.cos((deg * Math.PI) / 180), y: r * Math.sin((deg * Math.PI) / 180) });
+  if (label === 'Bull') return polaire(entre(0, R.bull - 1.5), entre(0, 360));
+  if (label === '25') return polaire(entre(R.bull + 2, R.demiBull - 2), entre(0, 360));
+  if (label === '0') return polaire(entre(R.doubleOut + 6, R.bord - 6), entre(0, 360));
+  const n = Number(label.replace(/^[TD]/, ''));
+  const angle = -90 + 18 * CIBLE_ORDRE.indexOf(n) + entre(-6, 6);
+  if (label.startsWith('T')) return polaire(entre(R.tripleIn + 2, R.tripleOut - 2), angle);
+  if (label.startsWith('D')) return polaire(entre(R.doubleIn + 2, R.doubleOut - 2), angle);
+  return polaire(rng() < 0.5 ? entre(R.demiBull + 8, R.tripleIn - 6) : entre(R.tripleOut + 6, R.doubleIn - 6), angle);
+}

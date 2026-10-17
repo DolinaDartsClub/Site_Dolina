@@ -42,36 +42,42 @@ function profil({ moyenne, doubles }) {
   return { pT, pS, pSimple: borne(0.55 + m / 60, 0.55, 0.97), pD: doubles / 100 };
 }
 
-// Un lancer : renvoie { v, double }
+// Un lancer : renvoie { v, double, label } ; label : « T20 », « 20 », « D16 », « 25 », « Bull » ou « 0 » (hors cible)
+const S = (n) => ({ v: n, double: false, label: String(n) });
+const T = (n) => ({ v: 3 * n, double: false, label: `T${n}` });
+const D = (n) => ({ v: 2 * n, double: true, label: `D${n}` });
+const BULL = { v: 50, double: true, label: 'Bull' };
+const VINGT_CINQ = { v: 25, double: false, label: '25' };
+const RATE = { v: 0, double: false, label: '0' };
 function lancer(cible, p, rng) {
   const r = rng();
   if (cible === 'Bull') {
-    if (r < p.pD * 0.7) return { v: 50, double: true };
-    return rng() < 0.45 ? { v: 25, double: false } : { v: CIBLE[Math.floor(rng() * 20)], double: false };
+    if (r < p.pD * 0.7) return BULL;
+    return rng() < 0.45 ? VINGT_CINQ : S(CIBLE[Math.floor(rng() * 20)]);
   }
   if (cible === '25') {
-    if (r < 0.35 + p.pSimple / 3) return { v: 25, double: false };
-    return rng() < 0.12 ? { v: 50, double: true } : { v: CIBLE[Math.floor(rng() * 20)], double: false };
+    if (r < 0.35 + p.pSimple / 3) return VINGT_CINQ;
+    return rng() < 0.12 ? BULL : S(CIBLE[Math.floor(rng() * 20)]);
   }
   const n = Number(cible.replace(/^[TD]/, ''));
   if (cible.startsWith('T')) {
-    if (r < p.pT) return { v: 3 * n, double: false };
-    if (r < p.pT + p.pS) return { v: rng() < 0.75 ? n : voisin(n, rng), double: false };
-    return { v: 0, double: false };
+    if (r < p.pT) return T(n);
+    if (r < p.pT + p.pS) return S(rng() < 0.75 ? n : voisin(n, rng));
+    return RATE;
   }
   if (cible.startsWith('D')) {
-    if (r < p.pD) return { v: 2 * n, double: true };
+    if (r < p.pD) return D(n);
     const r2 = rng();
-    if (r2 < 0.45) return { v: n, double: false };
-    if (r2 < 0.55) return { v: voisin(n, rng), double: false };
-    return { v: 0, double: false };                 // hors de la cible
+    if (r2 < 0.45) return S(n);
+    if (r2 < 0.55) return S(voisin(n, rng));
+    return RATE;                                    // hors de la cible
   }
   // Simple
-  if (r < p.pSimple) return { v: n, double: false };
+  if (r < p.pSimple) return S(n);
   const r2 = rng();
-  if (r2 < 0.7) return { v: voisin(n, rng), double: false };
-  if (r2 < 0.85) return { v: 3 * n, double: false };
-  return { v: 0, double: false };
+  if (r2 < 0.7) return S(voisin(n, rng));
+  if (r2 < 0.85) return T(n);
+  return RATE;
 }
 
 // Où viser avec `d` fléchettes en main ?
@@ -112,7 +118,7 @@ export function voleeBot(reste, reglage, rng = Math.random, historique = { finis
       auDouble += 1;
     }
     const l = lancer(cible, p, rng);
-    detail.push(l.v === 0 ? '0' : (l.double ? (l.v === 50 ? 'Bull' : `D${l.v / 2}`) : String(l.v)));
+    detail.push(l.label);
     const apres = r - l.v;
     if (apres === 0 && l.double) {
       return { score: reste, nature: 'finish', flechettes: 4 - d, auDouble: Math.max(1, auDouble), detail };

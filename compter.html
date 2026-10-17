@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Compter une manche – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/compter.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom">Compter</span>
+      <span class="entete__sous">Dolina Darts Club</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page page--compter">
+  <section id="cp-reglages">
+    <h1 class="section__titre">Compter une manche</h1>
+    <p class="intro">Entraînez-vous à marquer comme au club : le dartbot lance, vous comptez la volée et le reste. En cas d'erreur, le site vous montre la façon la plus simple de calculer.</p>
+    <form class="formulaire-jeu" id="form-compter">
+      <fieldset class="bloc-choix">
+        <legend>Niveau</legend>
+        <div class="pastilles" data-groupe="niveau">
+          <button type="button" class="pastille-choix" data-valeur="debutant" aria-pressed="true">Débutant<small>volées affichées</small></button>
+          <button type="button" class="pastille-choix" data-valeur="confirme">Confirmé<small>cible seulement</small></button>
+          <button type="button" class="pastille-choix" data-valeur="expert">Expert<small>chrono 15 s</small></button>
+        </div>
+      </fieldset>
+      <fieldset class="bloc-choix">
+        <legend>Départ</legend>
+        <div class="pastilles pastilles--2" data-groupe="depart">
+          <button type="button" class="pastille-choix" data-valeur="301">301</button>
+          <button type="button" class="pastille-choix" data-valeur="501" aria-pressed="true">501</button>
+        </div>
+      </fieldset>
+      <div class="cp-records" id="cp-records"></div>
+      <button type="submit" class="bouton bouton--plein bouton--large">Commencer la manche</button>
+    </form>
+  </section>
+
+  <section id="cp-jeu" hidden>
+    <div class="cp-barre">
+      <span class="cp-info"><small>Volée</small><b id="cp-volee">1</b></span>
+      <span class="cp-info"><small>Points</small><b id="cp-points">0</b></span>
+      <span class="cp-info"><small>Série</small><b id="cp-serie">0</b></span>
+      <span class="cp-info cp-info--chrono" id="cp-chrono-bloc" hidden><small>Chrono</small><b id="cp-chrono">15</b></span>
+    </div>
+    <div class="cp-reste-avant">Reste avant la volée : <b id="cp-avant">501</b></div>
+    <div class="cp-cible" id="cp-cible"></div>
+    <p class="cp-fleches" id="cp-fleches" hidden></p>
+    <form class="cp-saisie" id="form-reponse" novalidate>
+      <label class="champ cp-champ">Score de la volée<input type="number" inputmode="numeric" name="score" min="0" max="180" autocomplete="off"></label>
+      <label class="champ cp-champ">Reste<input type="number" inputmode="numeric" name="reste" min="0" max="501" autocomplete="off"></label>
+      <button type="button" class="bouton cp-bust" id="cp-bust" aria-pressed="false">Bust !</button>
+      <button type="submit" class="bouton bouton--plein bouton--large">Valider</button>
+    </form>
+    <section class="cp-correction" id="cp-correction" hidden aria-live="polite"></section>
+  </section>
+
+  <section id="cp-fin" class="carte-info cp-fin" hidden aria-live="polite"></section>
+</main>
+
+</body>
+</html>
