@@ -157,6 +157,7 @@ function verifier(tempsEcoule) {
       <h3>${parfait ? 'Le calcul' : 'Le calcul le plus simple'}</h3>
       ${c.lignes.map((l) => `<p>${esc(l)}</p>`).join('')}
       ${c.conseil ? `<p class="cp-conseil">${esc(c.conseil)}</p>` : ''}
+      ${c.pourquoi ? `<p class="cp-pourquoi">${esc(c.pourquoi)}</p>` : ''}
     </div>
     <button type="button" class="bouton bouton--plein bouton--large" id="cp-suivant">${c.finish ? 'Voir mon bilan' : 'Volée suivante'}</button>`;
   $('cp-suivant').focus({ preventScroll: true });

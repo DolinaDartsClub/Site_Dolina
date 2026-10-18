@@ -4,7 +4,7 @@
 //  Aucune dépendance au navigateur : testé par outils/test-compter.mjs.
 // =====================================================================
 
-import { suggestionFinish } from './x01.js?v=__VERSION__';
+import { finissable } from './x01.js?v=__VERSION__';
 
 export function valeurFleche(label) {
   if (label === 'Bull') return 50;
@@ -67,6 +67,53 @@ export function expliquerReste(reste, score) {
   return `${reste} − ${score} : ${reste} − ${dizaines} = ${reste - dizaines}, puis − ${u} → ${r}`;
 }
 
+// ---------- Chemin de finish conseillé ----------
+// On vise d'abord les doubles qui « se coupent » bien en deux quand on touche le simple :
+// D20 → D10, D16 → D8 → D4, D12 → D6, D18 (→ D9)
+export const DOUBLES_CONSEILLES = [20, 16, 10, 8, 12, 18, 6, 4];
+const SUITE_DOUBLE = {
+  20: 'si la fléchette tombe dans le simple 20, il reste 20 : on enchaîne sur D10',
+  16: 'si elle tombe dans le simple 16, il reste D8, puis D4 : le double qui se coupe le mieux',
+  10: 'si elle tombe dans le simple 10, il reste D5',
+  8: 'si elle tombe dans le simple 8, il reste D4, puis D2',
+  12: 'si elle tombe dans le simple 12, il reste D6, puis D3',
+  18: 'si elle tombe dans le simple 18, il reste D9',
+  6: 'si elle tombe dans le simple 6, il reste D3',
+  4: 'si elle tombe dans le simple 4, il reste D2, puis D1',
+};
+const FLECHES = (() => {
+  const l = [];
+  for (let n = 1; n <= 20; n++) l.push({ l: String(n), v: n, cout: 0 });
+  l.push({ l: '25', v: 25, cout: 1 });
+  for (let n = 1; n <= 20; n++) l.push({ l: `T${n}`, v: 3 * n, cout: 1 });
+  for (let n = 1; n <= 20; n++) l.push({ l: `D${n}`, v: 2 * n, cout: 2 });
+  l.push({ l: 'Bull', v: 50, cout: 2 });
+  return l;
+})();
+const FINALES = [...Array.from({ length: 20 }, (_, i) => ({ l: `D${i + 1}`, v: 2 * (i + 1), n: i + 1 })), { l: 'Bull', v: 50, n: 25 }];
+const rangDouble = (f) => { const i = DOUBLES_CONSEILLES.indexOf(f.n); return i >= 0 ? i : (f.n === 25 ? 30 : 10 + (20 - f.n)); };
+
+// Le chemin le plus court qui finit, de préférence, sur un double conseillé
+export function cheminConseille(reste) {
+  if (!finissable(reste)) return null;
+  let meilleur = null;
+  const garder = (chemin, finale) => {
+    const setup = chemin.slice(0, -1);
+    // D'abord finir sur un double conseillé (quitte à prendre une fléchette de plus), puis le moins de fléchettes
+    const cle = [DOUBLES_CONSEILLES.includes(finale.n) ? 0 : 1, chemin.length, rangDouble(finale), setup.reduce((s, x) => s + x.cout, 0), -(setup[0]?.v || 0)];
+    if (!meilleur || cle.some((v, i) => v !== meilleur.cle[i] && cle.slice(0, i).every((w, j) => w === meilleur.cle[j]) && v < meilleur.cle[i])) meilleur = { cle, chemin, finale };
+  };
+  for (const f of FINALES) {
+    if (f.v === reste) garder([f], f);
+    for (const a of FLECHES) {
+      if (a.v + f.v === reste) garder([a, f], f);
+      for (const b of FLECHES) if (a.v + b.v + f.v === reste) garder([a, b, f], f);
+    }
+  }
+  if (!meilleur) return null;
+  return { chemin: meilleur.chemin.map((x) => x.l), double: meilleur.finale.n, explication: SUITE_DOUBLE[meilleur.finale.n] || null };
+}
+
 // Correction complète d'une volée. labels : fléchettes ; reste : avant la volée
 export function corriger(labels, reste) {
   const { total, lignes } = expliquerVolee(labels);
@@ -83,8 +130,11 @@ export function corriger(labels, reste) {
     res.lignes.push(`${reste} − ${total} = 0, terminé sur ${dernier === 'Bull' ? 'le bull' : `le ${nomFleche(dernier).split(' =')[0]}`} : game shot !`);
   } else {
     res.lignes.push(`Reste : ${expliquerReste(reste, total)}`);
-    const chemin = suggestionFinish(apres);
-    if (chemin) res.conseil = `Il reste ${apres} : finish possible en ${chemin.length} fléchette${chemin.length > 1 ? 's' : ''} — ${chemin.join(' · ')}`;
+    const c = cheminConseille(apres);
+    if (c) {
+      res.conseil = `Il reste ${apres} : finish conseillé en ${c.chemin.length} fléchette${c.chemin.length > 1 ? 's' : ''} — ${c.chemin.join(' · ')}`;
+      if (c.explication) res.pourquoi = `Pourquoi finir sur ${c.double === 25 ? 'le bull' : `D${c.double}`} ? ${c.explication.charAt(0).toUpperCase()}${c.explication.slice(1)}.`;
+    }
   }
   return res;
 }
