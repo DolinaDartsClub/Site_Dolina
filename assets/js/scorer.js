@@ -261,18 +261,42 @@ function afficherFin() {
 function construirePave() {
   // Raccourcis sur les côtés du pavé : scores fréquents à gauche, gros scores à droite
   const raccourci = (n) => `<button type="button" class="touche touche--raccourci" data-score="${n}">${n}</button>`;
-  $('raccourcis-g').innerHTML = [0, 26, 41, 45, 60].map(raccourci).join('');
+  $('raccourcis-g').innerHTML = [26, 41, 45, 57, 60].map(raccourci).join('');
   $('raccourcis-d').innerHTML = [81, 85, 100, 140, 180].map(raccourci).join('');
   $('pave').innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((c) => `<button type="button" class="touche" data-chiffre="${c}">${c}</button>`).join('')
     + '<button type="button" class="touche touche--effacer" data-effacer>Effacer</button>'
     + '<button type="button" class="touche" data-chiffre="0">0</button>'
-    + '<button type="button" class="touche touche--valider" data-valider>Valider</button>';
+    + '<button type="button" class="touche touche--valider" data-valider title="Appui long (3 s) : le nombre saisi est le reste après la volée">Valider</button>';
+  erreurSaisie('');
+}
+
+// Message sous la saisie : une erreur, ou à défaut l'astuce de l'appui long
+function erreurSaisie(texte) {
+  const z = $('erreur');
+  z.classList.toggle('ecran-saisie__erreur--astuce', !texte);
+  z.textContent = texte || 'Sans saisie : 0 · Appui long sur Valider : saisir le reste';
+}
+
+// Valider : sans saisie, la volée vaut 0 ; si le nombre saisi est le reste (appui long), on en déduit le score
+function validerSaisie(estReste = false) {
+  if (!estReste) return valider(saisie === '' ? 0 : Number(saisie));
+  const reste = etat.reste[etat.auLancer];
+  const apres = Number(saisie);
+  if (saisie === '') return erreurSaisie('Tapez le reste, puis gardez le doigt sur Valider.');
+  const score = reste - apres;
+  if (apres === 1 || score < 0 || score > 180) {
+    saisie = ''; $('saisie').textContent = '0';
+    return erreurSaisie(`Il ne peut pas rester ${apres} : il restait ${reste}.`);
+  }
+  saisie = '';
+  $('saisie').textContent = '0';
+  valider(score);
 }
 
 function saisir(c) {
   if (saisie.length >= 3) return;
   saisie = saisie === '0' ? c : saisie + c;
-  $('erreur').textContent = '';
+  erreurSaisie('');
   $('saisie').textContent = saisie;
 }
 
@@ -280,17 +304,40 @@ document.querySelector('.scorer__saisie').addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b || !etat || etat.gagnant || game.status === 'abandoned' || tourDuBot()) return;
   if (b.dataset.chiffre) saisir(b.dataset.chiffre);
-  else if ('effacer' in b.dataset) { saisie = ''; $('saisie').textContent = '0'; $('erreur').textContent = ''; }
-  else if ('valider' in b.dataset) { if (saisie !== '') valider(Number(saisie)); }
+  else if ('effacer' in b.dataset) { saisie = ''; $('saisie').textContent = '0'; erreurSaisie(''); }
+  else if ('valider' in b.dataset) { if (appuiLongFait) { appuiLongFait = false; return; } validerSaisie(); }
   else if (b.dataset.score) valider(Number(b.dataset.score));
 });
+
+// Appui long (3 s) sur Valider : le nombre saisi est le reste après la volée
+const DUREE_APPUI = 3000;
+let minuterieAppui = null;
+let appuiLongFait = false;
+document.querySelector('.scorer__saisie').addEventListener('pointerdown', (e) => {
+  const b = e.target.closest('[data-valider]');
+  if (!b || !etat || etat.gagnant || tourDuBot() || saisie === '') return;
+  appuiLongFait = false;
+  b.classList.add('touche--appui');
+  clearTimeout(minuterieAppui);
+  minuterieAppui = setTimeout(() => {
+    appuiLongFait = true;
+    b.classList.remove('touche--appui');
+    if (navigator.vibrate) navigator.vibrate(40);
+    validerSaisie(true);
+  }, DUREE_APPUI);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => document.querySelector('.scorer__saisie').addEventListener(t, () => {
+  clearTimeout(minuterieAppui);
+  document.querySelector('.touche--appui')?.classList.remove('touche--appui');
+}));
+document.querySelector('.scorer__saisie').addEventListener('contextmenu', (e) => { if (e.target.closest('[data-valider]')) e.preventDefault(); });
 
 // Clavier (ordinateur) : chiffres, Entrée, Retour arrière
 document.addEventListener('keydown', (e) => {
   if (!etat || etat.gagnant || tourDuBot() || e.target.closest('input, textarea')) return;
   if (!document.querySelectorAll('.fenetre:not([hidden])').length) {
     if (/^[0-9]$/.test(e.key)) saisir(e.key);
-    else if (e.key === 'Enter' && saisie !== '') valider(Number(saisie));
+    else if (e.key === 'Enter') validerSaisie();
     else if (e.key === 'Backspace') { saisie = saisie.slice(0, -1); $('saisie').textContent = saisie || '0'; }
   }
 });
@@ -302,7 +349,7 @@ function valider(score) {
   const reste = etat.reste[side];
   const probleme = verifierVolee(score, reste);
   if (probleme) {
-    $('erreur').textContent = probleme;
+    erreurSaisie(probleme);
     saisie = '';
     $('saisie').textContent = '0';
     return;

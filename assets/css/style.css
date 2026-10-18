@@ -1989,3 +1989,9 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .clavier .raccourcis--droite .touche--raccourci { background: rgba(245,122,0,.16); }
 .clavier .touche--raccourci[data-score="180"] { background: rgba(245,122,0,.28); color: var(--blanc); }
 .scorer--tour-bot .clavier .raccourcis { opacity: .4; pointer-events: none; }
+
+/* Scorer : astuce sous la saisie, appui long sur Valider (remplissage sur 3 s) */
+.ecran-saisie__erreur--astuce { color: var(--gris); font-weight: 500; font-size: 12px; }
+.touche--valider { position: relative; overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.touche--valider::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,.35); transform-origin: left; transform: scaleX(0); pointer-events: none; }
+.touche--appui::after { transform: scaleX(1); transition: transform 3s linear; }
