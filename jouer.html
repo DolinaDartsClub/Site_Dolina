@@ -30,6 +30,11 @@
 <main class="page page--jouer">
   <div class="message" id="message" role="alert" hidden></div>
 
+  <section class="section match-en-cours" id="reprendre" hidden>
+    <h2 class="section__titre"><span class="point-direct" aria-hidden="true"></span><span id="titre-reprendre">Match en cours</span></h2>
+    <div class="liste-cartes" id="liste-reprendre"></div>
+  </section>
+
   <section class="jeux" id="hub" aria-labelledby="titre-jeux">
     <div class="jeux__tete">
       <h1 class="section__titre" id="titre-jeux">Jouer</h1>
@@ -49,11 +54,6 @@
       <div class="jeu-tuile jeu-tuile--bientot" aria-disabled="true"><span class="jeu-tuile__icone"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M8 3v18M3 8h18"/></svg></span><span class="jeu-tuile__texte"><strong>Défi du mois</strong><small>Un exercice commun et un classement entre membres</small></span><span class="jeu-tuile__badge">À venir</span></div>
       <div class="jeu-tuile jeu-tuile--bientot" aria-disabled="true"><span class="jeu-tuile__icone"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="jeu-tuile__texte"><strong>Match officiel CPARD</strong><small>La feuille de match des rencontres de championnat</small></span><span class="jeu-tuile__badge">À venir</span></div>
     </div>
-  </section>
-
-  <section class="section" id="reprendre" hidden>
-    <h2 class="section__titre">Parties à reprendre</h2>
-    <div class="liste-cartes" id="liste-reprendre"></div>
   </section>
 
   <div id="acces" hidden></div>

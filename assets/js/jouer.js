@@ -29,7 +29,8 @@ function afficherVue() {
   document.getElementById('hub').hidden = match;
   form.hidden = !match || !moi || moi.status !== 'active';
   zoneAcces.hidden = !match || (moi && moi.status === 'active');
-  document.getElementById('reprendre').hidden = match || !document.getElementById('liste-reprendre').children.length;
+  // Une partie en cours s'affiche tout en haut, sur le choix des jeux comme sur « Match X01 »
+  document.getElementById('reprendre').hidden = !document.getElementById('liste-reprendre').children.length;
   if (match) window.scrollTo({ top: 0 });
 }
 window.addEventListener('hashchange', afficherVue);
@@ -69,22 +70,27 @@ async function chargerReprises() {
 
   const bloc = document.getElementById('reprendre');
   bloc.hidden = !recentes.length;
-  document.getElementById('liste-reprendre').innerHTML = recentes.map((g) => {
+  document.getElementById('titre-reprendre').textContent = recentes.length > 1 ? 'Matchs en cours' : 'Match en cours';
+  document.getElementById('liste-reprendre').innerHTML = recentes.map((g, i) => {
     const noms = [...g.game_players].sort((a, b) => a.side - b.side).map((p) => p.display_name).join(' – ');
     const heure = new Date(g.created_at).toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
     return `
-      <article class="carte-info">
+      <article class="carte-info"${i >= 2 ? ' data-autre hidden' : ''}>
         <strong>${esc(noms)}</strong>
         <span class="match__format">${esc(formatPartie(g))} · commencée ${esc(heure)}</span>
         <div class="actions">
-          <a class="bouton bouton--petit bouton--plein" href="scorer.html?id=${g.id}">Reprendre</a>
+          <a class="bouton bouton--petit bouton--plein" href="scorer.html?id=${g.id}">Reprendre le match</a>
           <button type="button" class="bouton bouton--petit bouton--danger" data-abandon="${g.id}">Abandonner</button>
         </div>
       </article>`;
-  }).join('');
+  }).join('') + (recentes.length > 2
+    ? `<button type="button" class="bouton bouton--petit bouton--discret" data-voir-autres>Voir les ${recentes.length - 2} autres</button>` : '');
 }
 
 document.getElementById('liste-reprendre').addEventListener('click', async (e) => {
+  // Au-delà de 2 parties, les autres restent repliées pour garder le formulaire visible
+  const voir = e.target.closest('[data-voir-autres]');
+  if (voir) { document.querySelectorAll('#liste-reprendre [data-autre]').forEach((x) => { x.hidden = false; }); voir.remove(); return; }
   const b = e.target.closest('[data-abandon]');
   if (!b || !confirm('Abandonner cette partie ? Elle sera supprimée définitivement, avec tous ses scores.')) return;
   await supprimerPartie(b.dataset.abandon);
