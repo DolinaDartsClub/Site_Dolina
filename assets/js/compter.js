@@ -13,9 +13,10 @@ import { corriger } from './compter-calcul.js?v=__VERSION__';
 import { reglageVoix, annoncerVolee } from './voix.js?v=__VERSION__';
 
 const NIVEAUX = {
-  debutant: { nom: 'Débutant', moyenne: 42, doubles: 30, afficher: true, chrono: 0 },
-  confirme: { nom: 'Confirmé', moyenne: 62, doubles: 35, afficher: false, chrono: 0 },
-  expert: { nom: 'Expert', moyenne: 82, doubles: 45, afficher: false, chrono: 15 },
+  // variete : le bot vise aussi T19, T18, T17 et tombe dans les numéros voisins → des totaux moins évidents
+  debutant: { nom: 'Débutant', moyenne: 45, doubles: 30, variete: 0.7, afficher: true, chrono: 0 },
+  confirme: { nom: 'Confirmé', moyenne: 62, doubles: 35, variete: 0.9, afficher: false, chrono: 0 },
+  expert: { nom: 'Expert', moyenne: 78, doubles: 45, variete: 1, afficher: false, chrono: 15 },
 };
 const CLE = 'dolina-compter';
 const $ = (id) => document.getElementById(id);

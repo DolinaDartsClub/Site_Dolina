@@ -11,9 +11,11 @@ import { suggestionFinish, IMPOSSIBLES } from './x01.js?v=__VERSION__';
 
 // Ordre des numéros sur la cible (pour les voisins)
 const CIBLE = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
-const voisin = (n, rng) => {
+// Numéro voisin sur la cible ; un joueur moins régulier tombe parfois deux cases à côté
+const voisin = (n, rng, disp = 0) => {
   const i = CIBLE.indexOf(n);
-  return CIBLE[(i + (rng() < 0.5 ? 1 : CIBLE.length - 1)) % CIBLE.length];
+  const pas = rng() < 0.25 * disp ? 2 : 1;
+  return CIBLE[(i + (rng() < 0.5 ? pas : CIBLE.length - pas)) % CIBLE.length];
 };
 const borne = (x, a, b) => Math.min(b, Math.max(a, x));
 
@@ -33,13 +35,18 @@ export function lireReglageBot(nom) {
 
 // Probabilités d'un lancer vers un triple, calées sur la moyenne visée.
 // Le facteur compense les fléchettes « perdues » en fin de manche (placement, doubles).
-function profil({ moyenne, doubles }) {
-  const m = (moyenne * 1.09) / 3;            // points visés par fléchette
+// disp : dispersion (0 = très régulier, 1 = débutant) ; variete : envie de varier les cibles (T19, T18)
+function profil({ moyenne, doubles, variete = 0 }) {
+  const disp = borne((70 - moyenne) / 50 + variete * 0.3, 0, 1);
+  const m = (moyenne * (1.12 + 0.04 * variete + 0.14 * disp)) / 3;   // points visés par fléchette (compense les ratés)
   const S = 15.75;                            // simple moyen quand on rate le triple (20, ou 1 / 5)
   let pT; let pS; let p0;
   if (m >= S * 0.97) { p0 = 0.03; pT = borne((m - S * (1 - p0)) / (60 - S), 0, 0.95); pS = 1 - p0 - pT; }
   else { pT = 0; pS = borne(m / S, 0.05, 1); p0 = 1 - pS; }
-  return { pT, pS, pSimple: borne(0.55 + m / 60, 0.55, 0.97), pD: doubles / 100 };
+  return {
+    pT, pS, pSimple: borne(0.55 + m / 60, 0.55, 0.97), pD: doubles / 100, disp, variete,
+    pFolle: borne(0.012 + 0.05 * disp, 0, 0.08),   // fléchette « partie n'importe où » de temps en temps
+  };
 }
 
 // Un lancer : renvoie { v, double, label } ; label : « T20 », « 20 », « D16 », « 25 », « Bull » ou « 0 » (hors cible)
@@ -50,6 +57,8 @@ const BULL = { v: 50, double: true, label: 'Bull' };
 const VINGT_CINQ = { v: 25, double: false, label: '25' };
 const RATE = { v: 0, double: false, label: '0' };
 function lancer(cible, p, rng) {
+  // De temps en temps, une fléchette mal partie : hors cible ou dans un numéro au hasard
+  if (rng() < p.pFolle) return rng() < 0.4 ? RATE : S(CIBLE[Math.floor(rng() * 20)]);
   const r = rng();
   if (cible === 'Bull') {
     if (r < p.pD * 0.7) return BULL;
@@ -62,30 +71,30 @@ function lancer(cible, p, rng) {
   const n = Number(cible.replace(/^[TD]/, ''));
   if (cible.startsWith('T')) {
     if (r < p.pT) return T(n);
-    if (r < p.pT + p.pS) return S(rng() < 0.75 ? n : voisin(n, rng));
+    if (r < p.pT + p.pS) return S(rng() < 0.75 - 0.25 * p.disp ? n : voisin(n, rng, p.disp));
     return RATE;
   }
   if (cible.startsWith('D')) {
     if (r < p.pD) return D(n);
     const r2 = rng();
     if (r2 < 0.45) return S(n);
-    if (r2 < 0.55) return S(voisin(n, rng));
+    if (r2 < 0.55) return S(voisin(n, rng, p.disp));
     return RATE;                                    // hors de la cible
   }
   // Simple
   if (r < p.pSimple) return S(n);
   const r2 = rng();
-  if (r2 < 0.7) return S(voisin(n, rng));
+  if (r2 < 0.7) return S(voisin(n, rng, p.disp));
   if (r2 < 0.85) return T(n);
   return RATE;
 }
 
 // Où viser avec `d` fléchettes en main ?
 const LAISSES = [40, 32, 36, 24, 20, 16, 8, 12, 4, 28, 38, 34, 30, 26, 22, 18, 14, 10, 6, 2];
-function viser(reste, d) {
+function viser(reste, d, zone = 20) {
   const chemin = suggestionFinish(reste);
   if (chemin && chemin.length <= d) return chemin[0];
-  if (reste >= 62) return 'T20';
+  if (reste >= 62) return `T${zone}`;
   // Placement : laisser un double (de préférence D20, D16…)
   for (const l of LAISSES) {
     const s = reste - l;
@@ -110,8 +119,14 @@ export function voleeBot(reste, reglage, rng = Math.random, historique = { finis
   let r = reste;
   let auDouble = 0;
   const detail = [];
+  // Zone de marque de la volée : surtout le 20, mais aussi le 19 et le 18, comme un vrai joueur
+  const v = p.variete;
+  const t = rng();
+  let zone = t < 0.62 - 0.22 * v ? 20 : (t < 0.9 - 0.08 * v ? 19 : (v >= 0.8 && rng() < 0.4 ? 17 : 18));
   for (let d = 3; d >= 1; d--) {
-    const cible = viser(r, d);
+    // Le triple 20 est « bouché » après deux triples 20 : on change de cible
+    if (d === 1 && zone === 20 && detail[0] === 'T20' && detail[1] === 'T20' && rng() < 0.35) zone = 19;
+    const cible = viser(r, d, zone);
     const surFinish = (cible.startsWith('D') || cible === 'Bull') && suggestionFinish(r)?.length === 1;
     if (surFinish) {
       p.pD = chanceDouble(reglage.doubles / 100, historique.finishs || 0, (historique.auDouble || 0) + auDouble);
