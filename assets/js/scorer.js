@@ -7,6 +7,7 @@
 // =====================================================================
 
 import { voleeBot, lireReglageBot } from './dartbot.js?v=__VERSION__';
+import { valeurFleche } from './compter-calcul.js?v=__VERSION__';
 import { reglageVoix, definirVoix, voixDisponible, annoncerVolee, dire } from './voix.js?v=__VERSION__';
 import { supabase, esc, message, erreurFr, profilConnecte, formatPartie, supprimerPartie } from './app.js?v=__VERSION__';
 import {
@@ -24,7 +25,6 @@ let moi = null;
 let botSide = null;       // camp du dartbot (partie contre le bot)
 let reglageBot = null;
 let minuterieBot = null;
-const DELAI_BOT = 5000;
 let joueursCamps = {};    // side -> [noms des joueurs dans l'ordre de lancer]
 let visits = [];
 let etat = null;
@@ -457,18 +457,50 @@ function tourDuBot() {
 
 function planifierBot() {
   if (!tourDuBot() || enAttente || minuterieBot || game.status !== 'live') return;
-  // 5 secondes : le temps de lire le score et de laisser l'annonce vocale finir
-  minuterieBot = setTimeout(jouerBot, DELAI_BOT);
+  // Petite pause (plus longue avec l'annonce vocale), puis le bot lance fléchette par fléchette
+  $('erreur').textContent = '';
+  minuterieBot = setTimeout(jouerBot, reglageVoix().actif ? 2200 : 1200);
 }
 
+// Le bot lance ses 3 fléchettes une par une : chaque fléchette s'affiche en direct
+// (total de la volée qui monte, reste du bot qui baisse), puis la volée est enregistrée
+const PAUSE_FLECHETTE = 1200;
 function jouerBot() {
   minuterieBot = null;
   if (!tourDuBot() || enAttente || game.status !== 'live') return;
   const reste = etat.reste[botSide];
   const v = voleeBot(reste, reglageBot, Math.random, etat.stats[botSide]);
-  enAttente = { score: v.score, reste, nature: v.nature, detail: { flechettes: v.flechettes, auDouble: v.auDouble } };
-  enregistrer();
-  if (v.nature === 'normale') afficherEvenement(`Dartbot : ${v.detail.join(' · ')}`);
+  const carte = document.querySelectorAll('#camps .camp')[camps.indexOf(botSide)]?.querySelector('.camp__reste');
+  const nom = (l) => (l === '0' ? 'Raté' : l);
+  let cumul = 0;
+  let i = 0;
+  const suivante = () => {
+    minuterieBot = null;
+    if (!tourDuBot() || game.status !== 'live') return;   // volée annulée entre-temps
+    const l = v.detail[i];
+    cumul += valeurFleche(l);
+    i += 1;
+    $('saisie').textContent = cumul;
+    const z = $('erreur');
+    z.classList.add('ecran-saisie__erreur--bot');
+    z.innerHTML = v.detail.slice(0, i).map((x, k) => `<span class="fl-bot${k === i - 1 ? ' fl-bot--nouvelle' : ''}">${esc(nom(x))}</span>`).join('');
+    if (carte) {
+      const apres = reste - cumul;
+      carte.textContent = apres < 0 || apres === 1 || (apres === 0 && !(l.startsWith('D') || l === 'Bull')) ? 'Bust' : apres;
+      carte.classList.add('camp__reste--direct');
+    }
+    if (i < v.detail.length) { minuterieBot = setTimeout(suivante, PAUSE_FLECHETTE); return; }
+    minuterieBot = setTimeout(() => {
+      minuterieBot = null;
+      if (!tourDuBot() || game.status !== 'live') return;
+      z.classList.remove('ecran-saisie__erreur--bot');
+      enAttente = { score: v.score, reste, nature: v.nature, detail: { flechettes: v.flechettes, auDouble: v.auDouble } };
+      enregistrer();
+      erreurSaisie('');
+      if (v.nature === 'normale') afficherEvenement(`Dartbot : ${v.detail.map(nom).join(' · ')}`);
+    }, PAUSE_FLECHETTE);
+  };
+  suivante();
 }
 
 // ---------- Annuler la dernière volée ----------

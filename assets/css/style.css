@@ -1995,3 +1995,10 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .touche--valider { position: relative; overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .touche--valider::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,.35); transform-origin: left; transform: scaleX(0); pointer-events: none; }
 .touche--appui::after { transform: scaleX(1); transition: transform 3s linear; }
+
+/* Scorer : fléchettes du dartbot affichées une par une */
+.ecran-saisie__erreur--bot { display: flex; gap: 6px; color: var(--blanc); }
+.fl-bot { padding: 2px 9px; border-radius: 999px; background: rgba(245,122,0,.18); border: 1px solid rgba(245,122,0,.45); font-size: 13px; font-weight: 700; }
+.fl-bot--nouvelle { animation: fleche-arrive .35s ease-out; background: var(--orange); color: var(--noir); }
+.scorer--tour-bot .ecran-saisie__valeur { opacity: 1 !important; color: var(--orange); }
+.camp__reste--direct { color: var(--orange); transition: color .2s; }
