@@ -178,7 +178,7 @@ function afficher() {
   const visibles = parties.filter((g) => !filtres.type || contexte(g).type === filtres.type);
   liste.innerHTML = visibles.length
     ? visibles.map(carte).join('')
-    : `<p class="vide">${filtres.statut || filtres.jeu ? 'Aucune partie avec ces filtres.' : 'Vous n\'avez pas encore de partie. <a href="jouer.html">Lancer un match</a>'}</p>`;
+    : `<p class="vide">${filtres.statut || filtres.jeu ? 'Aucune partie avec ces filtres.' : 'Vous n\'avez pas encore de partie. <a href="jouer.html#match">Lancer un match</a>'}</p>`;
   btnPlus.hidden = fin;
 }
 

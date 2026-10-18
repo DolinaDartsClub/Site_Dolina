@@ -23,25 +23,32 @@ const typeMatch = brancherTypeMatch(document.getElementById('type-match'));
 
 // ---------- Accès ----------
 
+// La page Jouer affiche le choix des jeux ; « Match X01 » (#match) ouvre la création de match
+function afficherVue() {
+  const match = location.hash === '#match';
+  document.getElementById('hub').hidden = match;
+  form.hidden = !match || !moi || moi.status !== 'active';
+  zoneAcces.hidden = !match || (moi && moi.status === 'active');
+  document.getElementById('reprendre').hidden = match || !document.getElementById('liste-reprendre').children.length;
+  if (match) window.scrollTo({ top: 0 });
+}
+window.addEventListener('hashchange', afficherVue);
+
 async function init() {
   moi = await profilConnecte();
   if (!moi) {
-    zoneAcces.hidden = false;
-    zoneAcces.innerHTML = '<p class="vide">Connectez-vous pour lancer une partie. <a href="connexion.html">Se connecter</a></p>';
-    return;
-  }
-  if (moi.status !== 'active') {
-    zoneAcces.hidden = false;
+    zoneAcces.innerHTML = '<p class="vide">Connectez-vous pour lancer un match. <a href="connexion.html">Se connecter</a></p>';
+  } else if (moi.status !== 'active') {
     zoneAcces.innerHTML = '<p class="vide">Votre compte doit être validé par un admin du club avant de pouvoir jouer.</p>';
-    return;
   }
-  form.hidden = false;
+  afficherVue();
+  if (!moi || moi.status !== 'active') return;
   document.getElementById('lien-mes-parties').hidden = false;
-  document.getElementById('liens-tournoi').hidden = false;
   joueurs = [{ type: 'membre', id: moi.id, nom: nomAffiche(moi) }];
   afficherJoueurs();
   majFormat();
   await Promise.all([chargerMembres(), chargerReprises()]);
+  afficherVue();
 }
 
 // ---------- Parties à reprendre (24 h) ----------

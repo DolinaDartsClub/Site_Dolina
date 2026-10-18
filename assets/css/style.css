@@ -1956,3 +1956,27 @@ body { background: transparent; }
 .cp-stats b { font-family: var(--police-titre); font-size: 26px; color: var(--orange); }
 .cp-fin .actions { justify-content: center; }
 .cp-pourquoi { margin: 0; font-size: 13px; color: var(--gris-clair); font-style: italic; }
+
+/* ===================== Jouer : choix des jeux ===================== */
+.jeux { display: grid; gap: 12px; }
+.jeux__tete { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.jeux__tete .section__titre { margin: 0; }
+.jeux__tete .lien-mes-parties { margin: 0; }
+.jeux__groupe { margin: 10px 0 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--gris); }
+.jeux__grille { display: grid; gap: 10px; }
+@media (min-width: 700px) { .jeux__grille { grid-template-columns: 1fr 1fr; } }
+.jeu-tuile { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 16px; border: 1px solid var(--verre-bord, #2e2e2e); background: var(--verre, #1e1e1e); box-shadow: var(--verre-reflet, none); color: var(--blanc); text-decoration: none; transition: border-color .2s, transform .15s, box-shadow .2s; }
+a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+.jeu-tuile__icone { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; flex: none; background: rgba(245,122,0,.16); border: 1px solid rgba(245,122,0,.4); color: var(--orange); }
+.jeu-tuile__icone svg { width: 26px; height: 26px; }
+.jeu-tuile__texte { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.jeu-tuile__texte strong { font-family: var(--police-titre); font-size: 20px; text-transform: uppercase; letter-spacing: .02em; }
+.jeu-tuile__texte small { color: var(--gris-clair); font-size: 13px; line-height: 1.35; }
+.jeu-tuile__fleche { color: var(--orange); font-size: 20px; font-weight: 700; }
+.jeu-tuile--vedette { border-color: rgba(245,122,0,.55); background: linear-gradient(120deg, rgba(245,122,0,.28), var(--verre, #1e1e1e) 70%); }
+.jeu-tuile--vedette .jeu-tuile__icone { background: var(--orange); color: var(--noir); border-color: var(--orange); box-shadow: 0 6px 18px rgba(245,122,0,.35); }
+.jeu-tuile--bientot { opacity: .5; filter: grayscale(1); cursor: not-allowed; }
+.jeu-tuile--bientot .jeu-tuile__icone { background: #262626; border-color: #333; color: var(--gris); }
+.jeu-tuile__badge { position: absolute; top: 10px; right: 10px; padding: 3px 9px; border-radius: 999px; border: 1px dashed var(--gris); color: var(--gris-clair); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.retour-jeux { justify-self: start; color: var(--orange); font-weight: 700; font-size: 14px; text-decoration: none; }
+.jeu-tuile--bientot .jeu-tuile__texte strong { padding-right: 72px; }

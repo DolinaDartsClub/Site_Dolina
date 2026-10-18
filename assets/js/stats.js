@@ -89,7 +89,7 @@ function afficher(s) {
   document.title = `${autre ? `Stats de ${nom}` : 'Mes stats'} – Dolina Darts Club`;
 
   if (!s.parties) {
-    zone.innerHTML = `<p class="vide">Aucune partie comptée sur cette période.${autre ? '' : ' <a href="jouer.html">Lancer un match</a>'}</p>`;
+    zone.innerHTML = `<p class="vide">Aucune partie comptée sur cette période.${autre ? '' : ' <a href="jouer.html#match">Lancer un match</a>'}</p>`;
     return;
   }
   const moyenne = s.flechettes ? (s.points / s.flechettes) * 3 : null;
