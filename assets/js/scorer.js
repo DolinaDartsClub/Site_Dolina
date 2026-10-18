@@ -259,8 +259,10 @@ function afficherFin() {
 // ---------- Pavé numérique ----------
 
 function construirePave() {
-  $('raccourcis').innerHTML = [0, 26, 41, 45, 60, 81, 85, 100, 140, 180]
-    .map((n) => `<button type="button" class="touche touche--raccourci" data-score="${n}">${n}</button>`).join('');
+  // Raccourcis sur les côtés du pavé : scores fréquents à gauche, gros scores à droite
+  const raccourci = (n) => `<button type="button" class="touche touche--raccourci" data-score="${n}">${n}</button>`;
+  $('raccourcis-g').innerHTML = [0, 26, 41, 45, 60].map(raccourci).join('');
+  $('raccourcis-d').innerHTML = [81, 85, 100, 140, 180].map(raccourci).join('');
   $('pave').innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((c) => `<button type="button" class="touche" data-chiffre="${c}">${c}</button>`).join('')
     + '<button type="button" class="touche touche--effacer" data-effacer>Effacer</button>'
     + '<button type="button" class="touche" data-chiffre="0">0</button>'

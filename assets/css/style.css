@@ -1980,3 +1980,12 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .jeu-tuile__badge { position: absolute; top: 10px; right: 10px; padding: 3px 9px; border-radius: 999px; border: 1px dashed var(--gris); color: var(--gris-clair); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
 .retour-jeux { justify-self: start; color: var(--orange); font-weight: 700; font-size: 14px; text-decoration: none; }
 .jeu-tuile--bientot .jeu-tuile__texte strong { padding-right: 72px; }
+
+/* Scorer : raccourcis de score sur les côtés du pavé numérique */
+.clavier { display: grid; grid-template-columns: minmax(52px, .62fr) minmax(0, 3fr) minmax(52px, .62fr); gap: 6px; flex-grow: 1; min-height: 0; }
+.clavier .raccourcis { display: grid; grid-template-columns: 1fr; grid-auto-rows: 1fr; gap: 6px; }
+.clavier .pave { grid-template-rows: repeat(4, 1fr); }
+.clavier .touche--raccourci { min-height: 0; font-size: 18px; padding: 0; background: rgba(245,122,0,.10); border-color: rgba(245,122,0,.35); color: var(--orange-clair); }
+.clavier .raccourcis--droite .touche--raccourci { background: rgba(245,122,0,.16); }
+.clavier .touche--raccourci[data-score="180"] { background: rgba(245,122,0,.28); color: var(--blanc); }
+.scorer--tour-bot .clavier .raccourcis { opacity: .4; pointer-events: none; }
