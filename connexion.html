@@ -30,7 +30,7 @@
   <form class="formulaire" id="formulaire" novalidate>
     <h1>Connexion</h1>
     <div class="message" id="message" role="alert" hidden></div>
-    <label class="champ">Email<input name="email" type="email" autocomplete="email" required></label>
+    <label class="champ">Email ou identifiant<input name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
     <label class="champ">Mot de passe<input name="password" type="password" autocomplete="current-password" required></label>
     <button class="bouton bouton--plein bouton--large" type="submit" id="envoyer">Se connecter</button>
     <a href="mot-de-passe-oublie.html" id="oubli">Mot de passe oublié ?</a>

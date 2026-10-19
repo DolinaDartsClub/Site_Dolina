@@ -6,7 +6,8 @@
 //  Les droits sont vérifiés par la base : un non-admin ne peut rien modifier.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur, avatar, DOSSIER_PHOTOS, formatPartie } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur, avatar, DOSSIER_PHOTOS, formatPartie, identifiantDe } from './app.js?v=__VERSION__';
+import { initSansEmail } from './admin-sans-email.js?v=__VERSION__';
 import { initActus } from './admin-actus.js?v=__VERSION__';
 import { initDemandes } from './admin-demandes.js?v=__VERSION__';
 import { initMatchs } from './admin-matchs.js?v=__VERSION__';
@@ -51,7 +52,7 @@ async function charger() {
   const [rp, rt] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, first_name, last_name, nickname, use_nickname, photo_path, status, role, created_at, profile_private(email, phone), team_members!team_members_profile_id_fkey(team_id, status)')
+      .select('*, profile_private(email, phone), team_members!team_members_profile_id_fkey(team_id, status)')
       .order('last_name'),
     supabase.from('teams').select('id, name, captain_id, sort_order').order('sort_order'),
   ]);
@@ -152,12 +153,15 @@ function afficherMembres() {
     ? '<span class="valide-ok" role="img" aria-label="Compte validé" title="Compte validé"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg></span>'
     : `<span class="statut ${STATUT_CLASSE[p.status]}">${STATUT[p.status]}</span>`}
             ${p.role === 'admin' ? '<span class="statut statut--ok">Admin</span>' : ''}
+            ${p.compte === 'gere' ? '<span class="statut statut--sans-email">Profil géré</span>' : (identifiantDe(c.email) ? '<span class="statut statut--sans-email">Sans email</span>' : '')}
           </span>
           <span class="match__format">${esc(resumeEquipes || 'Sans équipe')}</span>
         </summary>
         <div class="fiche__contenu">
           <dl class="infos">
-            <dt>Email</dt><dd>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : '—'}</dd>
+            ${identifiantDe(c.email)
+    ? `<dt>${p.compte === 'gere' ? 'Accès' : 'Identifiant'}</dt><dd>${p.compte === 'gere' ? 'Profil géré, sans connexion' : `<strong>${esc(identifiantDe(c.email))}</strong> · sans email`}</dd>`
+    : `<dt>Email</dt><dd>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : '—'}</dd>`}
             <dt>Téléphone</dt><dd>${c.phone ? `<a href="tel:${esc(c.phone)}">${esc(c.phone)}</a>` : '—'}</dd>
             <dt>Inscrit le</dt><dd>${esc(dateFr(p.created_at))}</dd>
           </dl>
@@ -166,6 +170,11 @@ function afficherMembres() {
             <label class="champ">Nom<input type="text" maxlength="60" value="${esc(p.last_name)}" data-champ="last_name" data-id="${p.id}"></label>
           </div>
           <button type="button" class="bouton bouton--petit" data-action="renommer" data-id="${p.id}" style="align-self:flex-start">Enregistrer le nom</button>
+          ${identifiantDe(c.email) ? `<div class="se-fiche">
+            <button type="button" class="bouton bouton--petit" data-nouveau-code="${p.id}" data-nom="${esc(nomComplet(p))}">${p.compte === 'gere' ? 'Donner un accès (identifiant + code)' : 'Nouveau code'}</button>
+            <span class="match__format">${p.compte === 'gere' ? `Identifiant prévu : ${esc(identifiantDe(c.email))}` : 'Code oublié ? Choisissez-en un nouveau et donnez-le au membre.'}</span>
+            <div data-codes></div>
+          </div>` : ''}
           ${p.photo_path ? `<div class="photo-profil__ligne">${avatar(p, 'avatar--grand')}
             <button type="button" class="bouton bouton--petit bouton--danger" data-action="retirer-photo" data-id="${p.id}">Retirer la photo</button></div>` : ''}
           <div class="deux-colonnes">
@@ -492,6 +501,7 @@ async function init() {
   if (vues[depart]) document.querySelector(`[data-onglet="${depart}"]`).click();
   await Promise.all([charger(), initActus(moi), initDemandes(document.getElementById('message')), initSauvegarde(document.getElementById('message')), initTournois(document.getElementById('message')), initMatchs(document.getElementById('message'))]);
   initExports(document.getElementById('message'));
+  initSansEmail({ zoneMessage: document.getElementById('message'), equipes, recharger: charger });
 }
 
 init();

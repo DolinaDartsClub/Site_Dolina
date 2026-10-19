@@ -3,7 +3,7 @@
 //  (« Mot de passe oublié ? » ouvre la page mot-de-passe-oublie.html)
 // =====================================================================
 
-import { supabase, erreurFr, message } from './app.js?v=__VERSION__';
+import { supabase, erreurFr, message, emailConnexion } from './app.js?v=__VERSION__';
 
 const form = document.getElementById('formulaire');
 const zoneMessage = document.getElementById('message');
@@ -18,15 +18,16 @@ supabase.auth.getSession().then(({ data: { session } }) => {
 // Si un email est déjà saisi, on le transmet à la page « Mot de passe oublié »
 lienOubli.addEventListener('click', () => {
   const email = form.email.value.trim();
-  if (email) lienOubli.href = `mot-de-passe-oublie.html?email=${encodeURIComponent(email)}`;
+  if (email && email.includes('@')) lienOubli.href = `mot-de-passe-oublie.html?email=${encodeURIComponent(email)}`;
 });
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const email = form.email.value.trim().toLowerCase();
+  const saisie = form.email.value.trim();
+  const email = emailConnexion(saisie);   // « jean.dupont » → compte sans email
   const password = form.password.value;
-  if (!email || !password) {
-    message(zoneMessage, 'Indiquez votre email et votre mot de passe.');
+  if (!saisie || !password) {
+    message(zoneMessage, 'Indiquez votre email (ou votre identifiant) et votre mot de passe.');
     return;
   }
 
@@ -37,7 +38,9 @@ form.addEventListener('submit', async (e) => {
   bouton.textContent = 'Se connecter';
 
   if (error) {
-    message(zoneMessage, erreurFr(error));
+    message(zoneMessage, !saisie.includes('@') && /invalid login|credentials/i.test(error.message || '')
+      ? 'Identifiant ou code incorrect. Code oublié : demandez-en un nouveau à un admin du club.'
+      : erreurFr(error));
     return;
   }
   location.replace('compte.html');

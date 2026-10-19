@@ -39,6 +39,10 @@ function blocContact(email) {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = form.email.value.trim().toLowerCase();
+  if (email && !email.includes('@')) {
+    message(zoneMessage, 'Compte avec identifiant : un admin du club vous donne un nouveau code depuis l\'espace admin.');
+    return;
+  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     message(zoneMessage, 'Indiquez une adresse email valide.');
     return;

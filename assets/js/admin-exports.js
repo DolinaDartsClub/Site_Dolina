@@ -4,7 +4,7 @@
 //  Membres, classement et stats, toutes les parties, calendrier des équipes.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, formatPartie, nomAffiche } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, formatPartie, nomAffiche, emailVisible } from './app.js?v=__VERSION__';
 import { debutSaison, nomSaison } from './profil-commun.js?v=__VERSION__';
 
 let zone;
@@ -55,7 +55,7 @@ async function exporterMembres() {
   return telecharger('membres', ['Prénom', 'Nom', 'Surnom', 'Email', 'Téléphone', 'Équipes', 'Capitaine de', 'Statut', 'Rôle', 'Main', 'Fléchettes', 'Poids (g)', 'Inscrit le'],
     profils.map((p) => {
       const prive = (Array.isArray(p.profile_private) ? p.profile_private[0] : p.profile_private) || {};
-      return [p.first_name, p.last_name, p.nickname || '', prive.email || '', prive.phone || '',
+      return [p.first_name, p.last_name, p.nickname || '', emailVisible(prive.email), prive.phone || '',
         (p.team_members || []).filter((m) => m.status === 'accepted').map((m) => m.teams?.name).filter(Boolean).join(', '),
         capitaines.get(p.id) || '', STATUTS[p.status] || p.status, p.role === 'admin' ? 'Admin' : 'Membre',
         p.hand || '', p.dart_brand || '', p.dart_weight ? nombre(p.dart_weight, 1) : '', jour(p.created_at)];

@@ -88,6 +88,21 @@ export function nomCompletHtml(p) {
   return `${esc(p.first_name)}${surnom} ${esc(p.last_name)}`;
 }
 
+// ---------- Comptes sans email (script 035) ----------
+// Supabase exige un email : ces comptes ont une adresse interne qui ne reçoit rien
+export const DOMAINE_IDENTIFIANT = 'identifiant.dolina.invalid';
+export function identifiantDe(email) {
+  const m = String(email || '').toLowerCase().match(/^(.+)@identifiant\.dolina\.invalid$/);
+  return m ? m[1] : null;
+}
+// Saisie de connexion : un email, ou un identifiant (sans @)
+export function emailConnexion(saisie) {
+  const s = String(saisie || '').trim().toLowerCase();
+  return s.includes('@') ? s : `${s}@${DOMAINE_IDENTIFIANT}`;
+}
+// Email à afficher : rien pour une adresse interne
+export const emailVisible = (email) => (identifiantDe(email) ? '' : (email || ''));
+
 // Adresse publique d'une image d'actualité stockée dans Supabase
 export function urlImage(chemin) {
   return chemin ? `${SUPABASE_URL}/storage/v1/object/public/public-images/${chemin}` : '';

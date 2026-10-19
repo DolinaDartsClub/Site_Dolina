@@ -2047,3 +2047,22 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .eq-score-saisie--exterieur > span { order: 2; }
 .eq-score-saisie--exterieur > label:last-of-type { order: 1; }
 .eq-affiche .nom-dolina { color: inherit; font-weight: inherit; font-size: inherit; }
+
+/* Espace admin : membres sans email (script 035) */
+.se-bloc { display: grid; gap: 12px; margin-bottom: 14px; }
+.se-bloc > .bouton { justify-self: start; }
+.se-form h2 { margin: 0; }
+.se-choix { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--bord); border-radius: 10px; cursor: pointer; margin-top: 8px; }
+.se-choix:has(input:checked) { border-color: var(--orange); background: rgba(245,122,0,.08); }
+.se-choix input { margin-top: 4px; accent-color: var(--orange); }
+.se-choix span { display: grid; gap: 2px; }
+.se-choix small, .se-codes small { color: var(--gris); }
+.se-equipes { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 6px; }
+.se-equipes input { accent-color: var(--orange); }
+.se-codes { display: grid; gap: 6px; padding: 14px 16px; border: 1px solid var(--orange); border-radius: 12px; background: rgba(245,122,0,.08); }
+.se-codes dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 4px 0; }
+.se-codes dt { color: var(--gris-clair); }
+.se-codes dd { margin: 0; font-family: var(--police-titre); font-size: 24px; font-weight: 700; color: var(--orange); letter-spacing: .04em; user-select: all; }
+.se-fiche { display: grid; gap: 6px; justify-items: start; }
+.se-fiche [data-codes]:empty { display: none; }
+.statut--sans-email { background: rgba(120,160,255,.14); color: #a9c1ff; }

@@ -4,7 +4,7 @@
 //  profil modifiable, photo de profil
 // =====================================================================
 
-import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche, avatar, dateFr, DOSSIER_PHOTOS, oublierLienPhoto } from './app.js?v=__VERSION__';
+import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche, avatar, dateFr, DOSSIER_PHOTOS, oublierLienPhoto, identifiantDe } from './app.js?v=__VERSION__';
 import { debutSaison, nomSaison, resumeSaison } from './profil-commun.js?v=__VERSION__';
 
 const zone = document.getElementById('contenu');
@@ -177,7 +177,7 @@ async function afficher() {
             ${estAdmin ? '<span class="t-role">Administrateur</span>' : ''}
           </div>
           ${materiel ? `<p class="pr-sous">${esc(materiel)}</p>` : ''}
-          <p class="pr-sous">${esc(profil.email)}${p.created_at ? ` · ${estActif ? 'membre depuis' : 'inscrit'} le ${esc(dateFr(p.created_at))}` : ''}</p>
+          <p class="pr-sous">${identifiantDe(profil.email) ? `Identifiant : <strong>${esc(identifiantDe(profil.email))}</strong>` : esc(profil.email)}${p.created_at ? ` · ${estActif ? 'membre depuis' : 'inscrit'} le ${esc(dateFr(p.created_at))}` : ''}</p>
         </div>
       </div>
       ${explication}
