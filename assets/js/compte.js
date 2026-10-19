@@ -4,7 +4,7 @@
 //  profil modifiable, photo de profil
 // =====================================================================
 
-import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche, avatar, dateFr, DOSSIER_PHOTOS, oublierLienPhoto, identifiantDe, estCapitaineDe } from './app.js?v=__VERSION__';
+import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche, avatar, dateFr, DOSSIER_PHOTOS, oublierLienPhoto, identifiantDe, estCapitaineDe, rencontresEnRetard } from './app.js?v=__VERSION__';
 import { debutSaison, nomSaison, resumeSaison } from './profil-commun.js?v=__VERSION__';
 
 const zone = document.getElementById('contenu');
@@ -93,23 +93,17 @@ async function afficher() {
       <a class="bouton bouton--plein" href="admin.html">Espace admin</a>
     </div>` : '';
 
-  // ----- Bloc capitaine -----
+  // ----- Bloc capitaine (et vice-capitaine) : même bandeau que l'admin -----
+  const role = monEquipe?.captain_id === profil.id ? 'Capitaine' : 'Vice-capitaine';
+  const aScorer = monEquipe ? (await rencontresEnRetard(monEquipe.id).catch(() => [])).length : 0;
+  const aFaire = [
+    demandes.length ? `<strong>${demandes.length} demande${demandes.length > 1 ? 's' : ''}</strong> pour rejoindre l'équipe` : '',
+    aScorer ? `<strong>${aScorer} rencontre${aScorer > 1 ? 's' : ''}</strong> à scorer` : '',
+  ].filter(Boolean).join(' · ');
   const blocCapitaine = monEquipe ? `
-    <div class="carte-info" id="capitaine">
-      <div class="cap-bloc-tete"><h2>Capitaine · ${esc(monEquipe.name)}</h2><a class="lien-equipe" href="capitaine.html">Espace capitaine →</a></div>
-      ${demandes.length ? demandes.map((d) => {
-        const p = d.profiles || {};
-        const valide = p.status === 'active';
-        return `
-          <div class="ligne-equipe">
-            <span class="ligne-equipe__nom">${nomCompletHtml(p)}</span>
-            ${valide ? '<span class="statut statut--attente">Veut intégrer l\'équipe</span>' : '<span class="statut statut--attente">Compte pas encore validé</span>'}
-            <span class="ligne-equipe__actions">
-              <button type="button" class="bouton bouton--petit bouton--plein" data-action="cap-accepter" data-id="${d.profile_id}" ${valide ? '' : 'disabled title="Un admin doit d\'abord valider ce compte"'}>Accepter</button>
-              <button type="button" class="bouton bouton--petit bouton--danger" data-action="cap-refuser" data-id="${d.profile_id}">Refuser</button>
-            </span>
-          </div>`;
-      }).join('') : '<p class="intro">Aucune demande en attente pour votre équipe.</p>'}
+    <div class="alerte" id="capitaine">
+      <span>${esc(role)} · ${esc(monEquipe.name)}<br><small>${aFaire || 'Rien en attente pour votre équipe'}</small></span>
+      <a class="bouton bouton--plein" href="capitaine.html">Espace capitaine</a>
     </div>` : '';
 
   // ----- Mon équipe : seulement les équipes demandées ou rejointes -----
@@ -189,11 +183,11 @@ async function afficher() {
       </div>` : ''}
     </section>
     ${blocAdmin}
+    ${blocCapitaine}
     ${estActif ? `<section class="section s-section cp-saison" aria-labelledby="t-saison">
       <div class="cp-saison__titre"><h2 class="section__titre" id="t-saison">Ma ${nomSaison().toLowerCase()}</h2><a href="stats.html">Toutes mes stats →</a></div>
       ${resume}
     </section>` : ''}
-    ${blocCapitaine}
     <div class="carte-info">
       <h2>${mesEquipes.length > 1 ? 'Mes équipes' : 'Mon équipe'}</h2>
       ${!mesEquipes.length ? '<p class="intro" style="margin:0">Vous n\'êtes dans aucune équipe : vous avez accès à tout le site, sauf aux espaces équipe.</p>'
