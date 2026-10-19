@@ -1,10 +1,18 @@
 // Vérifie le dartbot : volées valides, moyenne proche du réglage, doubles respectés.
 // Lancer : node outils/test-dartbot.mjs
-import { voleeBot, lireReglageBot, nomCampBot } from '../assets/js/dartbot.js';
+import { voleeBot, lireReglageBot, nomCampBot, viser } from '../assets/js/dartbot.js';
 import { verifierVolee, natureVolee } from '../assets/js/x01.js';
 
 let ok = 0; let ko = 0;
 const verifier = (cond, txt) => { if (cond) ok++; else { ko++; console.log('ÉCHEC', txt); } };
+
+// Le bot vise les doubles conseillés (D20, D16, D10, D8, D12, D18, D6, D4) à la descente
+verifier(viser(32, 3) === 'D16', `32 : vise D16 (obtenu ${viser(32, 3)})`);
+verifier(viser(50, 3) === '18', `50 : prépare 18 pour D16 (obtenu ${viser(50, 3)})`);
+verifier(viser(16, 1) === 'D8', `16 : vise D8 (obtenu ${viser(16, 1)})`);
+verifier(viser(45, 1) === '13', `45 avec 1 fléchette : se laisse 32 (obtenu ${viser(45, 1)})`);
+verifier(viser(110, 3) === 'T20', `110 : T20 pour T20 18 D16 (obtenu ${viser(110, 3)})`);
+verifier(viser(7, 2) === '1' || viser(7, 2) === '3', `7 : prépare un double (obtenu ${viser(7, 2)})`);
 
 // Générateur pseudo-aléatoire reproductible
 function graine(s) { return () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; }; }

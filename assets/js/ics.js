@@ -65,7 +65,11 @@ function vevent(e) {
   lignes.push(`SUMMARY:${texte(e.titre)}`);
   if (e.lieu) lignes.push(`LOCATION:${texte(e.lieu)}`);
   if (e.description) lignes.push(`DESCRIPTION:${texte(e.description)}`);
-  if (e.rappel !== false && e.heure) lignes.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${texte(e.titre)}`, 'TRIGGER:-PT3H', 'END:VALARM');
+  // Deux rappels : la veille (24 h avant) et 3 h avant le match
+  if (e.rappel !== false && e.heure) {
+    lignes.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:Demain : ${texte(e.titre)}`, 'TRIGGER:-PT24H', 'END:VALARM');
+    lignes.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${texte(e.titre)}`, 'TRIGGER:-PT3H', 'END:VALARM');
+  }
   lignes.push('END:VEVENT');
   return lignes;
 }

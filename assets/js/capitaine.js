@@ -7,6 +7,7 @@
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar, estCapitaineDe } from './app.js?v=__VERSION__';
 import { blocRencontresRetard } from './retard.js?v=__VERSION__';
 import { chargerClubs, logoAdversaire } from './logos.js?v=__VERSION__';
+import { afficherStatsEquipe } from './cap-stats.js?v=__VERSION__';
 
 const zone = document.getElementById('cap-zone');
 const zoneMsg = document.getElementById('message');
@@ -134,10 +135,13 @@ async function afficher() {
         <li class="cap-ligne">
           ${avatar(m.profiles, 'avatar--liste')}
           <a class="cap-ligne__texte" href="profil.html?id=${encodeURIComponent(m.profile_id)}"><strong>${esc(nomAffiche(m.profiles))}</strong>${m.profile_id === t.captain_id ? '<small class="eq-cap">Capitaine</small>' : (m.profile_id === t.vice_captain_id ? '<small class="eq-cap eq-cap--vice">Vice-capitaine</small>' : '')}</a>
-          ${admin && m.profile_id !== t.captain_id ? `<span class="cap-ligne__actions"><button type="button" class="bouton bouton--petit" data-retirer="${m.profile_id}" data-nom="${esc(nomAffiche(m.profiles))}">Retirer</button></span>` : ''}
+          ${(admin || estCapitaineDe(t, moi.id)) && m.profile_id !== t.captain_id && m.profile_id !== moi.id ? `<span class="cap-ligne__actions"><button type="button" class="bouton bouton--petit" data-retirer="${m.profile_id}" data-nom="${esc(nomAffiche(m.profiles))}">Retirer</button></span>` : ''}
         </li>`).join('')}</ul>` : '<p class="vide">Aucun joueur dans l\'équipe pour l\'instant.</p>'}
-    </section>`;
+    </section>
+
+    <section class="section cap-stats" id="cap-stats"></section>`;
   blocRencontresRetard(document.getElementById('cap-retard'), t.id);
+  afficherStatsEquipe(document.getElementById('cap-stats'), t, effectif);
 }
 
 // Vice-capitaine : mêmes accès que le capitaine ; choisi par un admin ou par le capitaine
@@ -185,8 +189,9 @@ zone.addEventListener('click', async (e) => {
   if (b.dataset.retirer) {
     const t = equipes.find((x) => x.id === active);
     if (!confirm(`Retirer ${b.dataset.nom} de l'équipe ${t.name} ?`)) return;
-    const { error } = await supabase.from('team_members').delete().eq('team_id', active).eq('profile_id', b.dataset.retirer);
+    const { data, error } = await supabase.from('team_members').delete().eq('team_id', active).eq('profile_id', b.dataset.retirer).select('profile_id');
     if (error) return message(zoneMsg, erreurFr(error));
+    if (!data?.length) return message(zoneMsg, 'Ce joueur n\'a pas pu être retiré (le script SQL 037 est-il lancé ?).');
     message(zoneMsg, `${b.dataset.nom} a été retiré de l'équipe.`, 'ok');
     afficher();
   }

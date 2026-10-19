@@ -2071,3 +2071,74 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .eq-cap--vice { background: rgba(245,122,0,.12); color: var(--orange); border-color: rgba(245,122,0,.35); }
 .cap-vice { margin: 10px 0 4px; }
 .cap-vice select { max-width: 340px; }
+
+/* Espace capitaine : statistiques de l'équipe (script 037) */
+.cs-bilan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cs-tuile { display: grid; justify-items: center; gap: 2px; padding: 10px 6px; border: 1px solid var(--verre-bord, var(--bord)); border-radius: 12px; background: var(--verre, var(--carte)); text-align: center; }
+.cs-tuile b { font-family: var(--police-titre); font-size: 22px; line-height: 1.1; }
+.cs-tuile b i, .cs-grille b i { font-style: normal; color: var(--gris); margin: 0 2px; }
+.cs-tuile span { font-size: 11px; color: var(--gris); text-transform: uppercase; letter-spacing: .04em; }
+.cs-tuile--v b { color: var(--orange); }
+.cs-forme { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 13px; color: var(--gris-clair); flex-wrap: wrap; }
+.cs-forme span { display: inline-flex; gap: 4px; }
+.cs-forme small { color: var(--gris); }
+.cs-forme__pt { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 11px; font-weight: 800; background: #2a2a2a; color: var(--gris-clair); }
+.cs-forme__pt--V { background: var(--orange); color: var(--noir); }
+.cs-forme__pt--N { background: #444; color: var(--blanc); }
+.cs-sous-titre { margin: 22px 0 8px; font-size: 16px; }
+.cs-filtres { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cs-resume { margin: 4px 0 10px; }
+.cs-joueurs { display: grid; gap: 10px; }
+@media (min-width: 760px) { .cs-joueurs { grid-template-columns: 1fr 1fr; } .cs-bilan { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.cs-joueur { display: grid; gap: 10px; padding: 12px 14px; border: 1px solid var(--verre-bord, var(--bord)); border-radius: 14px; background: var(--verre, var(--carte)); }
+.cs-joueur--vide { opacity: .75; }
+.cs-joueur__tete { display: flex; align-items: center; gap: 10px; color: var(--blanc); text-decoration: none; }
+.cs-joueur__tete > span:not(.cs-joueur__moy) { display: grid; min-width: 0; flex: 1; }
+.cs-joueur__tete strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-joueur__tete small { color: var(--gris); font-size: 12px; }
+.cs-joueur__moy { display: grid; justify-items: end; }
+.cs-joueur__moy b { font-family: var(--police-titre); font-size: 26px; color: var(--orange); line-height: 1; }
+.cs-joueur__moy small { color: var(--gris); font-size: 11px; }
+.cs-grille { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.cs-grille span { display: grid; justify-items: center; padding: 6px 2px; border-radius: 10px; background: rgba(255,255,255,.03); }
+.cs-grille b { font-size: 16px; }
+.cs-grille small { font-size: 11px; color: var(--gris); }
+.cs-forme--joueur { margin: 0; }
+.cs-note { margin-top: 10px; font-size: 12px; }
+.cs-joueur__tete .avatar { flex: none; }
+
+/* Scorer sur téléphone couché (petite hauteur) : tout tient à l'écran, sans défilement */
+@media (orientation: landscape) and (max-height: 520px) {
+  .scorer {
+    height: 100dvh; min-height: 0; overflow: hidden; padding: 8px 10px; gap: 8px;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 46%);
+    grid-template-areas: "barre barre" "camps saisie" "infos saisie";
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .scorer__barre .bouton { min-height: 34px; padding-block: 4px; }
+  .scorer__titre strong { font-size: 15px; }
+  .scorer__titre span { font-size: 12px; }
+  .scorer__camps { align-content: stretch; gap: 8px; min-height: 0; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+  .camp { padding: 6px 8px; gap: 2px; border-width: 2px; justify-content: space-between; min-height: 0; }
+  .camp__entete { min-height: 22px; }
+  .camp__nom { font-size: 15px; }
+  .scorer__camps .camp__badge { display: none; }   /* le cadre orange indique qui lance */
+  .camp__reste { font-size: clamp(36px, min(17vh, 8.5vw), 96px); }
+  .scorer--nombreux .camp__reste { font-size: clamp(32px, 12vh, 72px); }
+  .camp__stats b { font-size: 15px; }
+  .camp__stats small { font-size: 9px; }
+  .scorer__infos { min-height: 34px; padding: 4px 10px; }
+  .scorer__finish strong { font-size: 18px; }
+  .scorer__saisie { gap: 6px; min-height: 0; }
+  .bouton-annuler { min-height: 34px; font-size: 14px; gap: 8px; }
+  .bouton-annuler svg { width: 28px; height: 20px; }
+  .ecran-saisie { padding: 3px 10px; }
+  .ecran-saisie__qui { font-size: 12px; }
+  .ecran-saisie__valeur { font-size: 30px; }
+  .ecran-saisie__erreur { font-size: 11px; min-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .clavier { gap: 4px; min-height: 0; }
+  .clavier .raccourcis, .pave { gap: 4px; }
+  .touche { min-height: 0; font-size: 20px; border-radius: 8px; }
+  .clavier .touche--raccourci { font-size: 14px; }
+  .touche--effacer, .touche--valider { font-size: clamp(12px, 2.3vw, 14px); padding: 0 2px; }
+}

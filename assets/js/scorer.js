@@ -7,7 +7,7 @@
 // =====================================================================
 
 import { voleeBot, lireReglageBot } from './dartbot.js?v=__VERSION__';
-import { valeurFleche } from './compter-calcul.js?v=__VERSION__';
+import { valeurFleche, cheminConseille } from './compter-calcul.js?v=__VERSION__';
 import { reglageVoix, definirVoix, voixDisponible, annoncerVolee, dire } from './voix.js?v=__VERSION__';
 import { supabase, esc, message, erreurFr, profilConnecte, formatPartie, supprimerPartie } from './app.js?v=__VERSION__';
 import {
@@ -99,7 +99,8 @@ function rafraichir() {
   $('camps').innerHTML = camps.length > 2 ? campsNombreux() : camps.map((s) => carteCamp(s)).join('');
 
   const reste = etat.auLancer ? etat.reste[etat.auLancer] : null;
-  const sugg = reste !== null ? suggestionFinish(reste) : null;
+  // Guide de finish : de préférence sur D20, D16, D10, D8, D12, D18, D6 ou D4 (meilleure descente)
+  const sugg = reste !== null ? cheminConseille(reste)?.chemin : null;
   $('finish').textContent = sugg ? sugg.join(' · ') : (reste === null ? '—' : (reste > 170 ? 'Pas encore' : 'Pas de finish en une volée'));
   $('qui').textContent = etat.auLancer ? (tourDuBot() ? 'Le dartbot lance…' : `Volée de ${nomsCamps[etat.auLancer]}`) : 'Partie terminée';
   $('saisie').textContent = saisie || '0';

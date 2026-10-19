@@ -8,6 +8,7 @@
 // =====================================================================
 
 import { suggestionFinish, IMPOSSIBLES } from './x01.js?v=__VERSION__';
+import { cheminConseille, RESTES_A_LAISSER } from './compter-calcul.js?v=__VERSION__';
 
 // Ordre des numéros sur la cible (pour les voisins)
 const CIBLE = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
@@ -89,11 +90,12 @@ function lancer(cible, p, rng) {
   return RATE;
 }
 
-// Où viser avec `d` fléchettes en main ?
-const LAISSES = [40, 32, 36, 24, 20, 16, 8, 12, 4, 28, 38, 34, 30, 26, 22, 18, 14, 10, 6, 2];
-function viser(reste, d, zone = 20) {
-  const chemin = suggestionFinish(reste);
-  if (chemin && chemin.length <= d) return chemin[0];
+// Où viser avec `d` fléchettes en main ? Comme un joueur du club : finir de préférence
+// sur D20, D16, D10, D8, D12, D18, D6 ou D4, et sinon se laisser un de ces doubles
+const LAISSES = [...RESTES_A_LAISSER, 28, 38, 34, 30, 26, 22, 14, 2];
+export function viser(reste, d, zone = 20) {
+  const chemin = cheminConseille(reste, d)?.chemin;
+  if (chemin) return chemin[0];
   if (reste >= 62) return `T${zone}`;
   // Placement : laisser un double (de préférence D20, D16…)
   for (const l of LAISSES) {

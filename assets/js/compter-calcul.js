@@ -91,16 +91,34 @@ const FLECHES = (() => {
   return l;
 })();
 const FINALES = [...Array.from({ length: 20 }, (_, i) => ({ l: `D${i + 1}`, v: 2 * (i + 1), n: i + 1 })), { l: 'Bull', v: 50, n: 25 }];
-const rangDouble = (f) => { const i = DOUBLES_CONSEILLES.indexOf(f.n); return i >= 0 ? i : (f.n === 25 ? 30 : 10 + (20 - f.n)); };
+// Doubles conseillés, sans ordre entre eux : on départage par la « descente ».
+// Un double qui se coupe en deux sur un autre double conseillé quand on touche le simple
+// est plus sûr : D16 → D8 → D4 (2 crans), D20 → D10, D12 → D6, D8 → D4 (1 cran), les autres 0.
+export function descente(n) {
+  let k = 0;
+  while (n % 2 === 0 && DOUBLES_CONSEILLES.includes(n / 2)) { n /= 2; k += 1; }
+  return k;
+}
+const rangAutre = (f) => (DOUBLES_CONSEILLES.includes(f.n) ? 0 : (f.n === 25 ? 30 : 20 - f.n));
 
-// Le chemin le plus court qui finit, de préférence, sur un double conseillé
-export function cheminConseille(reste) {
+// Le chemin qui finit, de préférence, sur un double conseillé (au plus maxFlechettes fléchettes)
+const memoire = new Map();   // calcul coûteux : gardé une fois fait (le dartbot l'appelle à chaque fléchette)
+export function cheminConseille(reste, maxFlechettes = 3) {
+  const k = `${reste}/${maxFlechettes}`;
+  if (!memoire.has(k)) memoire.set(k, calculerChemin(reste, maxFlechettes));
+  const c = memoire.get(k);
+  return c ? { ...c, chemin: [...c.chemin] } : null;
+}
+function calculerChemin(reste, maxFlechettes) {
   if (!finissable(reste)) return null;
   let meilleur = null;
   const garder = (chemin, finale) => {
+    if (chemin.length > maxFlechettes) return;
     const setup = chemin.slice(0, -1);
-    // D'abord finir sur un double conseillé (quitte à prendre une fléchette de plus), puis le moins de fléchettes
-    const cle = [DOUBLES_CONSEILLES.includes(finale.n) ? 0 : 1, chemin.length, rangDouble(finale), setup.reduce((s, x) => s + x.cout, 0), -(setup[0]?.v || 0)];
+    // 1. finir sur un double conseillé (quitte à prendre une fléchette de plus) ; 2. le moins de fléchettes ;
+    // 3. la préparation la plus simple (simples avant triples) ; 4. la meilleure descente ; 5. le plus gros double
+    const cle = [DOUBLES_CONSEILLES.includes(finale.n) ? 0 : 1, chemin.length, setup.reduce((x, y) => x + y.cout, 0),
+      -descente(finale.n), rangAutre(finale), -(setup[0]?.v || 0)];
     if (!meilleur || cle.some((v, i) => v !== meilleur.cle[i] && cle.slice(0, i).every((w, j) => w === meilleur.cle[j]) && v < meilleur.cle[i])) meilleur = { cle, chemin, finale };
   };
   for (const f of FINALES) {
@@ -113,6 +131,9 @@ export function cheminConseille(reste) {
   if (!meilleur) return null;
   return { chemin: meilleur.chemin.map((x) => x.l), double: meilleur.finale.n, explication: SUITE_DOUBLE[meilleur.finale.n] || null };
 }
+
+// Placement sans finish possible : le reste à laisser (un double conseillé, la meilleure descente d'abord)
+export const RESTES_A_LAISSER = [...DOUBLES_CONSEILLES].sort((a, b) => descente(b) - descente(a) || b - a).map((n) => 2 * n);
 
 // Correction complète d'une volée. labels : fléchettes ; reste : avant la volée
 export function corriger(labels, reste) {
