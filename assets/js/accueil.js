@@ -3,6 +3,7 @@
 // =====================================================================
 
 import { supabase, esc, dateFr, formatPartie, etatPartie, urlImage, profilConnecte } from './app.js?v=__VERSION__';
+import { chargerClubs, logoAdversaire, logoDolina } from './logos.js?v=__VERSION__';
 
 const CATEGORIES = {
   annonce: 'Annonce de match',
@@ -107,6 +108,7 @@ async function chargerProchaines() {
       .is('score_nous', null).gte('date_match', depuis).order('date_match').order('heure_match', { nullsFirst: false }).limit(40),
     supabase.from('teams').select('id, name, sort_order').order('sort_order'),
     moi?.status === 'active' ? supabase.from('team_members').select('team_id').eq('profile_id', moi.id).eq('status', 'accepted') : Promise.resolve({ data: [] }),
+    chargerClubs(),
   ]);
   if (rr.error || rt.error) { bloc.hidden = true; return; }
   const mesEquipes = new Set((rm.data || []).map((m) => m.team_id));
@@ -136,6 +138,11 @@ async function chargerProchaines() {
           <span class="pr-equipe">${esc(t.name)}</span>
           <span class="eq-badge${r.domicile ? ' eq-badge--dom' : ''}">${r.domicile ? 'Domicile' : 'Extérieur'}</span>
         </div>
+        <a class="pr-duel" href="equipes.html#${encodeURIComponent(t.name)}" aria-hidden="true" tabindex="-1">
+          ${r.domicile ? logoDolina('logo-adv--l') : logoAdversaire(r.adversaire, 'logo-adv--l')}
+          <span class="pr-duel__vs">VS</span>
+          ${r.domicile ? logoAdversaire(r.adversaire, 'logo-adv--l') : logoDolina('logo-adv--l')}
+        </a>
         <a class="pr-affiche" href="equipes.html#${encodeURIComponent(t.name)}">${r.domicile ? 'reçoit' : 'chez'} <strong>${esc(r.adversaire)}</strong></a>
         <span class="pr-quand">${esc(quand)}${heures ? ` · ${esc(heures)}` : ''}${periode ? ' <small>date à confirmer</small>' : ''}${r.journee ? ` <small>${esc(r.journee)}</small>` : ''}</span>
         ${r.salles ? `<span class="pr-salle">${esc(r.salles.nom)} · <a href="${esc(carte(r.salles))}" target="_blank" rel="noopener">Itinéraire</a></span>` : ''}
@@ -152,6 +159,7 @@ async function chargerResultats() {
     supabase.from('rencontres').select('id, team_id, date_match, date_fin, journee, adversaire, domicile, score_nous, score_eux')
       .not('score_nous', 'is', null).order('date_match', { ascending: false }).limit(4),
     supabase.from('teams').select('id, name'),
+    chargerClubs(),
   ]);
   if (rr.error || rt.error || !rr.data?.length) { bloc.hidden = true; return; }
   const nom = (id) => rt.data.find((t) => t.id === id)?.name || 'Dolina';
@@ -162,6 +170,7 @@ async function chargerResultats() {
     return `
       <a class="res-ligne${code === 'V' ? ' res-ligne--gagne' : ''}" href="equipes.html#${encodeURIComponent(nom(r.team_id))}" aria-label="${esc(`${libelle} de ${nom(r.team_id)} contre ${r.adversaire}, ${r.score_nous} à ${r.score_eux}`)}">
         <span class="res-ligne__res" aria-hidden="true">${code}</span>
+        ${logoAdversaire(r.adversaire, 'logo-adv--s')}
         <span class="res-ligne__texte"><strong>${esc(nom(r.team_id))} – ${esc(r.adversaire)}</strong><small>${esc(r.date_fin && r.date_fin !== r.date_match ? (r.journee ? `Journée ${r.journee.replace(/^J/i, '')}` : 'Championnat') : fmt.format(new Date(`${r.date_match}T12:00:00`)))} · ${r.domicile ? 'à domicile' : 'à l\'extérieur'}</small></span>
         <span class="res-ligne__score">${r.score_nous} – ${r.score_eux}</span>
       </a>`;

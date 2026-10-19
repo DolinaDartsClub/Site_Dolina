@@ -8,6 +8,7 @@
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar } from './app.js?v=__VERSION__';
 import { debutSaison, nomSaison } from './profil-commun.js?v=__VERSION__';
 import { telechargerIcs } from './ics.js?v=__VERSION__';
+import { chargerClubs, clubDe, logoAdversaire, enregistrerLogo } from './logos.js?v=__VERSION__';
 
 const zone = document.getElementById('eq-contenu');
 const zoneMsg = document.getElementById('message');
@@ -72,6 +73,7 @@ async function charger() {
     supabase.from('teams').select('id, name, captain_id, sort_order').order('sort_order'),
     supabase.from('rencontres').select('*').order('date_match').order('heure_match', { nullsFirst: true }),
     supabase.from('salles').select('*').order('nom'),
+    chargerClubs(),
   ]);
   if (rt.error) { zone.innerHTML = `<p class="vide">${esc(erreurFr(rt.error))}</p>`; return; }
   if (rr.error || rs.error) {
@@ -144,7 +146,10 @@ function carteRencontre(r, gerer) {
           ${gerer && !res && finDe(r) < aujourdhui() ? `<span class="eq-badge eq-badge--retard">${aConfirmer(r) ? 'À mettre à jour' : 'À scorer'}</span>` : ''}
           ${meta ? `<span class="eq-meta">${esc(meta)}</span>` : ''}
         </div>
-        <h3 class="eq-affiche">${esc(equipe?.name || '')} <span>${r.domicile ? 'reçoit' : 'chez'}</span> ${esc(r.adversaire)}</h3>
+        <div class="eq-affiche-ligne">
+          ${logoAdversaire(r.adversaire, 'logo-adv--m')}
+          <h3 class="eq-affiche">${esc(equipe?.name || '')} <span>${r.domicile ? 'reçoit' : 'chez'}</span> ${esc(r.adversaire)}</h3>
+        </div>
         ${aConfirmer(r) ? `<p class="eq-periode">${esc(periode(r))}${res ? '' : ' · date à confirmer'}</p>` : ''}
         ${heures ? `<p class="eq-heures">${esc(heures)}</p>` : ''}
         ${s ? `<p class="eq-salle"><strong>${esc(s.nom)}</strong> · ${esc(s.adresse)} <a href="${esc(lienCarte(s))}" target="_blank" rel="noopener">Itinéraire</a></p>` : ''}
@@ -282,7 +287,37 @@ function majDomicile(valeur) {
   const t = equipes.find((x) => x.id === equipeActive);
   document.getElementById('lib-score-nous').textContent = t?.name || 'Nous';
   document.getElementById('lib-score-eux').textContent = form.elements.adversaire.value.trim() || 'Adversaire';
+  majLogo();
 }
+
+// Logo de l'adversaire : partagé par toutes les équipes du même club (CAL 1, CAL 3…)
+function majLogo() {
+  const nom = form.elements.adversaire.value.trim();
+  const club = nom ? clubDe(nom) : null;
+  document.getElementById('eq-logo-apercu').innerHTML = logoAdversaire(nom || '?', 'logo-adv--m');
+  document.getElementById('eq-logo-etat').textContent = !nom ? 'Tapez le nom de l\'adversaire'
+    : club?.logo ? `Logo du club « ${club.nom} »` : 'Pas encore de logo pour ce club';
+  document.getElementById('eq-logo-libelle').textContent = club?.logo ? 'Changer' : 'Ajouter';
+}
+
+form.elements.logo.addEventListener('change', async (e) => {
+  const fichier = e.target.files[0];
+  e.target.value = '';
+  if (!fichier) return;
+  const nom = form.elements.adversaire.value.trim();
+  if (!nom) { message(zoneMsg, 'Indiquez d\'abord le nom de l\'adversaire.'); form.elements.adversaire.focus(); return; }
+  const etat = document.getElementById('eq-logo-etat');
+  etat.textContent = 'Envoi du logo…';
+  try {
+    const club = await enregistrerLogo(nom, fichier);
+    majLogo();
+    etat.textContent = `Logo enregistré pour « ${club.nom} »`;
+    afficher();
+  } catch (err) {
+    majLogo();
+    message(zoneMsg, err?.message && !err.code ? err.message : erreurFr(err));
+  }
+});
 
 function ouvrirFormulaire(r = null) {
   enEdition = r;

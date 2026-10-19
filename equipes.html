@@ -48,6 +48,17 @@
       <button type="button" class="pastille-choix" data-domicile="0" aria-pressed="false">Extérieur</button>
     </div>
     <label class="champ">Adversaire<input type="text" name="adversaire" maxlength="80" required placeholder="Ex. Les Archers de Vanves"></label>
+    <div class="eq-logo-champ">
+      <span id="eq-logo-apercu"></span>
+      <div class="eq-logo-champ__texte">
+        <strong>Logo de l'adversaire</strong>
+        <small id="eq-logo-etat">Tapez le nom de l'adversaire</small>
+      </div>
+      <label class="bouton bouton--petit eq-logo-champ__bouton">
+        <span id="eq-logo-libelle">Ajouter</span>
+        <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" hidden>
+      </label>
+    </div>
     <div class="deux-colonnes">
       <label class="champ">Date <small>(ou début de la période)</small><input type="date" name="date_match" required></label>
       <label class="champ">Date limite <small>(si pas encore fixée)</small><input type="date" name="date_fin"></label>

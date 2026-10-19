@@ -6,6 +6,7 @@
 
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar } from './app.js?v=__VERSION__';
 import { blocRencontresRetard } from './retard.js?v=__VERSION__';
+import { chargerClubs, logoAdversaire } from './logos.js?v=__VERSION__';
 
 const zone = document.getElementById('cap-zone');
 const zoneMsg = document.getElementById('message');
@@ -69,6 +70,7 @@ async function afficher() {
       .is('score_nous', null).gte('date_match', new Date(Date.now() - 20 * 86400000).toLocaleDateString('fr-CA'))
       .order('date_match').limit(6),
     t.captain_id ? supabase.from('profiles').select('first_name, last_name, nickname, use_nickname').eq('id', t.captain_id).maybeSingle() : Promise.resolve({ data: null }),
+    chargerClubs(),
   ]);
   if (rm.error) { zone.innerHTML = `<p class="vide">${esc(erreurFr(rm.error))}</p>`; return; }
   const demandes = (rm.data || []).filter((m) => m.status === 'pending' && m.profiles);
@@ -86,7 +88,7 @@ async function afficher() {
     return `
       <div class="cap-prochaine">
         <span class="cap-prochaine__titre">Prochaine rencontre${prochaine.journee ? ` · ${esc(prochaine.journee)}` : ''}</span>
-        <strong>${esc(t.name)} ${prochaine.domicile ? 'reçoit' : 'chez'} ${esc(prochaine.adversaire)}</strong>
+        <strong class="cap-prochaine__affiche">${logoAdversaire(prochaine.adversaire, 'logo-adv--m')}<span>${esc(t.name)} ${prochaine.domicile ? 'reçoit' : 'chez'} ${esc(prochaine.adversaire)}</span></strong>
         <span>${esc(quand)}${prochaine.heure_rdv ? ` · RDV ${esc(hm(prochaine.heure_rdv))}` : ''}</span>
         ${prochaine.salles ? `<span class="match__format">${esc(prochaine.salles.nom)} · ${esc(prochaine.salles.adresse)}</span>` : ''}
         ${periode ? `<a class="bouton bouton--petit bouton--plein" href="equipes.html?modifier=${encodeURIComponent(prochaine.id)}#${encodeURIComponent(t.name)}">Fixer la date</a>` : ''}
