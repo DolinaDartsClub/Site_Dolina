@@ -257,6 +257,7 @@ async function afficher() {
 
   messageGeneral = document.getElementById('message-general');
   brancherChangementMotDePasse(profil.email);
+  signalerProvisoire(profil.id);
   brancherProfil();
   brancherPhoto(p);
   brancherDonnees(p);
@@ -506,7 +507,25 @@ function brancherChangementMotDePasse(email) {
 
     form.reset();
     message(zoneMsg, 'Mot de passe modifié. Utilisez-le dès votre prochaine connexion.', 'ok');
+    // Le mot de passe provisoire donné par un admin est remplacé : le bandeau disparaît
+    supabase.rpc('mot_de_passe_change').then(() => document.getElementById('bandeau-provisoire')?.remove(), () => {});
   });
+}
+
+// Mot de passe provisoire (script 038) : on invite le membre à choisir le sien
+async function signalerProvisoire(id) {
+  const { data, error } = await supabase.from('profiles').select('mdp_provisoire').eq('id', id).maybeSingle();
+  if (error || !data?.mdp_provisoire) return;
+  const bloc = document.getElementById('bloc-mdp');
+  bloc.open = true;
+  const champ = bloc.querySelector('[name=actuel]')?.closest('label');
+  if (champ?.firstChild) champ.firstChild.textContent = 'Mot de passe provisoire (reçu de l\'admin)';
+  const bandeau = document.createElement('div');
+  bandeau.id = 'bandeau-provisoire';
+  bandeau.className = 'bandeau-provisoire';
+  bandeau.innerHTML = '<strong>Vous utilisez un mot de passe provisoire.</strong><span>Choisissez votre propre mot de passe pour sécuriser votre compte.</span><a class="bouton bouton--petit bouton--plein" href="#bloc-mdp">Choisir mon mot de passe</a>';
+  const main = document.querySelector('main') || document.body;
+  main.insertBefore(bandeau, main.firstChild);
 }
 
 boutonDeco.addEventListener('click', async () => {

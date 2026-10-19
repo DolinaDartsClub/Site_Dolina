@@ -171,9 +171,9 @@ function afficherMembres() {
             <label class="champ">Nom<input type="text" maxlength="60" value="${esc(p.last_name)}" data-champ="last_name" data-id="${p.id}"></label>
           </div>
           <button type="button" class="bouton bouton--petit" data-action="renommer" data-id="${p.id}" style="align-self:flex-start">Enregistrer le nom</button>
-          ${identifiantDe(c.email) ? `<div class="se-fiche">
-            <button type="button" class="bouton bouton--petit" data-nouveau-code="${p.id}" data-nom="${esc(nomComplet(p))}">${p.compte === 'gere' ? 'Donner un accès (identifiant + code)' : 'Nouveau code'}</button>
-            <span class="match__format">${p.compte === 'gere' ? `Identifiant prévu : ${esc(identifiantDe(c.email))}` : 'Code oublié ? Choisissez-en un nouveau et donnez-le au membre.'}</span>
+          ${p.role !== 'admin' || estMoi ? `<div class="se-fiche">
+            <button type="button" class="bouton bouton--petit" data-nouveau-code="${p.id}" data-prenom="${esc(p.first_name)}" data-tel="${esc(c.phone || '')}" data-email="${esc(c.email || '')}">${p.compte === 'gere' ? 'Donner un accès (identifiant + mot de passe)' : 'Mot de passe provisoire'}</button>
+            <span class="match__format">${p.compte === 'gere' ? `Identifiant prévu : ${esc(identifiantDe(c.email))}` : 'Mot de passe oublié ? Le site en tire un provisoire, à envoyer au membre.'}${p.mdp_provisoire ? ' · <strong>Provisoire pas encore changé</strong>' : ''}</span>
             <div data-codes></div>
           </div>` : ''}
           ${p.photo_path ? `<div class="photo-profil__ligne">${avatar(p, 'avatar--grand')}

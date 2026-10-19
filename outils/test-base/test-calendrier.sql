@@ -13,7 +13,7 @@ select set_config('t.d2', (select id::text from teams where name = 'Dolina 2'), 
 -- Visiteur anonyme : lecture du calendrier et des salles
 create or replace function _anon(q text) returns text language plpgsql as $f$
 declare r text; begin execute 'set local role anon'; begin execute q into r; exception when others then r := 'ERREUR ' || sqlerrm; end; execute 'reset role'; return r; end $f$;
-select case when _anon('select count(*)::text from salles') = '1' then 'PASS  visiteur : salle du club visible' else 'FAIL  visiteur salles : ' || _anon('select count(*)::text from salles') end;
+select case when _anon('select count(*)::text from salles') = (select count(*)::text from salles) then 'PASS  visiteur : salles visibles' else 'FAIL  visiteur salles : ' || _anon('select count(*)::text from salles') end;
 
 select _t(:'W', 'capitaine : ajoute une rencontre à son équipe',
   format($q$insert into rencontres (team_id, date_match, heure_match, adversaire, domicile) values (%L, '2026-11-05', '20:30', 'Les Archers', false) returning adversaire$q$, current_setting('t.d1')));
@@ -29,7 +29,7 @@ select _t(:'W', 'score incomplet refusé',
   $q$update rencontres set score_eux = null where adversaire = 'Les Archers' returning id$q$, 'rencontres_score_complet');
 select _t(:'W', 'capitaine : ne modifie pas Dolina 2 (0 ligne)',
   $q$with u as (update rencontres set adversaire = 'Piraté' where adversaire = 'Les Flèches' returning 1) select count(*)::text from u$q$);
-select case when _anon('select count(*)::text from rencontres') = '2' then 'PASS  visiteur : 2 rencontres visibles' else 'FAIL  visiteur rencontres' end;
+select case when _anon('select count(*)::text from rencontres') = (select count(*)::text from rencontres) then 'PASS  visiteur : rencontres visibles' else 'FAIL  visiteur rencontres' end;
 select _t(:'W', 'capitaine : ajoute une salle', $q$insert into salles (nom, adresse) values ('Bar Le Bullseye', '1 rue X, Paris') returning nom$q$);
 select _t(:'F', 'simple membre : pas de salle', $q$insert into salles (nom, adresse) values ('Y', 'Z') returning nom$q$, 'row-level security');
 select _t(:'W', 'capitaine : ne supprime pas une salle (0 ligne)', $q$with d as (delete from salles where nom = 'Bar Le Bullseye' returning 1) select count(*)::text from d$q$);

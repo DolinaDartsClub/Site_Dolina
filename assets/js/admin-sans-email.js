@@ -114,19 +114,52 @@ export function initSansEmail({ zoneMessage, equipes, recharger }) {
     recharger();
   });
 
-  // « Nouveau code » sur la fiche d'un membre sans email
+  // « Mot de passe provisoire » sur la fiche d'un membre (avec ou sans email)
   document.addEventListener('click', async (e) => {
     const b = e.target.closest('button[data-nouveau-code]');
     if (!b) return;
-    const code = prompt(`Nouveau code pour ${b.dataset.nom} (6 caractères minimum) :`, codeAuHasard());
-    if (code === null) return;
-    if (code.trim().length < 6) return message(zoneMessage, 'Le code doit faire au moins 6 caractères.');
     b.disabled = true;
-    const { data, error } = await supabase.rpc('admin_changer_code', { p_user: b.dataset.nouveauCode, p_code: code.trim() });
+    await motDePasseProvisoire({
+      id: b.dataset.nouveauCode, prenom: b.dataset.prenom, telephone: b.dataset.tel, email: b.dataset.email,
+      zone: b.closest('.fiche__contenu')?.querySelector('[data-codes]'), zoneMessage,
+    });
     b.disabled = false;
-    if (error) return message(zoneMessage, error.code === 'P0001' ? error.message : erreurFr(error));
-    const zone = b.closest('.fiche__contenu')?.querySelector('[data-codes]');
-    if (zone) zone.innerHTML = carteCodes(b.dataset.nom, data.identifiant, code.trim());
-    message(zoneMessage, 'Nouveau code enregistré.', 'ok');
   });
+}
+
+// Mot de passe provisoire (script 038) : tiré au hasard, affiché à l'admin avec des
+// boutons pour l'envoyer au membre (WhatsApp, SMS, email) ; le membre le change ensuite
+export async function motDePasseProvisoire({ id, prenom, telephone, email, zone, zoneMessage }) {
+  const code = codeAuHasard();
+  let { data, error } = await supabase.rpc('admin_mot_de_passe_provisoire', { p_user: id, p_code: code });
+  if (error?.code === 'PGRST202') {
+    // Script 038 pas encore lancé : seuls les comptes sans email peuvent recevoir un code
+    ({ data, error } = await supabase.rpc('admin_changer_code', { p_user: id, p_code: code }));
+    if (data) data = { connexion: data.identifiant, identifiant: true };
+  }
+  if (error) { message(zoneMessage, error.code === 'P0001' ? error.message : erreurFr(error)); return null; }
+  const texte = `Bonjour ${prenom || ''}, voici ton mot de passe provisoire pour le site du Dolina Darts Club :\n`
+    + `${data.identifiant ? 'Identifiant' : 'Email'} : ${data.connexion}\nMot de passe : ${code}\n`
+    + `Connecte-toi sur https://dolinadartsclub.github.io/Site_Dolina/connexion.html puis choisis ton propre mot de passe dans « Mon compte ».`;
+  const tel = (telephone || '').replace(/[^\d+]/g, '');
+  const telInter = tel.startsWith('0') ? `33${tel.slice(1)}` : tel.replace(/^\+/, '');
+  const mail = email && !email.endsWith('.invalid') ? email : '';
+  if (zone) {
+    zone.innerHTML = `
+      <div class="se-codes" role="status">
+        <strong>Mot de passe provisoire pour ${esc(prenom || 'le membre')}</strong>
+        <dl>
+          <dt>${data.identifiant ? 'Identifiant' : 'Email'}</dt><dd class="se-codes__petit">${esc(data.connexion)}</dd>
+          <dt>Mot de passe</dt><dd>${esc(code)}</dd>
+        </dl>
+        <div class="actions">
+          ${telInter ? `<a class="bouton bouton--petit bouton--plein" href="https://wa.me/${esc(telInter)}?text=${encodeURIComponent(texte)}" target="_blank" rel="noopener">Envoyer par WhatsApp</a>
+          <a class="bouton bouton--petit" href="sms:${esc(tel)}?&body=${encodeURIComponent(texte)}">Par SMS</a>` : ''}
+          ${mail ? `<a class="bouton bouton--petit" href="mailto:${esc(mail)}?subject=${encodeURIComponent('Dolina Darts Club – mot de passe provisoire')}&body=${encodeURIComponent(texte)}">Par email</a>` : ''}
+        </div>
+        <small>Il ne sera plus affiché ensuite. À sa connexion, le membre sera invité à choisir son propre mot de passe.</small>
+      </div>`;
+  }
+  message(zoneMessage, 'Mot de passe provisoire enregistré.', 'ok');
+  return { code, ...data };
 }

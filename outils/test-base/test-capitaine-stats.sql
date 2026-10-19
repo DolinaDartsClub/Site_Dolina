@@ -3,6 +3,9 @@
 \pset format unaligned
 \set T '11111111-1111-1111-1111-111111111111'
 \set W '22222222-2222-2222-2222-222222222222'
+-- Will capitaine des Dolinos, pas de vice (le test se suffit à lui-même)
+update teams set captain_id = null, vice_captain_id = null;
+update teams set captain_id = :'W' where name = 'Dolinos';
 \set F '33333333-3333-3333-3333-333333333333'
 \set G '44444444-4444-4444-4444-444444444444'
 select id as dolinos from teams where name = 'Dolinos' \gset
@@ -24,3 +27,4 @@ select _t(:'G', 'membre : lit la forme de l''équipe', format($q$select json_arr
 select _t(null, 'visiteur : refusé', format($q$select forme_equipe(%L)::text$q$, :'dolinos'), 'Réservé');
 -- Nettoyage
 delete from team_members where profile_id in (:'G') and team_id = :'d1';
+update teams set captain_id = null, vice_captain_id = null;

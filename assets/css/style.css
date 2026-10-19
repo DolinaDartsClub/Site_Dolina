@@ -2142,3 +2142,8 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
   .clavier .touche--raccourci { font-size: 14px; }
   .touche--effacer, .touche--valider { font-size: clamp(12px, 2.3vw, 14px); padding: 0 2px; }
 }
+.se-codes__petit { font-size: 16px !important; overflow-wrap: anywhere; }
+/* Mot de passe provisoire (script 038) */
+.bandeau-provisoire { display: grid; gap: 6px; justify-items: start; padding: 14px 16px; margin-bottom: 14px; border: 1px solid var(--orange); border-radius: 12px; background: rgba(245,122,0,.1); }
+.bandeau-provisoire span { color: var(--gris-clair); font-size: 14px; }
+.mdp-demande { display: grid; gap: 12px; }

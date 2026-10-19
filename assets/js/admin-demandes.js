@@ -4,9 +4,10 @@
 //  viendront s'y ajouter)
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, avatar, nomAffiche } from './app.js?v=__VERSION__';
+import { motDePasseProvisoire } from './admin-sans-email.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, avatar, nomAffiche, DOMAINE_IDENTIFIANT } from './app.js?v=__VERSION__';
 
-const MOTIFS = { adhesion: 'Rejoindre le club', question: 'Question', autre: 'Autre' };
+const MOTIFS = { adhesion: 'Rejoindre le club', question: 'Question', autre: 'Autre', mot_de_passe: 'Mot de passe oublié' };
 const fmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 let zone;
@@ -105,6 +106,7 @@ function carte(d) {
       </div>
       ${actionPref ? `<div class="actions">${actionPref}</div>` : ''}
       ${d.message ? `<p class="demande__message">${esc(d.message)}</p>` : '<p class="match__format" style="margin:0">Pas de message.</p>'}
+      ${d.motif === 'mot_de_passe' ? `<div class="actions"><button type="button" class="bouton bouton--petit bouton--plein" data-mdp-demande="${d.id}">Donner un mot de passe provisoire</button></div><div data-mdp-resultat="${d.id}"></div>` : ''}
       <label class="champ">Note interne <small>(visible des admins)</small>
         <textarea data-note="${d.id}" rows="2" maxlength="1000" placeholder="Ex. rappelé le 16/10, vient jeudi">${esc(d.note || '')}</textarea>
       </label>
@@ -121,6 +123,7 @@ function carte(d) {
 async function clic(e) {
   const b = e.target.closest('button');
   if (!b) return;
+  if (b.dataset.mdpDemande) return motDePasseDemande(b);
   if (b.dataset.filtre) { filtre = b.dataset.filtre; afficher(); return; }
   if (b.dataset.equipeOk || b.dataset.equipeNon) {
     const team = b.dataset.equipeOk || b.dataset.equipeNon;
@@ -152,4 +155,21 @@ async function clic(e) {
   if (res.error) return message(zoneMsg, erreurFr(res.error));
   message(zoneMsg, b.dataset.enregistrerNote ? 'Note enregistrée.' : (b.dataset.supprimer ? 'Demande supprimée.' : 'Demande mise à jour.'), 'ok');
   await charger();
+}
+
+// Demande « Mot de passe oublié » : retrouver le compte, lui donner un mot de passe provisoire
+async function motDePasseDemande(b) {
+  const d = (demandes || []).find((x) => x.id === b.dataset.mdpDemande);
+  if (!d) return;
+  const compte = (d.message.match(/Compte\s*:\s*(\S+)/i)?.[1] || d.email || '').toLowerCase();
+  const mail = compte.includes('@') ? compte : `${compte}@${DOMAINE_IDENTIFIANT}`;
+  const { data: p } = await supabase.from('profile_private').select('id').ilike('email', mail).maybeSingle();
+  const zone = document.querySelector(`[data-mdp-resultat="${d.id}"]`);
+  if (!p) {
+    zone.innerHTML = `<p class="message">Aucun compte trouvé pour « ${esc(compte)} ». Cherchez le membre dans Membres et utilisez « Mot de passe provisoire » sur sa fiche.</p>`;
+    return;
+  }
+  b.disabled = true;
+  await motDePasseProvisoire({ id: p.id, prenom: d.first_name, telephone: d.phone, email: d.email, zone, zoneMessage: zoneMsg });
+  b.disabled = false;
 }

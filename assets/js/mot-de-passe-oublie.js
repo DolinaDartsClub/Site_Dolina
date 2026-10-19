@@ -36,24 +36,77 @@ function blocContact(email) {
     </div>`;
 }
 
+// Demande à un admin (script 038) : arrive dans Espace admin › Demandes
+function afficherDemande(compte, identifiant) {
+  form.hidden = true;
+  const zone = document.getElementById('resultat');
+  document.getElementById('resultat-texte').hidden = true;
+  document.getElementById('resultat-contact').innerHTML = `
+    <form class="mdp-demande" id="form-demande" novalidate>
+      <p class="intro">Un admin du club vous envoie un <strong>mot de passe provisoire</strong>, que vous changerez ensuite dans « Mon compte ». Comment préférez-vous le recevoir ?</p>
+      <div class="message" id="message-demande" role="alert" hidden></div>
+      <div class="deux-colonnes">
+        <label class="champ">Prénom<input name="prenom" maxlength="60" autocomplete="given-name" required></label>
+        <label class="champ">Nom<input name="nom" maxlength="60" autocomplete="family-name" required></label>
+      </div>
+      <fieldset class="bloc-choix"><legend>Recevoir le mot de passe par</legend>
+        <div class="pastilles" id="mdp-pref">
+          ${[['whatsapp', 'WhatsApp'], ['sms', 'SMS'], ['appel', 'Appel'], ...(identifiant ? [] : [['email', 'Email']])].map(([v, l], i) => `<button type="button" class="pastille-choix" data-pref="${v}" aria-pressed="${i === 0}">${l}</button>`).join('')}
+        </div>
+      </fieldset>
+      <label class="champ" id="mdp-champ-tel">Téléphone<input name="telephone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30"></label>
+      <button class="bouton bouton--plein bouton--large" type="submit">Prévenir un admin</button>
+    </form>`;
+  zone.hidden = false;
+  const f = document.getElementById('form-demande');
+  let pref = 'whatsapp';
+  f.querySelector('#mdp-pref').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pref]');
+    if (!b) return;
+    pref = b.dataset.pref;
+    f.querySelectorAll('[data-pref]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    f.querySelector('#mdp-champ-tel').hidden = pref === 'email';
+  });
+  f.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const zm = document.getElementById('message-demande');
+    const bt = f.querySelector('[type=submit]');
+    bt.disabled = true;
+    const { error } = await supabase.rpc('envoyer_demande_contact_v2', {
+      p_motif: 'mot_de_passe', p_prenom: f.prenom.value, p_nom: f.nom.value,
+      p_telephone: pref === 'email' ? '' : f.telephone.value, p_email: identifiant ? '' : compte,
+      p_message: `Compte : ${compte}`, p_pref: pref, p_moment: '',
+    });
+    bt.disabled = false;
+    if (error) {
+      // Script 038 pas encore lancé : on garde l'ancien moyen (écrire au club)
+      if (/objet de votre demande|contact_requests_motif/i.test(error.message || '')) {
+        document.getElementById('resultat-contact').innerHTML = blocContact(compte);
+        return;
+      }
+      message(zm, error.code === 'P0001' ? error.message : erreurFr(error));
+      return;
+    }
+    const t = document.getElementById('resultat-texte');
+    t.hidden = false;
+    t.textContent = `C'est envoyé. Un admin du club vous recontacte ${{ whatsapp: 'sur WhatsApp', sms: 'par SMS', appel: 'par téléphone', email: 'par email' }[pref]} avec un mot de passe provisoire.`;
+    document.getElementById('resultat-contact').innerHTML = '';
+  });
+}
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = form.email.value.trim().toLowerCase();
-  if (email && !email.includes('@')) {
-    message(zoneMessage, 'Compte avec identifiant : un admin du club vous donne un nouveau code depuis l\'espace admin.');
-    return;
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email) { message(zoneMessage, 'Indiquez l\'email ou l\'identifiant de votre compte.'); return; }
+  const identifiant = !email.includes('@');
+  if (!identifiant && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     message(zoneMessage, 'Indiquez une adresse email valide.');
     return;
   }
 
-  // L'envoi d'emails n'est pas encore en place : on oriente vers le club
-  if (!EMAILS_ACTIFS) {
-    afficherResultat(
-      'La réinitialisation par email n\'est pas encore disponible sur le site.',
-      blocContact(email)
-    );
+  // Pas d'envoi d'email (ou compte avec identifiant) : on prévient un admin, qui donne un mot de passe provisoire
+  if (!EMAILS_ACTIFS || identifiant) {
+    afficherDemande(email, identifiant);
     return;
   }
 
