@@ -2015,7 +2015,9 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .logo-adv { --t: 40px; width: var(--t); height: var(--t); flex: none; display: inline-grid; place-items: center; border-radius: 12px; overflow: hidden; background: rgba(255,255,255,.04); border: 1px solid var(--bord); }
 .logo-adv img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .logo-adv--vide { color: var(--gris); font-weight: 800; font-size: calc(var(--t) * .3); letter-spacing: .02em; background: linear-gradient(145deg, #262626, #1a1a1a); }
-.logo-adv--dolina img { padding: 6%; }
+/* Logo du club (portrait) : entier dans la pastille, rien n'est coupé */
+.logo-adv--dolina { position: relative; }
+.logo-adv--dolina img { position: absolute; inset: 7%; width: 86%; height: 86%; object-fit: contain; }
 .logo-adv--s { --t: 34px; border-radius: 9px; }
 .logo-adv--m { --t: 48px; }
 .logo-adv--l { --t: 72px; border-radius: 16px; }
