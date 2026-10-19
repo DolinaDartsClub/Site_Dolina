@@ -172,7 +172,7 @@ async function chargerResultats() {
         <span class="res-ligne__res" aria-hidden="true">${code}</span>
         ${logoAdversaire(r.adversaire, 'logo-adv--s')}
         <span class="res-ligne__texte"><strong>${esc(nom(r.team_id))} – ${esc(r.adversaire)}</strong><small>${esc(r.date_fin && r.date_fin !== r.date_match ? (r.journee ? `Journée ${r.journee.replace(/^J/i, '')}` : 'Championnat') : fmt.format(new Date(`${r.date_match}T12:00:00`)))} · ${r.domicile ? 'à domicile' : 'à l\'extérieur'}</small></span>
-        <span class="res-ligne__score">${r.score_nous} – ${r.score_eux}</span>
+        <span class="res-ligne__score"><b class="res-nous">${r.score_nous}</b> – <b>${r.score_eux}</b></span>
       </a>`;
   }).join('') + '<a class="res-tout" href="equipes.html">Calendrier des équipes →</a>';
   bloc.hidden = false;

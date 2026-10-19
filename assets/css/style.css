@@ -1458,7 +1458,10 @@ span.adm-partie__case { cursor: default; }
 .res-ligne__texte strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .res-ligne__texte small { color: var(--gris); font-size: 12px; }
 .res-ligne__score { font-family: var(--police-titre); font-size: 22px; white-space: nowrap; }
-.res-ligne--gagne .res-ligne__score { color: var(--orange); }
+/* Score : Dolina en orange, l'adversaire en blanc ; une victoire est encadrée d'orange */
+.res-ligne__score b { font-weight: inherit; color: var(--blanc); }
+.res-ligne__score .res-nous { color: var(--orange); }
+.res-ligne--gagne { border-color: var(--orange); box-shadow: 0 0 0 1px rgba(245,122,0,.35), 0 0 18px rgba(245,122,0,.18); }
 .res-tout { justify-self: start; color: var(--orange); font-weight: 600; font-size: 14px; }
 .lien-equipe { display: inline-block; margin-left: 6px; color: var(--orange); font-size: 12px; font-weight: 700; white-space: nowrap; vertical-align: middle; }
 .eq-tete { margin-bottom: 18px; } .eq-score__chiffres, .res-ligne__score, .eq-bilan__case b, .eq-date__num { font-weight: 700; }
@@ -2032,3 +2035,5 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .eq-logo-champ__texte { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .eq-logo-champ__texte small { color: var(--gris); }
 .eq-logo-champ__bouton { cursor: pointer; }
+/* Derniers résultats : une victoire est encadrée d'orange (après l'effet verre) */
+.res-ligne.res-ligne--gagne { border-color: var(--orange); box-shadow: var(--verre-reflet), 0 0 16px rgba(245,122,0,.22); }
