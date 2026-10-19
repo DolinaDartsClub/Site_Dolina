@@ -1459,8 +1459,6 @@ span.adm-partie__case { cursor: default; }
 .res-ligne__texte small { color: var(--gris); font-size: 12px; }
 .res-ligne__score { font-family: var(--police-titre); font-size: 22px; white-space: nowrap; }
 /* Score : Dolina en orange, l'adversaire en blanc ; une victoire est encadrée d'orange */
-.res-ligne__score b { font-weight: inherit; color: var(--blanc); }
-.res-ligne__score .res-nous { color: var(--orange); }
 .res-ligne--gagne { border-color: var(--orange); box-shadow: 0 0 0 1px rgba(245,122,0,.35), 0 0 18px rgba(245,122,0,.18); }
 .res-tout { justify-self: start; color: var(--orange); font-weight: 600; font-size: 14px; }
 .lien-equipe { display: inline-block; margin-left: 6px; color: var(--orange); font-size: 12px; font-weight: 700; white-space: nowrap; vertical-align: middle; }
@@ -2037,3 +2035,15 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .eq-logo-champ__bouton { cursor: pointer; }
 /* Derniers résultats : une victoire est encadrée d'orange (après l'effet verre) */
 .res-ligne.res-ligne--gagne { border-color: var(--orange); box-shadow: var(--verre-reflet), 0 0 16px rgba(245,122,0,.22); }
+
+/* Rencontres, partout : score de Dolina en orange, de l'adversaire en blanc ; domicile à gauche */
+.score-dolina, .score-adv { font-weight: inherit; }
+.score-dolina { color: var(--orange); }
+.score-adv { color: var(--blanc); }
+.eq-rencontre--gagne .eq-score__chiffres, .res-ligne--gagne .res-ligne__score { color: inherit; }
+.eq-logos { display: flex; gap: 6px; flex: none; }
+.eq-affiche span:not(.nom-dolina) { margin: 0 2px; }
+.eq-score-saisie--exterieur > label:first-child { order: 3; }
+.eq-score-saisie--exterieur > span { order: 2; }
+.eq-score-saisie--exterieur > label:last-of-type { order: 1; }
+.eq-affiche .nom-dolina { color: inherit; font-weight: inherit; font-size: inherit; }

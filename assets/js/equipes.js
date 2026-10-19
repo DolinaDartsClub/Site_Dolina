@@ -8,7 +8,7 @@
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar } from './app.js?v=__VERSION__';
 import { debutSaison, nomSaison } from './profil-commun.js?v=__VERSION__';
 import { telechargerIcs } from './ics.js?v=__VERSION__';
-import { chargerClubs, clubDe, logoAdversaire, enregistrerLogo } from './logos.js?v=__VERSION__';
+import { chargerClubs, clubDe, logoAdversaire, logoDolina, enregistrerLogo, affiche, scoreOrdonne } from './logos.js?v=__VERSION__';
 
 const zone = document.getElementById('eq-contenu');
 const zoneMsg = document.getElementById('message');
@@ -147,8 +147,8 @@ function carteRencontre(r, gerer) {
           ${meta ? `<span class="eq-meta">${esc(meta)}</span>` : ''}
         </div>
         <div class="eq-affiche-ligne">
-          ${logoAdversaire(r.adversaire, 'logo-adv--m')}
-          <h3 class="eq-affiche">${esc(equipe?.name || '')} <span>${r.domicile ? 'reçoit' : 'chez'}</span> ${esc(r.adversaire)}</h3>
+          <span class="eq-logos">${r.domicile ? logoDolina('logo-adv--m') + logoAdversaire(r.adversaire, 'logo-adv--m') : logoAdversaire(r.adversaire, 'logo-adv--m') + logoDolina('logo-adv--m')}</span>
+          <h3 class="eq-affiche">${affiche(equipe?.name || 'Dolina', r, '<span>vs</span>')}</h3>
         </div>
         ${aConfirmer(r) ? `<p class="eq-periode">${esc(periode(r))}${res ? '' : ' · date à confirmer'}</p>` : ''}
         ${heures ? `<p class="eq-heures">${esc(heures)}</p>` : ''}
@@ -162,7 +162,7 @@ function carteRencontre(r, gerer) {
       </div>
       ${res ? `
       <div class="eq-score" aria-label="${esc(res.libelle)} ${r.score_nous} à ${r.score_eux}">
-        <span class="eq-score__chiffres">${r.score_nous}<i>–</i>${r.score_eux}</span>
+        <span class="eq-score__chiffres">${scoreOrdonne(r, '<i>–</i>')}</span>
         <span class="eq-score__res">${esc(res.libelle)}</span>
       </div>` : ''}
     </article>`;
@@ -287,6 +287,8 @@ function majDomicile(valeur) {
   const t = equipes.find((x) => x.id === equipeActive);
   document.getElementById('lib-score-nous').textContent = t?.name || 'Nous';
   document.getElementById('lib-score-eux').textContent = form.elements.adversaire.value.trim() || 'Adversaire';
+  // Saisie du score dans le même ordre : l'équipe qui reçoit à gauche
+  form.querySelector('.eq-score-saisie').classList.toggle('eq-score-saisie--exterieur', !domicile);
   majLogo();
 }
 

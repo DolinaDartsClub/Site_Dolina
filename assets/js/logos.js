@@ -95,3 +95,17 @@ export async function enregistrerLogo(adversaire, fichier) {
   clubs = clubs.filter((c) => c.id !== data.id).concat(data);
   return data;
 }
+
+// Ordre d'une rencontre partout sur le site : l'équipe qui reçoit à gauche,
+// celle qui se déplace à droite (quel que soit le résultat)
+export function affiche(nomDolina, r, sep = '–') {
+  const nous = `<span class="nom-dolina">${esc(nomDolina)}</span>`;
+  const eux = esc(r.adversaire);
+  return r.domicile ? `${nous} ${sep} ${eux}` : `${eux} ${sep} ${nous}`;
+}
+// Score : Dolina en orange, l'adversaire en blanc
+export function scoreOrdonne(r, sep = ' – ') {
+  const nous = `<b class="score-dolina">${r.score_nous}</b>`;
+  const eux = `<b class="score-adv">${r.score_eux}</b>`;
+  return r.domicile ? `${nous}${sep}${eux}` : `${eux}${sep}${nous}`;
+}

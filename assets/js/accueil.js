@@ -3,7 +3,7 @@
 // =====================================================================
 
 import { supabase, esc, dateFr, formatPartie, etatPartie, urlImage, profilConnecte } from './app.js?v=__VERSION__';
-import { chargerClubs, logoAdversaire, logoDolina } from './logos.js?v=__VERSION__';
+import { chargerClubs, logoAdversaire, logoDolina, affiche, scoreOrdonne } from './logos.js?v=__VERSION__';
 
 const CATEGORIES = {
   annonce: 'Annonce de match',
@@ -171,8 +171,8 @@ async function chargerResultats() {
       <a class="res-ligne${code === 'V' ? ' res-ligne--gagne' : ''}" href="equipes.html#${encodeURIComponent(nom(r.team_id))}" aria-label="${esc(`${libelle} de ${nom(r.team_id)} contre ${r.adversaire}, ${r.score_nous} à ${r.score_eux}`)}">
         <span class="res-ligne__res" aria-hidden="true">${code}</span>
         ${logoAdversaire(r.adversaire, 'logo-adv--s')}
-        <span class="res-ligne__texte"><strong>${esc(nom(r.team_id))} – ${esc(r.adversaire)}</strong><small>${esc(r.date_fin && r.date_fin !== r.date_match ? (r.journee ? `Journée ${r.journee.replace(/^J/i, '')}` : 'Championnat') : fmt.format(new Date(`${r.date_match}T12:00:00`)))} · ${r.domicile ? 'à domicile' : 'à l\'extérieur'}</small></span>
-        <span class="res-ligne__score"><b class="res-nous">${r.score_nous}</b> – <b>${r.score_eux}</b></span>
+        <span class="res-ligne__texte"><strong>${affiche(nom(r.team_id), r)}</strong><small>${esc(r.date_fin && r.date_fin !== r.date_match ? (r.journee ? `Journée ${r.journee.replace(/^J/i, '')}` : 'Championnat') : fmt.format(new Date(`${r.date_match}T12:00:00`)))} · ${r.domicile ? 'à domicile' : 'à l\'extérieur'}</small></span>
+        <span class="res-ligne__score">${scoreOrdonne(r)}</span>
       </a>`;
   }).join('') + '<a class="res-tout" href="equipes.html">Calendrier des équipes →</a>';
   bloc.hidden = false;
