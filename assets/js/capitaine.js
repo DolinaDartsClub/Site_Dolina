@@ -4,7 +4,7 @@
 //  Un capitaine voit son équipe ; un admin choisit n'importe quelle équipe.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar, estCapitaineDe } from './app.js?v=__VERSION__';
 import { blocRencontresRetard } from './retard.js?v=__VERSION__';
 import { chargerClubs, logoAdversaire } from './logos.js?v=__VERSION__';
 
@@ -27,9 +27,9 @@ async function init() {
     acces.innerHTML = `<p class="vide">Espace réservé aux capitaines et aux admins. ${moi ? '' : '<a href="connexion.html">Se connecter</a>'}</p>`;
     return;
   }
-  const { data } = await supabase.from('teams').select('id, name, captain_id, sort_order').order('sort_order');
+  const { data } = await supabase.from('teams').select('*').order('sort_order');
   const admin = moi.role === 'admin';
-  equipes = (data || []).filter((t) => admin || t.captain_id === moi.id);
+  equipes = (data || []).filter((t) => admin || estCapitaineDe(t, moi.id));
   if (!equipes.length) {
     acces.hidden = false;
     acces.innerHTML = '<p class="vide">Cet espace est réservé aux capitaines d\'équipe et aux admins.</p>';
@@ -37,11 +37,11 @@ async function init() {
   }
   document.getElementById('contenu').hidden = false;
   const demandee = new URLSearchParams(location.search).get('equipe');
-  active = (equipes.find((t) => t.id === demandee || t.name === demandee) || equipes.find((t) => t.captain_id === moi.id) || equipes[0]).id;
+  active = (equipes.find((t) => t.id === demandee || t.name === demandee) || equipes.find((t) => estCapitaineDe(t, moi.id)) || equipes[0]).id;
   // Choix de l'équipe (liste déroulante) dès qu'il y en a plusieurs
   if (equipes.length > 1) {
     choix.hidden = false;
-    choix.innerHTML = equipes.map((t) => `<button type="button" data-equipe="${t.id}" aria-pressed="${t.id === active}">${esc(t.name)}${t.captain_id === moi.id ? ' <small>mon équipe</small>' : ''}</button>`).join('');
+    choix.innerHTML = equipes.map((t) => `<button type="button" data-equipe="${t.id}" aria-pressed="${t.id === active}">${esc(t.name)}${estCapitaineDe(t, moi.id) ? ' <small>mon équipe</small>' : ''}</button>`).join('');
   }
   afficher();
 }
@@ -101,6 +101,7 @@ async function afficher() {
         <h2>${esc(t.name)}</h2>
         <span class="match__format">${rc.data ? `Capitaine : <strong>${esc(nomAffiche(rc.data))}</strong>` : `Pas de capitaine${admin ? ' · <a href="admin.html#equipes">le désigner</a>' : ''}`}</span>
       </div>
+      ${blocVice(t, effectif, admin)}
       ${blocProchaine}
       <div class="cap-raccourcis">
         <a class="cap-raccourci" href="${lienEquipe}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Calendrier et scores</span></a>
@@ -132,12 +133,43 @@ async function afficher() {
       ${effectif.length ? `<ul class="cap-liste">${effectif.map((m) => `
         <li class="cap-ligne">
           ${avatar(m.profiles, 'avatar--liste')}
-          <a class="cap-ligne__texte" href="profil.html?id=${encodeURIComponent(m.profile_id)}"><strong>${esc(nomAffiche(m.profiles))}</strong>${m.profile_id === t.captain_id ? '<small class="eq-cap">Capitaine</small>' : ''}</a>
+          <a class="cap-ligne__texte" href="profil.html?id=${encodeURIComponent(m.profile_id)}"><strong>${esc(nomAffiche(m.profiles))}</strong>${m.profile_id === t.captain_id ? '<small class="eq-cap">Capitaine</small>' : (m.profile_id === t.vice_captain_id ? '<small class="eq-cap eq-cap--vice">Vice-capitaine</small>' : '')}</a>
           ${admin && m.profile_id !== t.captain_id ? `<span class="cap-ligne__actions"><button type="button" class="bouton bouton--petit" data-retirer="${m.profile_id}" data-nom="${esc(nomAffiche(m.profiles))}">Retirer</button></span>` : ''}
         </li>`).join('')}</ul>` : '<p class="vide">Aucun joueur dans l\'équipe pour l\'instant.</p>'}
     </section>`;
   blocRencontresRetard(document.getElementById('cap-retard'), t.id);
 }
+
+// Vice-capitaine : mêmes accès que le capitaine ; choisi par un admin ou par le capitaine
+function blocVice(t, effectif, admin) {
+  if (!('vice_captain_id' in t)) return '';   // script 036 pas encore lancé
+  const vice = effectif.find((m) => m.profile_id === t.vice_captain_id);
+  const peutChoisir = admin || t.captain_id === moi.id;
+  if (!peutChoisir) {
+    return `<p class="match__format cap-vice">Vice-capitaine : <strong>${vice ? esc(nomAffiche(vice.profiles)) : 'aucun'}</strong></p>`;
+  }
+  const choixPossibles = effectif.filter((m) => m.profile_id !== t.captain_id && m.profiles?.status === 'active');
+  return `
+    <label class="champ cap-vice">Vice-capitaine <small>(mêmes accès que le capitaine)</small>
+      <select data-vice data-liste="jamais">
+        <option value="">Aucun</option>
+        ${choixPossibles.map((m) => `<option value="${m.profile_id}" ${m.profile_id === t.vice_captain_id ? 'selected' : ''}>${esc(nomAffiche(m.profiles))}</option>`).join('')}
+      </select>
+    </label>`;
+}
+
+zone.addEventListener('change', async (e) => {
+  const s = e.target.closest('select[data-vice]');
+  if (!s) return;
+  s.disabled = true;
+  const { error } = await supabase.rpc('definir_vice_capitaine', { p_team: active, p_profile: s.value || null });
+  s.disabled = false;
+  if (error) { message(zoneMsg, error.code === 'P0001' ? error.message : erreurFr(error)); return afficher(); }
+  const t = equipes.find((x) => x.id === active);
+  t.vice_captain_id = s.value || null;
+  message(zoneMsg, s.value ? `${s.selectedOptions[0].textContent} est vice-capitaine de ${t.name}.` : 'Plus de vice-capitaine pour cette équipe.', 'ok');
+  afficher();
+});
 
 zone.addEventListener('click', async (e) => {
   const b = e.target.closest('button');

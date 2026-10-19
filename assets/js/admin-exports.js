@@ -49,9 +49,9 @@ async function tout(requete) {
 async function exporterMembres() {
   const [profils, equipes] = await Promise.all([
     tout(() => supabase.from('profiles').select('id, first_name, last_name, nickname, use_nickname, status, role, hand, dart_brand, dart_weight, created_at, profile_private(email, phone), team_members!team_members_profile_id_fkey(status, teams(name))').order('last_name')),
-    supabase.from('teams').select('id, name, captain_id'),
+    supabase.from('teams').select('*'),
   ]);
-  const capitaines = new Map((equipes.data || []).map((t) => [t.captain_id, t.name]));
+  const capitaines = new Map((equipes.data || []).flatMap((t) => [[t.captain_id, t.name], [t.vice_captain_id, `${t.name} (vice)`]]));
   return telecharger('membres', ['Prénom', 'Nom', 'Surnom', 'Email', 'Téléphone', 'Équipes', 'Capitaine de', 'Statut', 'Rôle', 'Main', 'Fléchettes', 'Poids (g)', 'Inscrit le'],
     profils.map((p) => {
       const prive = (Array.isArray(p.profile_private) ? p.profile_private[0] : p.profile_private) || {};

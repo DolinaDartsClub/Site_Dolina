@@ -2066,3 +2066,8 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .se-fiche { display: grid; gap: 6px; justify-items: start; }
 .se-fiche [data-codes]:empty { display: none; }
 .statut--sans-email { background: rgba(120,160,255,.14); color: #a9c1ff; }
+
+/* Vice-capitaine (script 036) */
+.eq-cap--vice { background: rgba(245,122,0,.12); color: var(--orange); border-color: rgba(245,122,0,.35); }
+.cap-vice { margin: 10px 0 4px; }
+.cap-vice select { max-width: 340px; }

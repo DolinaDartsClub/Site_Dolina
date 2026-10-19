@@ -88,6 +88,9 @@ export function nomCompletHtml(p) {
   return `${esc(p.first_name)}${surnom} ${esc(p.last_name)}`;
 }
 
+// Capitaine ou vice-capitaine (script 036 : mêmes accès) de cette équipe
+export const estCapitaineDe = (t, uid) => !!uid && !!t && (t.captain_id === uid || t.vice_captain_id === uid);
+
 // ---------- Comptes sans email (script 035) ----------
 // Supabase exige un email : ces comptes ont une adresse interne qui ne reçoit rien
 export const DOMAINE_IDENTIFIANT = 'identifiant.dolina.invalid';
@@ -352,11 +355,11 @@ const iconeCompte = (k) => `<svg class="mc-icone" aria-hidden="true" viewBox="0 
 async function menuCompte(lien, uid) {
   const [rp, rt] = await Promise.all([
     supabase.from('profiles').select('role, status').eq('id', uid).maybeSingle(),
-    supabase.from('teams').select('id, name').eq('captain_id', uid).maybeSingle(),
+    supabase.from('teams').select('*').order('sort_order'),
   ]);
   const actif = rp.data?.status === 'active';
   const admin = actif && rp.data?.role === 'admin';
-  const equipe = actif ? rt.data : null;
+  const equipe = actif ? ((rt.data || []).find((t) => estCapitaineDe(t, uid)) || null) : null;
   if (!admin && !equipe) return;   // simple membre : le lien mène directement à Mon compte
 
   // Admin : nombre de choses à traiter (inscriptions, demandes d'équipe, messages)

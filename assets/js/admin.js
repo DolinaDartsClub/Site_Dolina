@@ -54,7 +54,7 @@ async function charger() {
       .from('profiles')
       .select('*, profile_private(email, phone), team_members!team_members_profile_id_fkey(team_id, status)')
       .order('last_name'),
-    supabase.from('teams').select('id, name, captain_id, sort_order').order('sort_order'),
+    supabase.from('teams').select('*').order('sort_order'),
   ]);
   if (rp.error || rt.error) {
     message(zoneMessage, erreurFr(rp.error || rt.error));
@@ -126,6 +126,7 @@ function afficherMembres() {
     const lignesEquipes = equipes.map((t) => {
       const m = rattachements.find((x) => x.team_id === t.id);
       const capitaine = t.captain_id === p.id;
+      const vice = t.vice_captain_id === p.id;
       let actions = '';
       if (!m) {
         actions = `<button type="button" class="bouton bouton--petit" data-action="ajouter-equipe" data-id="${p.id}" data-team="${t.id}">Ajouter</button>`;
@@ -137,7 +138,7 @@ function afficherMembres() {
       }
       return `
         <div class="ligne-equipe">
-          <span class="ligne-equipe__nom">${esc(t.name)}${capitaine ? ' <span class="statut statut--ok">Capitaine</span>' : ''}</span>
+          <span class="ligne-equipe__nom">${esc(t.name)}${capitaine ? ' <span class="statut statut--ok">Capitaine</span>' : (vice ? ' <span class="statut statut--ok">Vice-capitaine</span>' : '')}</span>
           ${m ? `<span class="statut ${EQUIPE_CLASSE[m.status]}">${EQUIPE[m.status]}</span>` : '<span class="match__format">—</span>'}
           <span class="ligne-equipe__actions">${actions}</span>
         </div>`;
@@ -234,6 +235,13 @@ function afficherEquipes() {
           </select>
           <small>Un capitaine ne gère qu'une seule équipe. Il en devient automatiquement membre.</small>
         </label>
+        ${'vice_captain_id' in t ? `<label class="champ">Vice-capitaine
+          <select data-action="vice" data-team="${t.id}">
+            <option value="">— Aucun vice-capitaine —</option>
+            ${actifs.filter((p) => p.id !== t.captain_id).map((p) => `<option value="${p.id}" ${t.vice_captain_id === p.id ? 'selected' : ''}>${esc(nomComplet(p))}</option>`).join('')}
+          </select>
+          <small>Mêmes accès que le capitaine. Le capitaine peut aussi le choisir dans son espace.</small>
+        </label>` : ''}
         <div>
           <strong>${membres.length} membre${membres.length > 1 ? 's' : ''}</strong>
           ${membres.length ? `<p class="intro" style="margin:4px 0 0">${membres.map((p) => esc(nomComplet(p))).join(', ')}</p>` : ''}
@@ -296,6 +304,9 @@ async function executer(action, el) {
       break;
     case 'capitaine':
       res = await supabase.from('teams').update({ captain_id: el.value || null }).eq('id', team);
+      break;
+    case 'vice':
+      res = await supabase.rpc('definir_vice_capitaine', { p_team: team, p_profile: el.value || null });
       break;
     case 'supprimer':
       if (!confirm(`Supprimer définitivement le compte de ${nomComplet(p)} ?\n\nSon profil, sa photo et ses parties jouées seul ou contre des invités seront effacés. Dans les parties contre d'autres membres et dans les tournois, il apparaîtra comme « Ancien joueur ». Cette action est irréversible.`)) return;

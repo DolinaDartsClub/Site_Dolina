@@ -4,7 +4,7 @@
 //  profil modifiable, photo de profil
 // =====================================================================
 
-import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche, avatar, dateFr, DOSSIER_PHOTOS, oublierLienPhoto, identifiantDe } from './app.js?v=__VERSION__';
+import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche, avatar, dateFr, DOSSIER_PHOTOS, oublierLienPhoto, identifiantDe, estCapitaineDe } from './app.js?v=__VERSION__';
 import { debutSaison, nomSaison, resumeSaison } from './profil-commun.js?v=__VERSION__';
 
 const zone = document.getElementById('contenu');
@@ -36,7 +36,7 @@ async function afficher() {
 
   // Équipes du club, mes rattachements, mon profil détaillé et mon téléphone
   const [{ data: equipes }, { data: mesRattachements }, { data: detail }, { data: prive }] = await Promise.all([
-    supabase.from('teams').select('id, name, captain_id').order('sort_order'),
+    supabase.from('teams').select('*').order('sort_order'),
     supabase.from('team_members').select('team_id, status').eq('profile_id', profil.id),
     supabase.from('profiles').select('first_name, last_name, nickname, use_nickname, hand, dart_weight, dart_brand, photo_path, photo_consent, created_at').eq('id', profil.id).maybeSingle(),
     supabase.from('profile_private').select('phone').eq('id', profil.id).maybeSingle(),
@@ -48,7 +48,7 @@ async function afficher() {
     .filter(Boolean).join(' · ');
 
   // Espace capitaine : demandes en attente pour mon équipe
-  const monEquipe = (equipes || []).find((t) => t.captain_id === profil.id && estActif);
+  const monEquipe = (equipes || []).find((t) => estCapitaineDe(t, profil.id) && estActif);
   let demandes = [];
   if (monEquipe) {
     const { data } = await supabase
@@ -119,13 +119,14 @@ async function afficher() {
   const lignesEquipes = mesEquipes.map((t) => {
     const m = rattachements.find((x) => x.team_id === t.id);
     const capitaine = t.captain_id === profil.id;
+    const vice = t.vice_captain_id === profil.id;
     let action = '';
     if (m.status === 'pending') action = `<button type="button" class="bouton bouton--mini bouton--danger" data-action="annuler" data-team="${t.id}">Annuler la demande</button>`;
     else if (m.status === 'refused') action = `<button type="button" class="bouton bouton--petit" data-action="redemander" data-team="${t.id}">Refaire une demande</button>`;
     const [c, l] = STATUTS_EQUIPE[m.status];
     return `
       <div class="ligne-equipe">
-        <span class="ligne-equipe__nom">${esc(t.name)}${capitaine ? ' <span class="statut statut--ok">Capitaine</span>' : ''}
+        <span class="ligne-equipe__nom">${esc(t.name)}${capitaine ? ' <span class="statut statut--ok">Capitaine</span>' : (vice ? ' <span class="statut statut--ok">Vice-capitaine</span>' : '')}
           ${m.status === 'accepted' ? `<a class="lien-equipe" href="equipes.html#${encodeURIComponent(t.name)}">Calendrier de l'équipe →</a>` : ''}</span>
         <span class="statut ${c}">${l}</span>
         <span class="ligne-equipe__actions">${action}</span>
@@ -460,7 +461,7 @@ zone.addEventListener('click', async (e) => {
       break;
     case 'cap-accepter':
     case 'cap-refuser': {
-      const equipe = (await supabase.from('teams').select('id').eq('captain_id', profil.id).maybeSingle()).data;
+      const equipe = ((await supabase.from('teams').select('*')).data || []).find((t) => estCapitaineDe(t, profil.id));
       res = await supabase.from('team_members')
         .update({ status: b.dataset.action === 'cap-accepter' ? 'accepted' : 'refused' })
         .eq('team_id', equipe?.id).eq('profile_id', id);

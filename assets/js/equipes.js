@@ -5,7 +5,7 @@
 //  l'admin celles des trois équipes. Export vers l'agenda (.ics).
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar, estCapitaineDe } from './app.js?v=__VERSION__';
 import { debutSaison, nomSaison } from './profil-commun.js?v=__VERSION__';
 import { telechargerIcs } from './ics.js?v=__VERSION__';
 import { chargerClubs, clubDe, logoAdversaire, logoDolina, enregistrerLogo, affiche, scoreOrdonne } from './logos.js?v=__VERSION__';
@@ -44,8 +44,8 @@ const finDe = (r) => r.date_fin || r.date_match;
 const periode = (r) => `Entre le ${fmtCourt.format(dateLocale(r.date_match)).replace('.', '')} et le ${fmtCourt.format(dateLocale(r.date_fin)).replace('.', '')}`;
 const salleDe = (r) => salles.find((s) => s.id === r.salle_id) || null;
 const peutGerer = (teamId) => !!moi && moi.status === 'active'
-  && (moi.role === 'admin' || equipes.some((t) => t.id === teamId && t.captain_id === moi.id));
-const gereUneEquipe = () => !!moi && moi.status === 'active' && (moi.role === 'admin' || equipes.some((t) => t.captain_id === moi.id));
+  && (moi.role === 'admin' || equipes.some((t) => t.id === teamId && estCapitaineDe(t, moi.id)));
+const gereUneEquipe = () => !!moi && moi.status === 'active' && (moi.role === 'admin' || equipes.some((t) => estCapitaineDe(t, moi.id)));
 
 export function resultat(r) {
   if (r.score_nous === null || r.score_eux === null || r.score_nous === undefined) return null;
@@ -70,7 +70,7 @@ function libelleMeta(r) {
 async function charger() {
   moi = await profilConnecte().catch(() => null);
   const [rt, rr, rs] = await Promise.all([
-    supabase.from('teams').select('id, name, captain_id, sort_order').order('sort_order'),
+    supabase.from('teams').select('*').order('sort_order'),
     supabase.from('rencontres').select('*').order('date_match').order('heure_match', { nullsFirst: true }),
     supabase.from('salles').select('*').order('nom'),
     chargerClubs(),
@@ -98,7 +98,7 @@ async function charger() {
   }
 
   const demandee = decodeURIComponent(location.hash.slice(1));
-  const mienne = moi && equipes.find((t) => t.captain_id === moi.id || (effectifs[t.id] || []).some((p) => p.id === moi.id));
+  const mienne = moi && equipes.find((t) => estCapitaineDe(t, moi.id) || (effectifs[t.id] || []).some((p) => p.id === moi.id));
   equipeActive = (equipes.find((t) => t.id === demandee || t.name === demandee) || mienne || equipes[0])?.id || null;
   saison = isoJour(debutSaison());
   afficher();
@@ -183,6 +183,7 @@ function afficher() {
   const bilan = { V: 0, N: 0, D: 0 };
   liste.forEach((r) => { const x = resultat(r); if (x) bilan[x.code] += 1; });
   const capitaine = (effectifs[t.id] || []).find((p) => p.id === t.captain_id);
+  const vice = t.vice_captain_id ? (effectifs[t.id] || []).find((p) => p.id === t.vice_captain_id) : null;
   const effectif = effectifs[t.id];
 
   zone.innerHTML = `
@@ -197,7 +198,7 @@ function afficher() {
         <span class="eq-bilan__case"><b>${bilan.N}</b>nul${bilan.N > 1 ? 's' : ''}</span>
         <span class="eq-bilan__case eq-bilan__case--d"><b>${bilan.D}</b>défaite${bilan.D > 1 ? 's' : ''}</span>
       </div>
-      ${capitaine ? `<p class="match__format" style="margin:0">Capitaine : <strong>${esc(nomAffiche(capitaine))}</strong></p>` : ''}
+      ${capitaine ? `<p class="match__format" style="margin:0">Capitaine : <strong>${esc(nomAffiche(capitaine))}</strong>${vice ? ` · Vice-capitaine : <strong>${esc(nomAffiche(vice))}</strong>` : ''}</p>` : ''}
       <div class="actions">
         ${gerer ? '<button type="button" class="bouton bouton--plein bouton--petit" id="btn-ajouter">+ Ajouter une rencontre</button>' : ''}
         ${agendables.length ? `<button type="button" class="bouton bouton--petit" id="btn-agenda-saison">${agendables.length > 1 ? `Les ${agendables.length} prochains matchs` : 'Le prochain match'} dans mon agenda</button>` : ''}
@@ -224,7 +225,7 @@ function afficher() {
       <div class="eq-effectif">${effectif.map((p) => `
         <a class="eq-joueur" href="profil.html?id=${encodeURIComponent(p.id)}">
           ${avatar(p, 'avatar--liste')}
-          <span>${esc(nomAffiche(p))}${p.id === t.captain_id ? ' <small class="eq-cap">Capitaine</small>' : ''}</span>
+          <span>${esc(nomAffiche(p))}${p.id === t.captain_id ? ' <small class="eq-cap">Capitaine</small>' : (p.id === t.vice_captain_id ? ' <small class="eq-cap eq-cap--vice">Vice-capitaine</small>' : '')}</span>
         </a>`).join('') || '<p class="vide">Aucun joueur.</p>'}</div>
     </section>` : (moi ? '' : '<p class="match__format eq-connexion"><a href="connexion.html">Connectez-vous</a> pour voir les joueurs de chaque équipe.</p>')}
 
