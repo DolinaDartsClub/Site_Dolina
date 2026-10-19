@@ -4,7 +4,7 @@
 //  Un capitaine voit son équipe ; un admin choisit n'importe quelle équipe.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar, estCapitaineDe } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar, estCapitaineDe, barreRubriques } from './app.js?v=__VERSION__';
 import { blocRencontresRetard } from './retard.js?v=__VERSION__';
 import { chargerClubs, logoAdversaire } from './logos.js?v=__VERSION__';
 import { afficherStatsEquipe } from './cap-stats.js?v=__VERSION__';
@@ -46,6 +46,16 @@ async function init() {
   }
   afficher();
 }
+
+// Bandeau de rubriques en haut de la page (comme l'accueil)
+const I = (d) => `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+barreRubriques(document.getElementById('cap-rubriques'), [
+  ['cap-equipe', 'Équipe', I('<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>')],
+  ['cap-retard', 'À scorer', I('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')],
+  ['cap-demandes', 'Demandes', I('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>')],
+  ['cap-effectif', 'Effectif', I('<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7M17 4a4 4 0 0 1 0 8M22 21c0-3-2-6-5-6.5"/>')],
+  ['cap-stats', 'Statistiques', I('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>')],
+]);
 
 choix.addEventListener('click', (e) => {
   const b = e.target.closest('[data-equipe]');
@@ -97,7 +107,7 @@ async function afficher() {
   })() : '<p class="match__format" style="margin:0">Aucune rencontre à venir dans le calendrier.</p>';
 
   zone.innerHTML = `
-    <section class="carte-info cap-carte">
+    <section class="carte-info cap-carte" id="cap-equipe">
       <div class="cap-carte__haut">
         <h2>${esc(t.name)}</h2>
         <span class="match__format">${rc.data ? `Capitaine : <strong>${esc(nomAffiche(rc.data))}</strong>` : `Pas de capitaine${admin ? ' · <a href="admin.html#equipes">le désigner</a>' : ''}`}</span>
@@ -111,9 +121,9 @@ async function afficher() {
       </div>
     </section>
 
-    <div id="cap-retard"></div>
+    <div id="cap-retard" class="cap-retard"></div>
 
-    <section class="section">
+    <section class="section" id="cap-demandes">
       <h2 class="section__titre">Demandes <span class="section__aide">${demandes.length ? `${demandes.length} en attente` : 'aucune en attente'}</span></h2>
       ${demandes.length ? `<ul class="cap-liste">${demandes.map((d) => {
     const valide = d.profiles.status === 'active';
@@ -129,7 +139,7 @@ async function afficher() {
   }).join('')}</ul>` : '<p class="vide">Aucune demande en attente.</p>'}
     </section>
 
-    <section class="section">
+    <section class="section" id="cap-effectif">
       <h2 class="section__titre">Effectif <span class="section__aide">${effectif.length} joueur${effectif.length > 1 ? 's' : ''}</span></h2>
       ${effectif.length ? `<ul class="cap-liste">${effectif.map((m) => `
         <li class="cap-ligne">

@@ -762,3 +762,61 @@ window.addEventListener('load', majHauteurEntete);
   nav.innerHTML = liens.map(([href, nom, d]) => `<a href="${href}"${href === actuelle ? ' aria-current="page"' : ''}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>${nom}</a>`).join('');
   document.body.appendChild(nav);
 }());
+
+// ---------- Bandeau de rubriques d'une page (comme l'accueil) ----------
+// Collé sous l'en-tête : caché quand on descend, revient quand on remonte ; la rubrique
+// affichée est mise en avant et un clic y amène directement. rubriques : [[id, nom, icône]]
+export function barreRubriques(barre, rubriques) {
+  if (!barre) return;
+  let actif = null;
+  const observateur = new IntersectionObserver((entrees) => {
+    const visibles = entrees.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (!visibles.length) return;
+    actif = visibles[0].target.id;
+    barre.querySelectorAll('a').forEach((a) => {
+      if (a.dataset.rubrique === actif) {
+        a.setAttribute('aria-current', 'true');
+        const piste = barre.querySelector('.rubriques-page__piste');
+        piste?.scrollTo({ left: a.offsetLeft - piste.clientWidth / 2 + a.clientWidth / 2, behavior: 'smooth' });
+      } else a.removeAttribute('aria-current');
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  const suivis = new Set();
+  let dernierRendu = null;
+  const dessiner = () => {
+    const presentes = rubriques.filter(([id]) => { const el = document.getElementById(id); return el && !el.hidden && el.offsetParent && el.childElementCount; });
+    const html = presentes.length > 1
+      ? `<div class="rubriques-page__piste">${presentes.map(([id, nom, icone]) => `<a href="#${id}" data-rubrique="${id}"${id === actif ? ' aria-current="true"' : ''}>${icone || ''}<span>${nom}</span></a>`).join('')}</div>` : '';
+    // Comparé au dernier rendu (le navigateur réécrit les SVG : comparer innerHTML bouclerait)
+    if (html !== dernierRendu) { dernierRendu = html; barre.innerHTML = html; }
+    if (barre.hidden !== !html) barre.hidden = !html;
+    presentes.forEach(([id]) => { const el = document.getElementById(id); if (!suivis.has(el)) { suivis.add(el); observateur.observe(el); } });
+  };
+  dessiner();
+  new MutationObserver(() => requestAnimationFrame(dessiner)).observe(document.querySelector('main'), { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
+
+  let dernier = window.scrollY;
+  let auto = 0;
+  let enAttente = false;
+  const effets = () => {
+    const y = window.scrollY;
+    const collee = barre.getBoundingClientRect().top <= (document.querySelector('.entete')?.offsetHeight || 64) + 1;
+    if (Date.now() >= auto) {
+      if (!collee || y < dernier - 6) barre.classList.remove('rubriques-page--cache');
+      else if (y > dernier + 6) barre.classList.add('rubriques-page--cache');
+    }
+    dernier = y;
+    enAttente = false;
+  };
+  window.addEventListener('scroll', () => { if (!enAttente) { enAttente = true; requestAnimationFrame(effets); } }, { passive: true });
+  barre.addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-rubrique]');
+    if (!a) return;
+    e.preventDefault();
+    const cible = document.getElementById(a.dataset.rubrique);
+    const decalage = (document.querySelector('.entete')?.offsetHeight || 64) + barre.offsetHeight + 12;
+    auto = Date.now() + 1200;
+    barre.classList.remove('rubriques-page--cache');
+    window.scrollTo({ top: cible.getBoundingClientRect().top + window.scrollY - decalage, behavior: 'smooth' });
+  });
+}

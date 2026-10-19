@@ -2080,9 +2080,7 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .cs-tuile span { font-size: 11px; color: var(--gris); text-transform: uppercase; letter-spacing: .04em; }
 .cs-tuile--v b { color: var(--orange); }
 .cs-forme { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 13px; color: var(--gris-clair); flex-wrap: wrap; }
-.cs-forme span { display: inline-flex; gap: 4px; }
 .cs-forme small { color: var(--gris); }
-.cs-forme__pt { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 11px; font-weight: 800; background: #2a2a2a; color: var(--gris-clair); }
 .cs-forme__pt--V { background: var(--orange); color: var(--noir); }
 .cs-forme__pt--N { background: #444; color: var(--blanc); }
 .cs-sous-titre { margin: 22px 0 8px; font-size: 16px; }
@@ -2093,7 +2091,6 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .cs-joueur { display: grid; gap: 10px; padding: 12px 14px; border: 1px solid var(--verre-bord, var(--bord)); border-radius: 14px; background: var(--verre, var(--carte)); }
 .cs-joueur--vide { opacity: .75; }
 .cs-joueur__tete { display: flex; align-items: center; gap: 10px; color: var(--blanc); text-decoration: none; }
-.cs-joueur__tete > span:not(.cs-joueur__moy) { display: grid; min-width: 0; flex: 1; }
 .cs-joueur__tete strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cs-joueur__tete small { color: var(--gris); font-size: 12px; }
 .cs-joueur__moy { display: grid; justify-items: end; }
@@ -2105,7 +2102,6 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .cs-grille small { font-size: 11px; color: var(--gris); }
 .cs-forme--joueur { margin: 0; }
 .cs-note { margin-top: 10px; font-size: 12px; }
-.cs-joueur__tete .avatar { flex: none; }
 
 /* Scorer sur téléphone couché (petite hauteur) : tout tient à l'écran, sans défilement */
 @media (orientation: landscape) and (max-height: 520px) {
@@ -2147,3 +2143,55 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .bandeau-provisoire { display: grid; gap: 6px; justify-items: start; padding: 14px 16px; margin-bottom: 14px; border: 1px solid var(--orange); border-radius: 12px; background: rgba(245,122,0,.1); }
 .bandeau-provisoire span { color: var(--gris-clair); font-size: 14px; }
 .mdp-demande { display: grid; gap: 12px; }
+
+/* Espace capitaine : cartes joueurs (v2) */
+.cs-forme__titre { font-weight: 600; }
+.cs-forme__liste { display: inline-flex; gap: 5px; }
+.cs-forme__pt { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; line-height: 1; font-size: 11px; font-weight: 800; background: #2a2a2a; color: var(--gris-clair); }
+.cs-avatar { width: 48px; height: 48px; font-size: 16px; border-width: 2px; flex: none; }
+.cs-avatar--petit { width: 30px; height: 30px; font-size: 11px; border-width: 1px; }
+.cs-joueur__tete { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.cs-joueur__id { display: grid; gap: 2px; min-width: 0; }
+.cs-joueur__id strong { font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-sans { display: grid; gap: 10px; margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--bord-fort); border-radius: 14px; }
+.cs-sans__titre { font-size: 13px; color: var(--gris-clair); font-weight: 600; }
+.cs-sans__titre b { margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #2a2a2a; font-size: 12px; }
+.cs-sans__liste { display: flex; flex-wrap: wrap; gap: 8px; }
+.cs-sans__joueur { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; background: rgba(255,255,255,.04); border: 1px solid var(--bord); color: var(--blanc); text-decoration: none; font-size: 13px; }
+.cs-sans__joueur:hover { border-color: var(--orange); }
+
+/* Bandeau de rubriques d'une page (espace capitaine…) : comme l'accueil, sur téléphone et ordinateur */
+.rubriques-page {
+  position: sticky; top: var(--entete-h, 64px); z-index: 9;
+  margin: 0 calc(-1 * var(--gouttiere)); padding: 8px var(--gouttiere) 12px;
+  background: linear-gradient(to bottom, var(--noir) 72%, rgba(20,20,20,0));
+  transition: transform .28s ease, opacity .2s ease;
+}
+.rubriques-page[hidden] { display: none; }
+.rubriques-page--cache { transform: translateY(-120%); opacity: 0; pointer-events: none; }
+.rubriques-page__piste {
+  display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding: 4px; max-width: 760px;
+  border-radius: 999px; border: 1px solid var(--bord-fort); background: #1a1a1a;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 6px 18px rgba(0,0,0,.35);
+}
+.rubriques-page__piste::-webkit-scrollbar { display: none; }
+.rubriques-page a {
+  flex: 1 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 12px; border-radius: 999px; color: var(--gris-clair); font-size: 13px; font-weight: 600;
+  text-decoration: none; white-space: nowrap; transition: background .25s, color .25s, box-shadow .25s;
+}
+.rubriques-page a svg { width: 16px; height: 16px; color: var(--orange); flex: none; transition: color .25s; }
+.rubriques-page a:hover { color: var(--blanc); }
+.rubriques-page a[aria-current="true"] { background: var(--orange); color: var(--noir); box-shadow: 0 4px 14px rgba(245,122,0,.35); }
+.rubriques-page a[aria-current="true"] svg { color: var(--noir); }
+@media (prefers-reduced-motion: reduce) { .rubriques-page { transition: none; } }
+
+/* Espace capitaine : même espacement entre toutes les rubriques */
+#cap-zone { display: grid; gap: 32px; }
+#cap-zone > * { margin: 0 !important; scroll-margin-top: calc(var(--entete-h, 64px) + 70px); }
+#cap-zone > .cap-retard:empty { display: none; }
+#cap-zone > .section > .section__titre { margin-top: 0; }
+.page--capitaine .cap-tete { margin-bottom: 4px; }
+.cs-forme__pt--V { background: var(--orange); color: var(--noir); }
+.cs-forme__pt--N { background: #444; color: var(--blanc); }
+@media (min-width: 900px) { .rubriques-page { margin: 0; padding: 4px 0 10px; background: none; } }
