@@ -2215,3 +2215,15 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .recap-equipe { padding: 8px 10px; text-align: center; justify-items: center; }
 .recap-equipe strong { font-size: 14px; }
 .recap-equipe small { font-size: 11px; line-height: 1.3; }
+
+/* Recadrage de la photo de profil */
+.recadrage__boite { max-width: 420px; }
+.recadrage__boite h2 { margin: 0; }
+.recadrage__cadre { position: relative; width: 100%; aspect-ratio: 1; border-radius: 14px; overflow: hidden; touch-action: none; cursor: grab; background: #141414; outline: none; user-select: none; }
+.recadrage__cadre:active { cursor: grabbing; }
+.recadrage__cadre:focus-visible { box-shadow: 0 0 0 2px var(--orange); }
+.recadrage__toile { display: block; }
+/* Cercle : ce qui sera visible sur le site ; l'extérieur est assombri */
+.recadrage__masque { position: absolute; inset: 0; pointer-events: none; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0,0,0,.55); outline: 2px solid var(--orange); outline-offset: -2px; }
+.recadrage__zoom { display: flex; align-items: center; gap: 10px; color: var(--gris-clair); font-size: 20px; font-weight: 700; }
+.recadrage__zoom input { flex: 1; accent-color: var(--orange); }

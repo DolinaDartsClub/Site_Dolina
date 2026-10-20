@@ -65,6 +65,7 @@ const FICHIERS = [
   'assets/js/logos.js',
   'assets/js/admin-sans-email.js',
   'assets/js/cap-stats.js',
+  'assets/js/recadrage.js',
   'assets/js/compter.js',
   'assets/js/compter-calcul.js',
   'assets/js/cible.js',

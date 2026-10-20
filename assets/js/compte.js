@@ -6,6 +6,7 @@
 
 import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche, avatar, dateFr, DOSSIER_PHOTOS, oublierLienPhoto, identifiantDe, estCapitaineDe, rencontresEnRetard } from './app.js?v=__VERSION__';
 import { debutSaison, nomSaison, resumeSaison } from './profil-commun.js?v=__VERSION__';
+import { recadrerPhoto } from './recadrage.js?v=__VERSION__';
 
 const zone = document.getElementById('contenu');
 const boutonDeco = document.getElementById('deconnexion');
@@ -171,7 +172,7 @@ async function afficher() {
             ${p.photo_path ? '<button type="button" class="bouton bouton--petit bouton--danger" id="btn-retirer-photo">Retirer ma photo</button>' : ''}
           </div>
           <label class="case case--simple"><input type="checkbox" id="accord-photo" ${p.photo_consent ? 'checked' : ''}>J'accepte que ma photo soit visible des membres connectés du club (jamais des visiteurs).</label>
-          <small class="match__format">La photo est recadrée en carré et réduite automatiquement. Décocher la case retire votre photo.</small>
+          <small class="match__format">Après le choix de la photo, vous pouvez la déplacer et zoomer pour l'ajuster dans le cercle. Décocher la case retire votre photo.</small>
         </section>`;
 
   zone.innerHTML = `
@@ -316,27 +317,6 @@ function brancherDonnees(p) {
 
 const TAILLE_PHOTO = 400;
 
-// Recadre la photo en carré (centre de l'image), 400 × 400, en JPEG
-function preparerPhoto(fichier) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(fichier);
-    img.onload = () => {
-      const cote = Math.min(img.width, img.height);
-      const canvas = document.createElement('canvas');
-      canvas.width = TAILLE_PHOTO;
-      canvas.height = TAILLE_PHOTO;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#141414';
-      ctx.fillRect(0, 0, TAILLE_PHOTO, TAILLE_PHOTO);
-      ctx.drawImage(img, (img.width - cote) / 2, (img.height - cote) / 2, cote, cote, 0, 0, TAILLE_PHOTO, TAILLE_PHOTO);
-      URL.revokeObjectURL(url);
-      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('conversion'))), 'image/jpeg', 0.85);
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('lecture')); };
-    img.src = url;
-  });
-}
 
 function brancherPhoto(p) {
   const zoneMsg = document.getElementById('message-photo');
@@ -363,13 +343,15 @@ function brancherPhoto(p) {
     champ.value = '';
     if (!f) return;
     if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return message(zoneMsg, 'Format non accepté : choisissez une image JPEG, PNG ou WebP.');
-    message(zoneMsg, 'Envoi de la photo…', 'ok');
     let blob;
     try {
-      blob = await preparerPhoto(f);
+      // Le membre ajuste la photo (déplacer, zoomer) dans le cercle avant l'envoi
+      blob = await recadrerPhoto(f, TAILLE_PHOTO);
     } catch {
       return message(zoneMsg, 'Impossible de lire cette image. Essayez avec une autre photo.');
     }
+    if (!blob) return;   // annulé
+    message(zoneMsg, 'Envoi de la photo…', 'ok');
     const chemin = `${profil.id}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}.jpg`;
     const envoi = await supabase.storage.from(DOSSIER_PHOTOS).upload(chemin, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
     if (envoi.error) return message(zoneMsg, `La photo n'a pas pu être envoyée. ${erreurFr(envoi.error)}`);
