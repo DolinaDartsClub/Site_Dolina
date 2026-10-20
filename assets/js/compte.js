@@ -100,11 +100,29 @@ async function afficher() {
     demandes.length ? `<strong>${demandes.length} demande${demandes.length > 1 ? 's' : ''}</strong> pour rejoindre l'équipe` : '',
     aScorer ? `<strong>${aScorer} rencontre${aScorer > 1 ? 's' : ''}</strong> à scorer` : '',
   ].filter(Boolean).join(' · ');
-  const blocCapitaine = monEquipe ? `
+  // Admin sans équipe à capitaner : accès aux espaces capitaines de toutes les équipes
+  let blocCapitainesAdmin = '';
+  if (estAdmin && !monEquipe) {
+    const [rd, retards] = await Promise.all([
+      supabase.from('team_members').select('team_id', { count: 'exact', head: true }).eq('status', 'pending'),
+      rencontresEnRetard().catch(() => []),
+    ]);
+    const nbDem = rd.count || 0;
+    const resume = [
+      nbDem ? `<strong>${nbDem} demande${nbDem > 1 ? 's' : ''}</strong> pour rejoindre une équipe` : '',
+      retards.length ? `<strong>${retards.length} rencontre${retards.length > 1 ? 's' : ''}</strong> à scorer` : '',
+    ].filter(Boolean).join(' · ');
+    blocCapitainesAdmin = `
+    <div class="alerte" id="capitaine">
+      <span>Espaces capitaines · ${(equipes || []).length} équipe${(equipes || []).length > 1 ? 's' : ''}<br><small>${resume || 'Rien en attente dans les équipes'}</small></span>
+      <a class="bouton bouton--plein" href="capitaine.html">Espace capitaine</a>
+    </div>`;
+  }
+  const blocCapitaine = blocCapitainesAdmin || (monEquipe ? `
     <div class="alerte" id="capitaine">
       <span>${esc(role)} · ${esc(monEquipe.name)}<br><small>${aFaire || 'Rien en attente pour votre équipe'}</small></span>
       <a class="bouton bouton--plein" href="capitaine.html">Espace capitaine</a>
-    </div>` : '';
+    </div>` : '');
 
   // ----- Mon équipe : seulement les équipes demandées ou rejointes -----
   const rattachements = mesRattachements || [];
