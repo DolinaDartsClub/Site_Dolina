@@ -28,6 +28,8 @@ let finEnAttente = null; // 301 : score égal au reste, en attente de « fini su
 let multi = 1;           // capital : simple / double / triple
 let tirage = [];         // ordre du tirage à la bulle
 let enregistre = false;
+let partieId = null;     // partie enregistrée en ligne (script 040) : reprenable sur un autre appareil
+let attenteSync = null;
 
 // ---------- Textes ----------
 const REGLES = {
@@ -51,7 +53,25 @@ if (MODE === 'capital') {
 
 // ---------- Sauvegarde sur le téléphone ----------
 function garder() {
-  try { localStorage.setItem(CLE, JSON.stringify({ config, actions, enregistre, quand: Date.now() })); } catch { /* sans importance */ }
+  try { localStorage.setItem(CLE, JSON.stringify({ config, actions, enregistre, partieId, quand: Date.now() })); } catch { /* sans importance */ }
+  // En ligne : la partie suit le joueur d'un appareil à l'autre
+  clearTimeout(attenteSync);
+  attenteSync = setTimeout(synchroniser, 500);
+}
+
+const joueursEnLigne = () => config.joueurs.map((j) => ({ nom: j.nom, profile_id: j.id || null }));
+let enLigneIndispo = false;
+async function synchroniser() {
+  if (!moi || moi.status !== 'active' || enregistre || enLigneIndispo || !config.joueurs.length) return;
+  if (!partieId) {
+    const { data, error } = await supabase.from('jeux_parties')
+      .insert({ jeu: MODE, joueurs: joueursEnLigne(), ordre: config.ordre, actions, statut: 'live' }).select('id').single();
+    if (error) { enLigneIndispo = true; return; }   // script 040 pas encore lancé : sur cet appareil seulement
+    partieId = data.id;
+    try { localStorage.setItem(CLE, JSON.stringify({ config, actions, enregistre, partieId, quand: Date.now() })); } catch { /* idem */ }
+  } else {
+    await supabase.from('jeux_parties').update({ actions, ordre: config.ordre }).eq('id', partieId);
+  }
 }
 function oublier() { try { localStorage.removeItem(CLE); } catch { /* idem */ } }
 function lireSauvegarde() {
@@ -131,6 +151,7 @@ $('pd-form').addEventListener('submit', (e) => {
   actions = [];
   volee = [];
   enregistre = false;
+  partieId = null;
   garder();
   demarrer();
 });
@@ -380,7 +401,9 @@ $('pd-annuler').addEventListener('click', () => {
 $('pd-abandonner').addEventListener('click', () => {
   if (!confirm('Abandonner la partie ? Elle ne sera pas enregistrée.')) return;
   oublier();
-  location.href = location.pathname + location.search;
+  clearTimeout(attenteSync);
+  const fin = () => { location.href = location.pathname + (MODE === 'capital' ? '?jeu=capital' : ''); };
+  if (partieId) supabase.from('jeux_parties').delete().eq('id', partieId).then(fin, fin); else fin();
 });
 
 // ---------- Feuille de score (comme la feuille papier) ----------
@@ -432,7 +455,7 @@ function finPartie(etat) {
     </div>`;
   $('pd-rejouer').addEventListener('click', () => {
     oublier();
-    actions = []; volee = []; tirage = []; enregistre = false;
+    actions = []; volee = []; tirage = []; enregistre = false; partieId = null;
     $('pd-fin').hidden = true;
     $('pd-reglages').hidden = false;
     afficherJoueurs();
@@ -450,13 +473,14 @@ async function enregistrer(etat) {
     totaux: etat.final.totaux,
     jeux: Object.fromEntries(Object.entries(etat.resultats).map(([c, r]) => [c, { points: r.points, rangs: r.rangs }])),
   };
-  const { error } = await supabase.from('jeux_parties').insert({
-    jeu: MODE,
-    joueurs: config.joueurs.map((j) => ({ nom: j.nom, profile_id: j.id || null })),
-    ordre: config.ordre,
-    resultat,
-    actions,
-  });
+  clearTimeout(attenteSync);
+  let { error } = partieId
+    ? await supabase.from('jeux_parties').update({ statut: 'finished', resultat, actions, ordre: config.ordre }).eq('id', partieId)
+    : await supabase.from('jeux_parties').insert({ jeu: MODE, joueurs: joueursEnLigne(), ordre: config.ordre, resultat, actions, statut: 'finished' });
+  // Script 040 pas encore lancé : enregistrement à l'ancienne (sans statut)
+  if (error && /statut/.test(error.message || '')) {
+    ({ error } = await supabase.from('jeux_parties').insert({ jeu: MODE, joueurs: joueursEnLigne(), ordre: config.ordre, resultat, actions }));
+  }
   if (error) {
     zone.textContent = /jeux_parties/.test(error.message || '') ? 'Historique pas encore disponible (script SQL 039 à lancer).' : `Partie non enregistrée : ${erreurFr(error)}`;
     return;
@@ -469,7 +493,8 @@ async function enregistrer(etat) {
 // ---------- Historique ----------
 async function chargerHistorique() {
   if (!moi || moi.status !== 'active') return;
-  const { data, error } = await supabase.from('jeux_parties').select('id, created_at, joueurs, resultat').eq('jeu', MODE).order('created_at', { ascending: false }).limit(10);
+  let { data, error } = await supabase.from('jeux_parties').select('id, created_at, joueurs, resultat').eq('jeu', MODE).eq('statut', 'finished').order('created_at', { ascending: false }).limit(10);
+  if (error) ({ data, error } = await supabase.from('jeux_parties').select('id, created_at, joueurs, resultat').eq('jeu', MODE).order('created_at', { ascending: false }).limit(10));
   if (error || !data?.length) return;
   const fmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   $('pd-historique').hidden = false;
@@ -485,6 +510,66 @@ async function chargerHistorique() {
   }).join('');
 }
 
+// ---------- Parties en cours (en ligne et sur cet appareil) ----------
+function reprendre(cfg, acts, id, dejaEnregistre = false) {
+  config = cfg; actions = acts || []; partieId = id || null; enregistre = dejaEnregistre;
+  volee = []; saisie = ''; finEnAttente = null;
+  garder();
+  demarrer();
+}
+const versConfig = (g) => ({ mode: MODE, joueurs: (g.joueurs || []).map((j) => ({ nom: j.nom, id: j.profile_id || undefined })), ordre: g.ordre || [] });
+
+async function afficherReprises() {
+  const local = lireSauvegarde();
+  let enLigne = [];
+  if (moi?.status === 'active') {
+    const depuis = new Date(Date.now() - 3 * 86400000).toISOString();
+    const { data } = await supabase.from('jeux_parties').select('id, joueurs, ordre, actions, created_by, updated_at')
+      .eq('jeu', MODE).eq('statut', 'live').gte('updated_at', depuis).order('updated_at', { ascending: false });
+    // Seulement les parties où je joue avec mon compte, ou que j'ai lancées
+    enLigne = (data || []).filter((g) => g.created_by === moi.id || (g.joueurs || []).some((j) => j.profile_id === moi.id));
+  }
+  const fmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+  const cartes = enLigne.map((g) => {
+    const etat = calculer(versConfig(g), g.actions || []);
+    return `<div class="carte-info pd-reprise">
+      <strong>Partie en cours</strong>
+      <span class="match__format">${(g.joueurs || []).map((j) => esc(j.nom)).join(' – ')} · ${esc(JEUX[etat.jeu]?.titre || 'départage')} · ${esc(fmt.format(new Date(g.updated_at)))}</span>
+      <div class="actions"><button type="button" class="bouton bouton--plein" data-reprendre-en-ligne="${g.id}">Reprendre la partie</button>
+      <button type="button" class="bouton bouton--danger" data-abandon-en-ligne="${g.id}">Abandonner</button></div></div>`;
+  });
+  // Partie gardée seulement sur cet appareil (pas encore en ligne)
+  const localSeul = local?.config?.joueurs?.length && local.actions && !local.enregistre && !enLigne.some((g) => g.id === local.partieId);
+  if (localSeul) {
+    const etat = calculer(local.config, local.actions);
+    if (!etat.termine) {
+      cartes.push(`<div class="carte-info pd-reprise">
+        <strong>Partie en cours sur cet appareil</strong>
+        <span class="match__format">${local.config.joueurs.map((j) => esc(j.nom)).join(' – ')} · ${esc(JEUX[etat.jeu]?.titre || 'départage')}</span>
+        <div class="actions"><button type="button" class="bouton bouton--plein" data-reprendre-local>Reprendre la partie</button>
+        <button type="button" class="bouton bouton--danger" data-abandon-local>Abandonner</button></div></div>`);
+    }
+  }
+  $('pd-reprise').innerHTML = cartes.join('');
+  $('pd-reprise').onclick = async (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.reprendreEnLigne) {
+      const g = enLigne.find((x) => x.id === b.dataset.reprendreEnLigne);
+      return reprendre(versConfig(g), g.actions, g.id);
+    }
+    if (b.hasAttribute('data-reprendre-local')) return reprendre(local.config, local.actions, local.partieId || null);
+    if (!confirm('Abandonner cette partie ? Elle sera supprimée.')) return;
+    if (b.dataset.abandonEnLigne) await supabase.from('jeux_parties').delete().eq('id', b.dataset.abandonEnLigne);
+    if (b.hasAttribute('data-abandon-local') || local?.partieId === b.dataset.abandonEnLigne) oublier();
+    afficherReprises();
+  };
+  // Lien « Reprendre » depuis Mes parties
+  const demande = new URLSearchParams(location.search).get('reprendre');
+  const g = demande && enLigne.find((x) => x.id === demande);
+  if (g) reprendre(versConfig(g), g.actions, g.id);
+}
+
 // ---------- Démarrage ----------
 async function init() {
   moi = await profilConnecte().catch(() => null);
@@ -494,22 +579,7 @@ async function init() {
     $('pd-champ-membre').hidden = false;
     if (!config.joueurs.length) config.joueurs.push({ nom: nomAffiche(moi), id: moi.id });
   }
-  const s = lireSauvegarde();
-  if (s?.config?.joueurs?.length && s.actions) {
-    const etat = calculer(s.config, s.actions);
-    $('pd-reprise').innerHTML = `
-      <div class="carte-info pd-reprise">
-        <strong>Partie en cours</strong>
-        <span class="match__format">${s.config.joueurs.map((j) => esc(j.nom)).join(' – ')} · ${etat.termine ? 'terminée' : esc(JEUX[etat.jeu]?.titre || 'départage')}</span>
-        <div class="actions"><button type="button" class="bouton bouton--plein" id="pd-reprendre">Reprendre la partie</button>
-        <button type="button" class="bouton bouton--danger" id="pd-oublier">Abandonner</button></div>
-      </div>`;
-    $('pd-reprendre').addEventListener('click', () => {
-      config = s.config; actions = s.actions; enregistre = !!s.enregistre;
-      demarrer();
-    });
-    $('pd-oublier').addEventListener('click', () => { oublier(); $('pd-reprise').innerHTML = ''; });
-  }
+  await afficherReprises();
   afficherJoueurs();
   chargerHistorique();
 }

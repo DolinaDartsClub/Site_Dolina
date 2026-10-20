@@ -62,22 +62,23 @@ function filtrer(q) {
   return q.order('created_at', { ascending: false }).range(page * PAR_PAGE, page * PAR_PAGE + PAR_PAGE - 1);
 }
 
-// Jeux du club (Pentadarts, Capital : script 039) : parties où je joue avec mon compte, ou que j'ai créées
+// Jeux du club (Pentadarts, Capital : scripts 039-040) : seulement les parties où je joue avec mon compte
 let jeuxClub = [];
 async function chargerJeuxClub() {
   jeuxClub = [];
-  if ((filtres.jeu && !JEUX_CLUB.includes(filtres.jeu)) || filtres.statut === 'live' || filtres.type) return;
-  const base = () => {
-    let q = supabase.from('jeux_parties').select('id, jeu, joueurs, resultat, created_by, created_at');
+  if ((filtres.jeu && !JEUX_CLUB.includes(filtres.jeu)) || filtres.type) return;
+  const lire = (colonnes) => {
+    let q = supabase.from('jeux_parties').select(colonnes).contains('joueurs', JSON.stringify([{ profile_id: moi.id }]));
     if (filtres.jeu) q = q.eq('jeu', filtres.jeu);
     return q.order('created_at', { ascending: false }).limit(100);
   };
-  const [a, b] = await Promise.all([
-    base().contains('joueurs', JSON.stringify([{ profile_id: moi.id }])),
-    base().eq('created_by', moi.id),
-  ]);
-  if (a.error && b.error) return;   // script 039 pas encore lancé
-  jeuxClub = [...(a.data || []), ...(b.data || [])].filter((g, i, t) => t.findIndex((x) => x.id === g.id) === i)
+  let r = await lire('id, jeu, joueurs, resultat, statut, updated_at, created_by, created_at');
+  if (r.error) r = await lire('id, jeu, joueurs, resultat, created_by, created_at');   // script 040 pas encore lancé
+  if (r.error) return;                                                                  // script 039 pas encore lancé
+  const limite = Date.now() - 3 * 86400000;
+  jeuxClub = (r.data || [])
+    .filter((g) => g.statut !== 'live' || Date.parse(g.updated_at) >= limite)
+    .filter((g) => !filtres.statut || (filtres.statut === 'live' ? g.statut === 'live' : g.statut !== 'live'))
     .map((g) => ({ ...g, jeuClub: true }));
 }
 
@@ -92,10 +93,10 @@ async function chargerPage() {
     afficher();
     return;
   }
-  // 1. Parties jouées avec mon compte ; 2. parties que j'ai créées (j'ai pu tenir le score sans jouer)
+  // Seulement les parties jouées avec mon compte
   const lire = () => Promise.all([
     filtrer(supabase.from('games').select(`${COLONNES}, moi:game_players!inner(profile_id)`).eq('moi.profile_id', moi.id)),
-    filtrer(supabase.from('games').select(COLONNES).eq('created_by', moi.id)),
+    Promise.resolve({ data: [] }),
   ]);
   let [jouees, creees] = await lire();
   // Base sans les tournois (script 016 non exécuté) : on relit sans la colonne du tournoi
@@ -215,10 +216,12 @@ function carteJeuClub(g) {
   let rang = 1; const rangs = {};
   groupes.forEach((gr) => { gr.forEach((p) => { rangs[p] = rang; }); rang += gr.length; });
   const monRang = moiIdx >= 0 ? rangs[moiIdx] : null;
-  const res = monRang === 1 ? { cle: 'victoire', texte: 'Victoire' } : monRang ? { cle: 'defaite', texte: `${monRang}e place` } : { cle: 'arbitre', texte: 'Terminée' };
+  const enCours = g.statut === 'live';
+  const res = enCours ? { cle: 'live', texte: 'En cours' }
+    : monRang === 1 ? { cle: 'victoire', texte: 'Victoire' } : monRang ? { cle: 'defaite', texte: `${monRang}e place` } : { cle: 'arbitre', texte: 'Terminée' };
   const date = new Date(g.created_at);
   const capital = g.jeu === 'capital';
-  const lignes = groupes.flat().map((p) => `
+  const lignes = enCours ? joueurs.map((j, p) => `<li class="${p === moiIdx ? 'mp-camp--moi' : ''}"><span class="mp-camp__nom">${esc(j.nom)}</span></li>`).join('') : groupes.flat().map((p) => `
     <li class="${p === moiIdx ? 'mp-camp--moi' : ''}${rangs[p] === 1 ? ' mp-camp--gagnant' : ''}">
       <span class="mp-camp__nom">${rangs[p]}. ${esc(joueurs[p]?.nom || '?')}</span>
       <b class="mp-camp__score">${r.totaux?.[p] ?? ''}${capital ? '' : '<small> pts</small>'}</b>
@@ -239,7 +242,7 @@ function carteJeuClub(g) {
       </header>
       <ul class="mp-camps">${lignes}</ul>
       <p class="mp-carte__format">Jeu du club · ${joueurs.length} joueur${joueurs.length > 1 ? 's' : ''} · hors statistiques</p>
-      ${feuille}
+      ${enCours ? `<div class="actions"><a class="bouton bouton--petit bouton--plein" href="pentadarts.html?${capital ? 'jeu=capital&' : ''}reprendre=${encodeURIComponent(g.id)}">Reprendre</a></div>` : feuille}
     </article>`;
 }
 
