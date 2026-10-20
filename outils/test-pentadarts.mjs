@@ -157,5 +157,16 @@ console.log('Totaux :', JSON.stringify(tot), e.final.groupes.map((g) => g.map((p
   egal(r.resultats.centre.classement, [1, 2, 0], 'J3 2e, J1 3e');
 }
 
+// ---------- Cricket : triple 20 sur le 20 (3 touches) ou sur la case Triple (1 touche) ----------
+{
+  const c3 = cfg(3);
+  const B = [V(50, 50, 50), V(50, 50, 50), V(0), V(50, 50, 50), V(50, 0, 0), V(0)];   // centre : J1 gagne
+  let s = calculer(c3, B);
+  egal(s.jeu, 'mickey', 'cricket');
+  B.push(V('20*3', 'T', 'C*2'));   // J2 (commence) : T20 sur le 20, un triple sur la case Triple, bulle 50
+  s = calculer(c3, B);
+  egal([s.jeux.mickey.touches[1]['20'], s.jeux.mickey.touches[1].T, s.jeux.mickey.touches[1].C], [3, 1, 2], 'T20 → 20 fermé ; Triple 1 ; bulle 2 touches');
+}
+
 console.log(`${ok} PASS, ${ko} FAIL`);
 process.exit(ko ? 1 : 0);

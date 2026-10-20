@@ -6,7 +6,7 @@
 //  La partie est rejouée à partir de la liste des actions (événements) :
 //  annuler = retirer la dernière action, reprendre = rejouer la liste.
 //
-//  Jeux, dans l'ordre : 1 Le centre · 2 Le mickey · 3 Le finish ·
+//  Jeux, dans l'ordre : 1 Le centre · 2 Le cricket (« mickey ») · 3 Le finish ·
 //  4 Le 301 (1re manche) · 4' Le 301 (2e manche) · 5 Le capital.
 //  Seuls les 3 premiers de chaque jeu marquent des points.
 //  L'ordre de départ (tiré à la bulle) tourne d'un joueur à chaque jeu.
@@ -23,7 +23,7 @@ import { valeurFleche } from './compter-calcul.js?v=__VERSION__';
 
 export const JEUX = {
   centre: { titre: 'Le centre', num: '1', points: [3, 1, 0] },
-  mickey: { titre: 'Le mickey', num: '2', points: [3, 1, 0] },
+  mickey: { titre: 'Le cricket', num: '2', points: [3, 1, 0] },
   finish: { titre: 'Le finish', num: '3', points: [6, 2, 0] },
   '301a': { titre: 'Le 301 (1re manche)', num: '4', points: [3, 1, 0] },
   '301b': { titre: 'Le 301 (2e manche)', num: "4'", points: [3, 1, 0] },
@@ -34,6 +34,15 @@ export const ORDRE_PENTADARTS = ['centre', 'mickey', 'finish', '301a', '301b', '
 export const CENTRE_BUT = 11;
 export const CIBLES_MICKEY = ['20', '19', '18', '17', '16', '15', 'C', 'T', 'D'];
 export const LIBELLES_MICKEY = { C: 'Centre', T: 'Triple', D: 'Double' };
+// Libellé d'une fléchette du cricket : « 20*3 » → T20, « C*2 » → 50, « T » → Triple
+export function libelleCricket(f) {
+  if (!f) return 'Raté';
+  const [c, n] = String(f).split('*');
+  if (c === 'C') return n === '2' ? '50' : '25';
+  if (LIBELLES_MICKEY[c]) return LIBELLES_MICKEY[c];
+  return `${n === '3' ? 'T' : n === '2' ? 'D' : ''}${c}`;
+}
+export const touchesFleche = (f) => (f ? Number(String(f).split('*')[1]) || 1 : 0);
 export const FINISHS = [50, 40, 36, 32, 24, 7];
 export const MANCHES_CAPITAL = ['$', '20', 'D', '19', 'T', '18', '57', 'C'];
 export const LIBELLES_CAPITAL = { $: 'Capital', D: 'Double', T: 'Triple', C: 'Centre', 57: '57' };
@@ -85,7 +94,12 @@ const MOTEURS = {
     jouer(st, a) {
       const p = this.courant(st);
       const fl = (a.fleches || []).slice(0, 3);
-      fl.forEach((c) => { if (c && CIBLES_MICKEY.includes(c) && st.touches[p][c] < 3) st.touches[p][c] += 1; });
+      // Une fléchette : « 20 » (1 touche), « 20*3 » (triple 20 posé sur le 20 = 3 touches),
+      // « T » (triple posé sur la case Triple = 1 touche), « C*2 » (bulle 50 = 2 touches au centre)
+      fl.forEach((f) => {
+        const [c, n] = String(f || '').split('*');
+        if (c && CIBLES_MICKEY.includes(c)) st.touches[p][c] = Math.min(3, st.touches[p][c] + (Number(n) || 1));
+      });
       st.volees[p].push(fl);
       st.t += 1;
     },

@@ -8,7 +8,7 @@
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche } from './app.js?v=__VERSION__';
 import {
   calculer, JEUX, CIBLES_MICKEY, LIBELLES_MICKEY, FINISHS, MANCHES_CAPITAL, LIBELLES_CAPITAL,
-  CENTRE_BUT, IMPOSSIBLES_301, pointsCentre, totalMickey, mancheCapital, mickeyFerme,
+  CENTRE_BUT, IMPOSSIBLES_301, pointsCentre, totalMickey, mancheCapital, mickeyFerme, libelleCricket, touchesFleche,
 } from './pentadarts-regles.js?v=__VERSION__';
 
 const MODE = new URLSearchParams(location.search).get('jeu') === 'capital' ? 'capital' : 'pentadarts';
@@ -32,7 +32,7 @@ let enregistre = false;
 // ---------- Textes ----------
 const REGLES = {
   centre: `Le premier à ${CENTRE_BUT} centres (25 = 1, bulle 50 = 2). Le tour se termine pour tous.`,
-  mickey: 'Toucher 3 fois chaque case, dans l\'ordre de votre choix. Triple et double : sur 15 à 20.',
+  mickey: 'Fermer chaque case (3 touches), dans l\'ordre de votre choix. Un triple 20 ferme le 20 d\'un coup, ou coche une fois la case Triple : à vous de choisir.',
   finish: 'Réussir 50, 40, 36, 32, 24 puis 7, en finissant sur un double.',
   '301a': 'Le premier qui finit sur un double gagne. Les autres : classés selon leur reste.',
   '301b': 'Le premier qui finit sur un double gagne. Les autres : classés selon leur reste.',
@@ -45,7 +45,7 @@ if (MODE === 'capital') {
   $('pd-intro').textContent = 'Marquez le plus de points possible avec votre première volée : c\'est votre capital. Ensuite, seuls les points sur la case affichée (20, double, 19, triple, 18, 57, centre) comptent. Une volée à 0 point divise votre capital par 2. Le plus gros capital gagne.';
   $('pd-legende-joueurs').textContent = 'Joueurs (1 à 8)';
 } else {
-  $('pd-intro').textContent = 'Les 5 jeux de la feuille du club : le centre, le mickey, le finish, deux manches de 301 et le capital. Les 3 premiers de chaque jeu marquent des points ; le total désigne le vainqueur. De 3 à 5 joueurs.';
+  $('pd-intro').textContent = 'Les 5 jeux de la feuille du club : le centre, le cricket, le finish, deux manches de 301 et le capital. Les 3 premiers de chaque jeu marquent des points ; le total désigne le vainqueur. De 3 à 5 joueurs.';
   $('pd-legende-joueurs').textContent = 'Joueurs (3 à 5)';
 }
 
@@ -262,11 +262,25 @@ function saisieHtml(etat) {
       ${boutonValider(volee.length === 3)}`;
   }
   if (cle === 'mickey') {
+    // Cricket : simple / double / triple, puis la case. Un double ou un triple sur 15-20 se pose
+    // soit sur son numéro (2 ou 3 touches), soit une fois sur la case Double / Triple.
     const p = etat.joueur;
-    const compte = (c) => st.touches[p][c] + volee.filter((x) => x === c).length;
-    return `${emplacements(volee.map((c) => (c ? (LIBELLES_MICKEY[c] || c) : 'Raté')))}
-      <div class="pd-touches pd-touches--mickey">${CIBLES_MICKEY.map((c) => `<button type="button" class="touche" data-fleche="${c}" ${volee.length >= 3 || compte(c) >= 3 ? 'disabled' : ''}>${esc(LIBELLES_MICKEY[c] || c)}</button>`).join('')}
-        <button type="button" class="touche touche--effacer" data-fleche="" ${volee.length >= 3 ? 'disabled' : ''}>Raté</button></div>
+    const compte = (c) => st.touches[p][c] + volee.filter((f) => String(f || '').split('*')[0] === c).reduce((n, f) => n + touchesFleche(f), 0);
+    const plein = volee.length >= 3;
+    const NUM = ['20', '19', '18', '17', '16', '15'];
+    const bouton = (val, texte, cible) => `<button type="button" class="touche" data-fleche="${val}" ${plein || compte(cible) >= 3 ? 'disabled' : ''}>${texte}</button>`;
+    let touches;
+    if (multi === 1) touches = NUM.map((c) => bouton(c, c, c)).join('') + bouton('C', '25', 'C');
+    else {
+      const L = multi === 3 ? 'T' : 'D';
+      touches = NUM.map((c) => bouton(`${c}*${multi}`, `${L}${c}<small>${multi} touches</small>`, c)).join('')
+        + (multi === 2 ? bouton('C*2', '50<small>2 touches</small>', 'C') : '')
+        + bouton(L, `Case ${multi === 3 ? 'Triple' : 'Double'}<small>1 touche</small>`, L);
+    }
+    return `${emplacements(volee.map(libelleCricket))}
+      <div class="pd-multi" role="group" aria-label="Multiplicateur">${[[1, 'Simple'], [2, 'Double'], [3, 'Triple']].map(([v, l]) => `<button type="button" class="pastille-choix" data-multi="${v}" aria-pressed="${multi === v}">${l}</button>`).join('')}</div>
+      <div class="pd-touches pd-touches--cricket">${touches}
+        <button type="button" class="touche touche--effacer" data-fleche="" ${plein ? 'disabled' : ''}>Raté</button></div>
       ${boutonValider(volee.length === 3 || (mickeyFermeAvec(st, p) && volee.length))}`;
   }
   if (cle === 'finish') return saisieReussite(FINISHS[st.etape[etat.joueur]]);
@@ -275,7 +289,7 @@ function saisieHtml(etat) {
   return '';
 }
 function mickeyFermeAvec(st, p) {
-  return CIBLES_MICKEY.every((c) => st.touches[p][c] + volee.filter((x) => x === c).length >= 3);
+  return CIBLES_MICKEY.every((c) => st.touches[p][c] + volee.filter((f) => String(f || '').split('*')[0] === c).reduce((n, f) => n + touchesFleche(f), 0) >= 3);
 }
 
 function saisieReussite(cible) {
@@ -318,6 +332,7 @@ $('pd-saisie').addEventListener('click', (e) => {
   if (b.dataset.fleche !== undefined) {
     const v = b.dataset.fleche;
     volee.push(etat.jeu === 'centre' ? Number(v) : (v || null));
+    multi = 1;
     return rendre();
   }
   if (b.dataset.multi) { multi = Number(b.dataset.multi); return rendre(); }
@@ -363,7 +378,7 @@ $('pd-abandonner').addEventListener('click', () => {
 });
 
 // ---------- Feuille de score (comme la feuille papier) ----------
-const COURTS = { centre: 'Centre', mickey: 'Mickey', finish: 'Finish', '301a': '301', '301b': '301', capital: 'Capital' };
+const COURTS = { centre: 'Centre', mickey: 'Cricket', finish: 'Finish', '301a': '301', '301b': '301', capital: 'Capital' };
 function feuilleHtml(etat) {
   const ordre = config.ordre;
   if (MODE === 'capital') {
