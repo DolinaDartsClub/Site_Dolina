@@ -68,6 +68,8 @@ async function charger() {
 }
 
 const estOrganisateur = () => role === 'organisateur';
+// Ligue interne (script 044) : un seul tableau, chacun contre chacun, puis le tournoi Master
+const estLigue = () => !!t?.est_ligue;
 // Poules toutes jouées et phase finale pas encore créée
 const poulesTerminees = () => t.format === 'pools' && t.status === 'running'
   && matchs.some((m) => m.phase === 'pool') && !matchs.some((m) => m.phase === 'final')
@@ -84,7 +86,7 @@ function afficher() {
   const nb = inscrits.length;
   const lance = !avantLancement();
   const onglets = [
-    ...(t.format === 'pools' && lance ? [['poules', 'Poules'], ['arbre', 'Phase finale']] : []),
+    ...(t.format === 'pools' && lance ? [['poules', estLigue() ? 'Classement' : 'Poules'], ['arbre', estLigue() ? 'Master' : 'Phase finale']] : []),
     ...(t.format === 'knockout' && lance ? [['arbre', 'Arbre']] : []),
     ...(lance ? [['matchs', `Matchs${mesMatchsAJouer() ? ' <span class="t-compte t-compte--moi">' + mesMatchsAJouer() + '</span>' : ''}`]] : []),
     ...(lance ? [['stats', 'Stats']] : []),
@@ -95,7 +97,7 @@ function afficher() {
 
   zone.innerHTML = `
     <section class="t-entete">
-      <div class="t-entete__haut">${badgeStatut(t.status)}${orga ? '<span class="t-role">Organisateur</span>' : ''}${mi ? '<span class="t-role t-role--joueur">Inscrit</span>' : ''}${role === 'spectateur' ? '<span class="t-role">Spectateur</span>' : ''}</div>
+      <div class="t-entete__haut">${badgeStatut(t.status)}${estLigue() ? '<span class="t-role t-role--ligue">Ligue interne</span>' : ''}${orga ? '<span class="t-role">Organisateur</span>' : ''}${mi ? '<span class="t-role t-role--joueur">Inscrit</span>' : ''}${role === 'spectateur' ? '<span class="t-role">Spectateur</span>' : ''}</div>
       <h1 class="t-titre">${esc(t.name)}</h1>
       <p class="t-sous">${esc(resumeFormat(t))} · organisé par ${esc(t.organisateur || '—')}</p>
       ${t.description ? `<p class="t-description">${esc(t.description)}</p>` : ''}
@@ -104,6 +106,7 @@ function afficher() {
         <p class="t-places">${nb} / ${t.max_participants} inscrits · ${esc(STATUTS[t.status].aide)}</p>`}
     </section>
 
+    ${bandeauLigue()}
     ${t.status === 'finished' ? podium() : ''}
     ${poulesTerminees() && !orga ? '<p class="message message--ok">Toutes les poules sont terminées : l\'organisateur va lancer la phase finale.</p>' : ''}
     ${t.code && t.status !== 'finished' ? blocCode() : ''}
@@ -115,6 +118,16 @@ function afficher() {
     <section class="t-panneau" role="tabpanel">${contenuOnglet(onglet)}</section>`;
 
   brancher();
+}
+
+// Ligue masquée : seuls les admins la voient ; bouton pour l'ouvrir aux membres
+function bandeauLigue() {
+  if (!estLigue() || moi?.role !== 'admin') return '';
+  return t.ligue_visible
+    ? `<section class="t-ligue t-ligue--visible"><span><strong>Ligue visible par les membres</strong><small>Les inscrits la voient et peuvent la rejoindre avec le code.</small></span>
+        <button type="button" class="bouton bouton--petit" data-ligue-visible="0">Masquer de nouveau</button></section>`
+    : `<section class="t-ligue"><span><strong>Ligue masquée (en préparation)</strong><small>Seuls les admins la voient. Les inscrits ne la voient pas, elle n'apparaît pas à l'accueil et son code ne fonctionne pas.</small></span>
+        <button type="button" class="bouton bouton--petit bouton--plein" data-ligue-visible="1">Rendre visible aux membres</button></section>`;
 }
 
 function avancement() {
@@ -213,8 +226,8 @@ function panneauOrganisateur() {
         <h2 class="t-gestion__titre">Gestion du tournoi</h2>
         ${poulesTerminees() ? `
         <div class="t-gestion__ligne t-gestion__ligne--alerte">
-          <span><strong>Toutes les poules sont terminées</strong><small>Vérifiez les classements, puis lancez la phase finale avec les ${t.pool_qualifiers * t.pools_count} qualifiés.</small></span>
-          <button type="button" class="bouton bouton--petit bouton--plein" data-action="phase-finale">Lancer la phase finale</button>
+          <span><strong>${estLigue() ? 'Tous les matchs de la ligue sont joués' : 'Toutes les poules sont terminées'}</strong><small>${estLigue() ? `Vérifiez le classement, puis lancez le tournoi Master avec les ${t.pool_qualifiers} premiers.` : `Vérifiez les classements, puis lancez la phase finale avec les ${t.pool_qualifiers * t.pools_count} qualifiés.`}</small></span>
+          <button type="button" class="bouton bouton--petit bouton--plein" data-action="phase-finale">${estLigue() ? 'Lancer le Master' : 'Lancer la phase finale'}</button>
         </div>` : ''}
         <div class="t-gestion__ligne">
           <span><strong>Tournoi lancé</strong><small>${commence ? 'Des matchs ont été joués : le tirage est définitif.' : 'Aucun match joué : vous pouvez encore annuler le lancement pour corriger les inscriptions.'}</small></span>
@@ -232,12 +245,12 @@ function panneauOrganisateur() {
         <button type="button" class="bouton bouton--petit${ouvert ? '' : ' bouton--plein'}" data-action="basculer">${ouvert ? 'Fermer les inscriptions' : 'Ouvrir les inscriptions'}</button>
       </div>
       <div class="t-gestion__ligne">
-        <span><strong>Lancer le tournoi</strong><small>${nb >= min ? 'Tirage au sort, puis création des ' + (t.format === 'pools' ? 'poules et de leurs matchs.' : 'matchs de l\'arbre.') : `Il faut au moins ${min} inscrits.`}</small></span>
-        <button type="button" class="bouton bouton--petit bouton--plein" data-action="lancer"${nb < min ? ' disabled' : ''}>Lancer le tournoi</button>
+        <span><strong>${estLigue() ? 'Lancer la ligue' : 'Lancer le tournoi'}</strong><small>${nb >= min ? (estLigue() ? `Création des ${nb * (nb - 1) / 2} matchs : chaque inscrit contre chacun des autres.` : 'Tirage au sort, puis création des ' + (t.format === 'pools' ? 'poules et de leurs matchs.' : 'matchs de l\'arbre.')) : `Il faut au moins ${min} inscrits.`}</small></span>
+        <button type="button" class="bouton bouton--petit bouton--plein" data-action="lancer"${nb < min ? ' disabled' : ''}>${estLigue() ? 'Lancer la ligue' : 'Lancer le tournoi'}</button>
       </div>
       <div class="actions">
         <button type="button" class="bouton bouton--petit" data-action="ajouter"${nb >= t.max_participants ? ' disabled title="Tournoi complet"' : ''}>+ Ajouter un participant</button>
-        <a class="bouton bouton--petit" href="tournoi-creer.html?id=${encodeURIComponent(t.id)}">Modifier les paramètres</a>
+        ${estLigue() ? '' : `<a class="bouton bouton--petit" href="tournoi-creer.html?id=${encodeURIComponent(t.id)}">Modifier les paramètres</a>`}
         <button type="button" class="bouton bouton--petit bouton--danger" data-action="supprimer">Supprimer le tournoi</button>
       </div>
     </section>`;
@@ -364,7 +377,7 @@ function etatPoule(k) {
   const libres = Math.max(0, ciblesParPoule() - enCours.length);
   const occ = occupes();
   const lancables = file.filter((x) => !joueurOccupe(x, occ));
-  const proposes = libres ? lancables.slice(0, libres + 1) : [];
+  const proposes = estLigue() ? lancables : (libres ? lancables.slice(0, libres + 1) : []);
   return { enCours, file, libres, lancables, proposes };
 }
 const nomCibles = (n) => (n > 1 ? `${n} cibles` : '1 cible');
@@ -400,7 +413,7 @@ function boutonMatch(m) {
     if (!e.libres || joueurOccupe(m)) {
       // Toutes les cibles de la poule sont prises, ou un joueur est déjà en match : rien à lancer
     } else if (rang >= 0) {
-      boutons.push(`<button type="button" class="bouton bouton--petit${rang < e.libres ? ' bouton--plein' : ''}" data-lancer="${m.id}">Lancer le match</button>`);
+      boutons.push(`<button type="button" class="bouton bouton--petit${(estLigue() ? estMonMatch(m) : rang < e.libres) ? ' bouton--plein' : ''}" data-lancer="${m.id}">Lancer le match</button>`);
     } else if (orga) {
       boutons.push(`<button type="button" class="bouton bouton--petit" data-lancer="${m.id}" title="Ce n'est pas le prochain match de la poule">Lancer hors ordre</button>`);
     }
@@ -446,7 +459,11 @@ function formatMatch(m) {
 function etatPartieMatch(m) {
   const notes = [];
   if (m.status === 'live' && m.game_status === 'finished') notes.push('<p class="m-carte__note">Partie terminée : résultat à valider.</p>');
-  if (m.status === 'ready' && m.phase === 'pool') {
+  if (m.status === 'ready' && m.phase === 'pool' && estLigue()) {
+    notes.push(joueurOccupe(m)
+      ? '<p class="m-carte__note m-carte__note--gris">Un des joueurs a déjà un match en cours.</p>'
+      : '<p class="m-carte__note m-carte__note--gris">À jouer dans la saison, quand les deux joueurs sont disponibles.</p>');
+  } else if (m.status === 'ready' && m.phase === 'pool') {
     const L = lettrePoule(m.pool_no);
     const e = etatPoule(m.pool_no);
     const rang = e.proposes.findIndex((x) => x.id === m.id);
@@ -564,7 +581,86 @@ function blocCiblesFinale({ compacte = false } = {}) {
 // Filtre des poules sur téléphone (une poule à la fois) ; null = pas encore choisi
 let filtrePoule = null;
 
+// Ligue : classement, tableau croisé des résultats, matchs en cours
+function vueLigue() {
+  const membres = inscrits.filter((e) => e.pool_no === 1);
+  const mPoule = matchs.filter((m) => m.phase === 'pool');
+  const classement = classementPoule(membres.map((e) => e.id), mPoule);
+  const qualif = t.pool_qualifiers || 0;
+  const mi = monInscription();
+  const joues = mPoule.filter((m) => m.status === 'done').length;
+  const lignes = classement.map((c) => {
+    const e = parId.get(c.id);
+    const moiIci = mi && c.id === mi.id;
+    return `
+        <tr class="${c.rang <= qualif ? 'p-qualif' : ''}${moiIci ? ' p-moi' : ''}">
+          <td class="p-rang">${c.rang}</td>
+          <th scope="row" class="p-nom">${esc(e?.nom || '—')}${moiIci ? ' <span class="t-moi">Vous</span>' : ''}${c.critere ? `<small>${esc(c.critere)}</small>` : ''}</th>
+          <td>${c.joues}</td><td>${c.victoires}</td><td>${c.defaites}</td>
+          <td>${c.pour}-${c.contre}</td>
+          <td class="p-points">${c.points}</td>
+        </tr>`;
+  }).join('');
+  // Tableau croisé : ligne = joueur, colonne = adversaire, case = score du joueur de la ligne
+  const ordre = classement.map((c) => c.id);
+  const entre = (x, y) => mPoule.find((m) => (m.entry_a === x && m.entry_b === y) || (m.entry_a === y && m.entry_b === x));
+  const initiales = (id) => esc((parId.get(id)?.nom || '?').split(/\s+/).map((x) => x[0]).join('').slice(0, 3).toUpperCase());
+  const grille = `
+    <div class="p-tableau-cadre lg-cadre">
+      <table class="lg-grille">
+        <thead><tr><th></th>${ordre.map((id) => `<th scope="col" title="${esc(parId.get(id)?.nom || '')}">${initiales(id)}</th>`).join('')}</tr></thead>
+        <tbody>${ordre.map((x) => `<tr><th scope="row">${esc(parId.get(x)?.nom || '—')}</th>${ordre.map((y) => {
+    if (x === y) return '<td class="lg-moi"></td>';
+    const m = entre(x, y);
+    if (!m) return '<td></td>';
+    if (m.status === 'live') return '<td class="lg-live" title="En cours">●</td>';
+    if (m.status !== 'done') return '<td class="lg-a-jouer"></td>';
+    const pour = m.entry_a === x ? m.score_a : m.score_b;
+    const contre = m.entry_a === x ? m.score_b : m.score_a;
+    const g = m.winner_entry === x;
+    return `<td class="${g ? 'lg-v' : 'lg-d'}">${m.forfeit ? (g ? 'V' : 'F') : `${pour ?? ''}-${contre ?? ''}`}</td>`;
+  }).join('')}</tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  const enCours = mPoule.filter((m) => m.status === 'live');
+  const mesAJouer = mPoule.filter((m) => m.status === 'ready' && estMonMatch(m));
+  return `
+    <p class="t-legende">Chaque joueur affronte une fois chacun des autres pendant la saison. ${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite ; à égalité, le plus de manches gagnées, puis le match entre les joueurs à égalité.
+      ${qualif ? `Les ${qualif} premiers (surlignés) se qualifient pour le tournoi Master.` : ''}</p>
+    ${reglageQualifies()}
+    <section class="p-poule">
+      <header class="p-poule__haut"><h3>Classement</h3><span class="p-poule__info">${membres.length} joueurs · ${joues}/${mPoule.length} matchs</span></header>
+      <div class="p-tableau-cadre">
+        <table class="p-tableau">
+          <thead><tr><th>#</th><th class="p-nom">Joueur</th><th title="Matchs joués">J</th><th title="Victoires">V</th><th title="Défaites">D</th><th title="Manches gagnées - perdues">Manches</th><th title="Points">Pts</th></tr></thead>
+          <tbody>${lignes}</tbody>
+        </table>
+      </div>
+    </section>
+    <h3 class="cs-sous-titre">Tableau des résultats</h3>
+    <p class="t-legende">Lisez une ligne : le score du joueur contre chaque adversaire (en colonne). Case vide : match à jouer ; ● : en cours. Faites défiler le tableau sur le côté.</p>
+    ${grille}
+    ${enCours.length ? `<h3 class="cs-sous-titre">En cours</h3><div class="m-liste">${enCours.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div>` : ''}
+    ${mesAJouer.length ? `<h3 class="cs-sous-titre">Mes matchs à jouer <span class="t-compte">${mesAJouer.length}</span></h3><div class="m-liste">${mesAJouer.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div>` : ''}
+    <p class="t-legende">Tous les matchs de la ligue sont dans l'onglet Matchs.</p>`;
+}
+
+// Organisateur : nombre de qualifiés pour la phase finale (le Master), tant qu'elle n'est pas lancée
+function reglageQualifies() {
+  if (role !== 'organisateur' || t.status === 'finished' || matchs.some((m) => m.phase === 'final')) return '';
+  const n = inscrits.filter((e) => e.pool_no === 1).length || inscrits.length;
+  const max = Math.min(32, n);
+  return `
+    <div class="c-reglage">
+      <label class="champ c-reglage__champ">Qualifiés pour le Master
+        <select data-qualifies>${Array.from({ length: max - 1 }, (_, i) => i + 2).map((v) => `<option value="${v}" ${v === t.pool_qualifiers ? 'selected' : ''}>${v}</option>`).join('')}</select>
+      </label>
+      <p class="c-reglage__aide">Modifiable jusqu'au lancement du Master. Si ce n'est pas une puissance de 2 (12, par exemple), les mieux classés sont exemptés du premier tour.</p>
+    </div>`;
+}
+
 function vuePoules() {
+  if (estLigue() && t.status !== 'draft' && t.status !== 'open') return vueLigue();
   const nbPoules = t.pools_count || Math.max(0, ...inscrits.map((e) => e.pool_no || 0));
   if (!nbPoules) return '<p class="vide">Les poules apparaîtront au lancement du tournoi.</p>';
   const mi = monInscription();
@@ -682,7 +778,7 @@ function vueMatchs() {
   const mien = vrais.filter(estMonMatch);
   const sections = [];
   // Poules en cours : les cibles de chaque poule, avec les matchs en cours et ceux qui suivent
-  const nbPoules = t.format === 'pools' ? (t.pools_count || 0) : 0;
+  const nbPoules = t.format === 'pools' && !estLigue() ? (t.pools_count || 0) : 0;
   const cibles = [];
   const nC = ciblesParPoule();
   for (let k = 1; k <= nbPoules; k++) {
@@ -840,9 +936,13 @@ function brancherStats() {
 function vueInfos() {
   const lignes = [
     ['Participants', `${t.team_mode === 'double' ? 'Double (2v2)' : 'Individuel'} · ${t.max_participants} places maximum`],
-    ['Format', t.format === 'pools' ? 'Poules puis élimination directe' : 'Élimination directe'],
+    ['Format', estLigue() ? 'Ligue : chacun contre chacun pendant la saison, puis tournoi Master' : (t.format === 'pools' ? 'Poules puis élimination directe' : 'Élimination directe')],
   ];
-  if (t.format === 'pools') {
+  if (estLigue()) {
+    lignes.push(['Qualifiés pour le Master', `${t.pool_qualifiers} premiers du classement`]);
+    lignes.push(['Classement', `${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite. Égalité : le plus de manches gagnées, puis le vainqueur du match entre les joueurs à égalité.`]);
+    if (t.pool_format) lignes.push(['Matchs de la ligue', esc(formatPartie(t.pool_format))]);
+  } else if (t.format === 'pools') {
     lignes.push(['Poules', `${t.pools_count ? `${t.pools_count} poules` : 'Nombre choisi au lancement'} · ${t.pool_qualifiers} qualifié${t.pool_qualifiers > 1 ? 's' : ''} par poule`]);
     lignes.push(['Classement des poules', `${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite. Égalité : le plus de manches gagnées, puis le vainqueur du match entre les joueurs à égalité.`]);
     if (t.pool_format) lignes.push(['Matchs de poule', esc(formatPartie(t.pool_format))]);
@@ -923,6 +1023,8 @@ function brancher() {
   zone.querySelectorAll('[data-reinit]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); reinitialiser(b.dataset.reinit); }));
   zone.querySelectorAll('[data-cibles-poule]').forEach((s) => s.addEventListener('change', () => changerCibles(s)));
   zone.querySelectorAll('[data-cibles-finale]').forEach((s) => s.addEventListener('change', () => changerCiblesFinale(s)));
+  zone.querySelectorAll('[data-qualifies]').forEach((s) => s.addEventListener('change', () => changerQualifies(s)));
+  zone.querySelector('[data-ligue-visible]')?.addEventListener('click', (e) => changerVisibiliteLigue(e.currentTarget.dataset.ligueVisible === '1'));
 }
 
 async function changerCibles(select) {
@@ -936,6 +1038,28 @@ async function changerCibles(select) {
     return;
   }
   message(zoneMsg, n > 1 ? `${n} cibles par poule : jusqu'à ${n} matchs d'une même poule en même temps.` : '1 cible par poule : un match à la fois dans chaque poule.', 'ok');
+  await charger();
+}
+
+async function changerQualifies(select) {
+  const n = Number(select.value);
+  select.disabled = true;
+  const { error } = await supabase.rpc('definir_qualifies', { p_tournoi: id, p_nombre: n });
+  if (error) {
+    select.disabled = false;
+    select.value = String(t.pool_qualifiers);
+    message(zoneMsg, error.code === 'PGRST202' ? 'Réglage indisponible : le script SQL 044 doit être exécuté dans Supabase.' : erreurFr(error));
+    return;
+  }
+  message(zoneMsg, `${n} qualifiés pour le Master.`, 'ok');
+  await charger();
+}
+
+async function changerVisibiliteLigue(visible) {
+  if (visible && !confirm('Rendre la ligue visible ? Les inscrits la verront dans leurs tournois et le code permettra de la rejoindre.')) return;
+  const { error } = await supabase.rpc('definir_visibilite_ligue', { p_tournoi: id, p_visible: visible });
+  if (error) { message(zoneMsg, erreurFr(error)); return; }
+  message(zoneMsg, visible ? 'La ligue est maintenant visible par les membres.' : 'La ligue est de nouveau masquée : seuls les admins la voient.', 'ok');
   await charger();
 }
 
@@ -1038,18 +1162,18 @@ function ouvrirLancement(mode = 'tournoi', tour = null) {
   majVariant();
   const n = inscrits.length;
   const blocPoules = document.getElementById('lancer-poules');
-  blocPoules.hidden = t.format !== 'pools' || mode === 'finale';
+  blocPoules.hidden = t.format !== 'pools' || mode === 'finale' || estLigue();
   // Cibles : par poule au lancement des poules, phase finale au lancement de l'arbre
   const blocCP = document.getElementById('lancer-cibles-poule');
   const blocCF = document.getElementById('lancer-cibles-finale');
-  blocCP.hidden = mode !== 'tournoi' || t.format !== 'pools';
+  blocCP.hidden = mode !== 'tournoi' || t.format !== 'pools' || estLigue();
   blocCF.hidden = !((mode === 'tournoi' && t.format !== 'pools') || mode === 'finale');
   f.elements.cibles_poule.innerHTML = optionsCibles(8, ciblesParPoule());
   // Phase finale : par défaut, les cibles utilisées pendant les poules
   const defautF = ciblesFinale() || (mode === 'finale' ? Math.min(16, (t.pools_count || 1) * ciblesParPoule()) : null);
   f.elements.cibles_finale.innerHTML = optionsCiblesFinale(defautF);
-  document.getElementById('t-lancer').textContent = mode === 'finale' ? 'Lancer la phase finale' : 'Lancer le tournoi';
-  f.querySelector('[type=submit]').textContent = mode === 'finale' ? 'Créer l\'arbre final' : 'Lancer et tirer au sort';
+  document.getElementById('t-lancer').textContent = estLigue() ? (mode === 'finale' ? 'Lancer le tournoi Master' : 'Lancer la ligue') : (mode === 'finale' ? 'Lancer la phase finale' : 'Lancer le tournoi');
+  f.querySelector('[type=submit]').textContent = estLigue() ? (mode === 'finale' ? 'Créer l\'arbre du Master' : 'Créer les matchs de la ligue') : (mode === 'finale' ? 'Créer l\'arbre final' : 'Lancer et tirer au sort');
   if (mode === 'tour') {
     const duTour = matchs.filter((m) => m.phase === 'final' && m.round_no === tour);
     const nb = duTour.filter((m) => !m.is_third_place).length;
@@ -1074,12 +1198,18 @@ function ouvrirLancement(mode = 'tournoi', tour = null) {
   if (mode === 'finale') {
     const q = t.pool_qualifiers * t.pools_count;
     document.getElementById('erreur-lancer').textContent = '';
-    document.getElementById('lancer-intro').textContent = `Les ${t.pool_qualifiers} premier${t.pool_qualifiers > 1 ? 's' : ''} de chaque poule (${q} qualifiés) : les premiers de poule sont les mieux placés, et deux joueurs d'une même poule ne se rencontrent pas au premier tour quand c'est possible (1er A contre 2e B…). Choisissez le format des matchs de la phase finale.`;
+    document.getElementById('lancer-intro').textContent = estLigue()
+      ? `Les ${t.pool_qualifiers} premiers du classement de la ligue jouent le tournoi Master, les mieux classés étant les mieux placés dans l'arbre. Choisissez le format des matchs du Master.`
+      : `Les ${t.pool_qualifiers} premier${t.pool_qualifiers > 1 ? 's' : ''} de chaque poule (${q} qualifiés) : les premiers de poule sont les mieux placés, et deux joueurs d'une même poule ne se rencontrent pas au premier tour quand c'est possible (1er A contre 2e B…). Choisissez le format des matchs de la phase finale.`;
     majResumeLancement();
     fenLancer.hidden = false;
     return;
   }
   if (t.format === 'pools') {
+    const sel = f.elements.poules;
+    if (estLigue()) { sel.innerHTML = '<option value="1">1</option>'; sel.value = '1'; }
+  }
+  if (t.format === 'pools' && !estLigue()) {
     const sel = f.elements.poules;
     const max = Math.min(16, Math.floor(n / 2));
     const defaut = Math.min(max, t.pools_count || Math.max(1, Math.ceil(n / 4)));
@@ -1088,7 +1218,9 @@ function ouvrirLancement(mode = 'tournoi', tour = null) {
   }
   majResumeLancement();
   document.getElementById('erreur-lancer').textContent = '';
-  document.getElementById('lancer-intro').textContent = t.format === 'pools'
+  document.getElementById('lancer-intro').textContent = estLigue()
+    ? `${n} joueurs : création des ${n * (n - 1) / 2} matchs de la ligue (chacun contre chacun, une fois). Les matchs se jouent pendant la saison, dans l'ordre que les joueurs veulent. Choisissez le format des matchs.`
+    : t.format === 'pools'
     ? `${n} ${t.team_mode === 'double' ? 'doublettes' : 'joueurs'} : tirage au sort des poules, puis création des matchs de poule (chacun contre chacun). Le format de la phase finale se choisira à la fin des poules.`
     : `${n} ${t.team_mode === 'double' ? 'doublettes' : 'joueurs'} : tirage au sort, puis création de l'arbre${(n & (n - 1)) !== 0 ? ' avec des exemptions au premier tour (nombre de joueurs qui n\'est pas une puissance de 2)' : ''}.`;
   fenLancer.hidden = false;
@@ -1116,7 +1248,10 @@ function majResumeLancement() {
   f.sets_n.hidden = !f.sets_kind.value;
   const format = lireFormat();
   let texte = formatPartie(format);
-  if (t.format === 'pools' && modeLancement !== 'finale') {
+  if (estLigue() && modeLancement !== 'finale') {
+    const n = inscrits.length;
+    texte += ` · ${n} joueurs → ${n * (n - 1) / 2} matchs · ${t.pool_qualifiers} qualifiés pour le Master`;
+  } else if (t.format === 'pools' && modeLancement !== 'finale') {
     const n = inscrits.length;
     const p = Number(f.poules.value) || 1;
     const base = Math.floor(n / p);

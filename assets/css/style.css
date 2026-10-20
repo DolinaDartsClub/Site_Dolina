@@ -741,6 +741,22 @@ img { max-width: 100%; display: block; }
 .t-statut--fini { background: #1e1e1e; color: var(--gris); }
 .t-role { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; border: 1px solid var(--bord-fort); color: var(--gris-clair); }
 .t-role--joueur { border-color: var(--orange); color: var(--orange); }
+.t-role--ligue { border-color: var(--orange); background: var(--orange); color: #111; }
+/* Ligue interne (script 044) */
+.t-ligue { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; margin: 0 0 16px; padding: 12px 14px; border: 1px dashed var(--orange); border-radius: 14px; background: rgba(245, 124, 0, .08); }
+.t-ligue span { display: grid; gap: 3px; flex: 1 1 220px; }
+.t-ligue small { color: var(--gris-clair); font-size: 13px; line-height: 1.4; }
+.t-ligue--visible { border-style: solid; border-color: var(--bord-fort); background: transparent; }
+.lg-cadre { margin-bottom: 8px; }
+.lg-grille { border-collapse: separate; border-spacing: 3px; font-size: 12px; }
+.lg-grille th { font-weight: 700; color: var(--gris-clair); white-space: nowrap; }
+.lg-grille thead th { min-width: 34px; font-size: 11px; }
+.lg-grille tbody th { text-align: left; padding-right: 8px; position: sticky; left: 0; background: var(--noir); }
+.lg-grille td { min-width: 34px; height: 30px; text-align: center; border-radius: 6px; background: rgba(255, 255, 255, .04); font-variant-numeric: tabular-nums; font-weight: 700; }
+.lg-grille td.lg-moi { background: repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 4px, transparent 4px 8px); }
+.lg-grille td.lg-v { background: rgba(245, 124, 0, .22); color: var(--orange); }
+.lg-grille td.lg-d { color: var(--gris-clair); }
+.lg-grille td.lg-live { color: var(--orange); }
 
 /* Page Tournois */
 .t-actions { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 16px; }
@@ -1184,6 +1200,9 @@ details.carte-info:not([open]) { gap: 0; }
 
 /* Admin > Tournois */
 .adm-tournois { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.adm-ligue { margin: 0 0 22px; padding: 14px; border: 1px dashed var(--orange); border-radius: 14px; display: grid; gap: 10px; }
+.adm-ligue__creer summary { cursor: pointer; font-weight: 700; color: var(--orange); }
+.adm-ligue__form { display: grid; gap: 12px; margin-top: 12px; }
 .adm-tournoi { display: grid; gap: 4px; padding: 12px 14px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); }
 .adm-tournoi__haut { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .adm-tournoi__nom { font-weight: 700; font-size: 16px; color: var(--blanc); }
