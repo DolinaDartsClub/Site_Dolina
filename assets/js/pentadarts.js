@@ -79,8 +79,10 @@ function afficherTirage() {
       ${rang >= 0 ? `<b>${rang + 1}</b>` : ''}${esc(j.nom)}</button>`;
   }).join('');
   const pret = n >= MIN && n <= MAX && (n === 1 || tirage.length >= n - 1);
+  const rangs = ['Qui est le plus près de la bulle ?', 'Qui est 2e ?', 'Qui est 3e ?', 'Qui est 4e ?'];
+  $('pd-bulle-question').textContent = n > 1 && tirage.length < n ? `👉 ${rangs[tirage.length] || ''}` : (n > 1 ? `✓ ${config.joueurs[tirage[0]]?.nom || ''} commence` : '');
   $('pd-commencer').disabled = !pret;
-  $('pd-commencer').textContent = n < MIN ? `Ajoutez au moins ${MIN} joueur${MIN > 1 ? 's' : ''}` : (pret ? 'Commencer la partie' : 'Faites le tirage à la bulle');
+  $('pd-commencer').textContent = n < MIN ? `Ajoutez au moins ${MIN} joueur${MIN > 1 ? 's' : ''}` : (pret ? 'Commencer la partie' : 'Touchez les noms ci-dessus pour le tirage');
 }
 
 $('pd-membre').addEventListener('change', (e) => {
@@ -113,6 +115,13 @@ $('pd-bulle').addEventListener('click', (e) => {
   afficherTirage();
 });
 $('pd-bulle-effacer').addEventListener('click', () => { tirage = []; afficherTirage(); });
+// Pas de tirage à la bulle possible : ordre tiré au sort
+$('pd-bulle-hasard').addEventListener('click', () => {
+  const idx = config.joueurs.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  tirage = idx;
+  afficherTirage();
+});
 
 $('pd-form').addEventListener('submit', (e) => {
   e.preventDefault();

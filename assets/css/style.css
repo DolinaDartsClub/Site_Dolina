@@ -2313,3 +2313,9 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .pd-histo { display: grid; gap: 4px; }
 .pd-histo__scores { font-size: 13px; color: var(--gris-clair); }
 .pd-histo__scores b { color: var(--orange); }
+/* Tirage à la bulle : noms bien visibles comme boutons à toucher */
+.pd-bulle__question { margin: 8px 0 0; font-weight: 700; color: var(--orange); }
+.pd-bulle__joueur:not(:disabled) { border-color: var(--orange); box-shadow: 0 0 0 1px rgba(245,122,0,.25), 0 4px 14px rgba(245,122,0,.15); }
+.pd-bulle__joueur:not(:disabled):hover { background: rgba(245,122,0,.1); }
+.pd-bulle__joueur--place { opacity: .75; }
+.pd-bulle__outils { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
