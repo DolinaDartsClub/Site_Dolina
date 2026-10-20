@@ -304,7 +304,7 @@ const ICONES_NAV = [
   ['contact.html', 'Nous contacter', '<path d="M4 5h16v14H4z"/><path d="M4 6l8 7 8-7"/>'],
 ];
 // Pages rattachées à une rubrique (pour la mettre en avant)
-const RUBRIQUES = { 'scorer.html': 'jouer.html', 'live.html': './', 'mes-parties.html': 'jouer.html', 'tournoi.html': 'tournois.html', 'tournoi-creer.html': 'tournois.html', 'face-a-face.html': 'classement.html', 'records.html': 'classement.html', 'capitaine.html': 'equipes.html', 'compter.html': 'jouer.html', 'pentadarts.html': 'jouer.html', 'equipes.html': 'equipes.html', 'profil.html': 'classement.html', 'article.html': './' };
+const RUBRIQUES = { 'scorer.html': 'jouer.html', 'live.html': './', 'mes-parties.html': 'jouer.html', 'tournoi.html': 'tournois.html', 'tournoi-creer.html': 'tournois.html', 'face-a-face.html': 'classement.html', 'records.html': 'classement.html', 'capitaine.html': 'equipes.html', 'compter.html': 'jouer.html', 'pentadarts.html': 'jouer.html', 'echauffement.html': 'jouer.html', 'equipes.html': 'equipes.html', 'profil.html': 'classement.html', 'article.html': './' };
 
 function ajouterBarreIcones() {
   const entete = document.querySelector('.entete');
@@ -745,7 +745,7 @@ window.addEventListener('load', majHauteurEntete);
   if (['scorer.html', 'live.html'].includes(page) || document.body.classList.contains('sans-nav')) return;
   const RUB = {
     'classement.html': 'stats.html', 'records.html': 'stats.html', 'face-a-face.html': 'stats.html', 'profil.html': 'stats.html',
-    'mes-parties.html': 'jouer.html', 'compter.html': 'jouer.html', 'pentadarts.html': 'jouer.html', 'tournoi.html': 'tournois.html', 'tournoi-creer.html': 'tournois.html',
+    'mes-parties.html': 'jouer.html', 'compter.html': 'jouer.html', 'pentadarts.html': 'jouer.html', 'echauffement.html': 'jouer.html', 'tournoi.html': 'tournois.html', 'tournoi-creer.html': 'tournois.html',
     'capitaine.html': 'equipes.html', 'article.html': './',
   };
   const actuelle = RUB[page] || page;

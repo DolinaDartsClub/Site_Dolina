@@ -2342,3 +2342,39 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .pd-score-match b { color: var(--orange); font-size: 15px; }
 .pd-manches { margin: 0; padding-left: 20px; display: grid; gap: 4px; color: var(--gris-clair); }
 .pd-manches strong { color: var(--blanc); }
+
+/* ===================== Échauffement ===================== */
+.page--echauffement { display: grid; gap: 18px; }
+.ec-option { display: flex; gap: 10px; align-items: center; font-size: 15px; }
+.ec-option input { width: 20px; height: 20px; accent-color: var(--orange); }
+.ec-records__liste { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.ec-records__liste span { display: grid; padding: 8px 14px; border-radius: 12px; border: 1px solid var(--bord); background: rgba(255,255,255,.03); }
+.ec-records__liste b { font-family: var(--police-titre); font-size: 22px; color: var(--orange); }
+.ec-records__liste small { color: var(--gris); font-size: 12px; }
+.ec-progres { display: grid; gap: 8px; }
+.ec-etapes { display: flex; gap: 6px; flex-wrap: wrap; }
+.ec-etape { display: grid; justify-items: center; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--bord); font-weight: 700; color: var(--gris-clair); }
+.ec-etape small { font-size: 10px; font-weight: 500; color: var(--gris); }
+.ec-etape--fait { border-color: var(--orange); background: rgba(245,122,0,.18); color: var(--blanc); }
+.ec-etape--encours { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(245,122,0,.35); color: var(--orange); }
+.ec-etapes--doubles { gap: 4px; }
+.ec-double { display: grid; justify-items: center; min-width: 40px; padding: 5px 6px; border-radius: 9px; border: 1px solid var(--bord); font-size: 13px; font-weight: 700; color: var(--gris-clair); }
+.ec-double--fait { background: var(--orange); border-color: var(--orange); color: var(--noir); }
+.ec-double--encours { border-color: var(--orange); color: var(--orange); box-shadow: 0 0 0 2px rgba(245,122,0,.35); }
+.ec-pts { font-style: normal; font-size: 8px; letter-spacing: 1px; }
+.ec-cible { display: grid; gap: 8px; padding: 16px; border-radius: 14px; border: 1px solid var(--verre-bord, var(--bord)); background: var(--verre, var(--carte)); text-align: center; }
+.ec-cible__sur { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); font-weight: 700; }
+.ec-cible__titre { margin: 0; font-family: var(--police-titre); font-size: 34px; text-transform: uppercase; }
+.ec-vise { color: var(--orange); font-size: 26px; }
+.ec-jauge { height: 10px; border-radius: 999px; background: #2a2a2a; overflow: hidden; }
+.ec-jauge span { display: block; height: 100%; background: var(--orange); transition: width .25s; }
+.ec-cible__pts { margin: 0; color: var(--gris-clair); }
+.ec-cible__pts b { font-family: var(--police-titre); font-size: 26px; color: var(--orange); }
+.ec-saisie { display: grid; gap: 10px; }
+.ec-touches { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ec-record { margin: 0; font-weight: 700; color: var(--orange); }
+.ec-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.ec-stats span { display: grid; justify-items: center; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--bord); background: rgba(255,255,255,.03); text-align: center; }
+.ec-stats b { font-family: var(--police-titre); font-size: 24px; }
+.ec-stats small { color: var(--gris); font-size: 11px; }
+.ec-vise { display: block; font-size: 22px; }
