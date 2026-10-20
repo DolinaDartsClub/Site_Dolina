@@ -2378,3 +2378,4 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .ec-stats b { font-family: var(--police-titre); font-size: 24px; }
 .ec-stats small { color: var(--gris); font-size: 11px; }
 .ec-vise { display: block; font-size: 22px; }
+.jeux__onglets { margin: 4px 0 6px; } .jeux__onglets button { flex: 1 0 auto; }

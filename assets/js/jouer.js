@@ -21,6 +21,24 @@ let joueurs = [];          // { type: 'membre' | 'invite', id?, nom }
 let affectation = {};      // index du joueur -> 1 | 2 (doublettes)
 const typeMatch = brancherTypeMatch(document.getElementById('type-match'));
 
+// ---------- Onglets du choix des jeux : « Jouer un match » / « S'entraîner et s'échauffer » ----------
+const CLE_ONGLET = 'dolina-jouer-onglet';
+function choisirOnglet(nom) {
+  document.querySelectorAll('[data-onglet-jeux]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.ongletJeux === nom)));
+  document.getElementById('panneau-jouer').hidden = nom !== 'jouer';
+  document.getElementById('panneau-entrainer').hidden = nom !== 'entrainer';
+  try { localStorage.setItem(CLE_ONGLET, nom); } catch { /* sans importance */ }
+}
+document.querySelector('.jeux__onglets')?.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-onglet-jeux]');
+  if (b) choisirOnglet(b.dataset.ongletJeux);
+});
+(() => {
+  let nom = location.hash === '#entrainement' ? 'entrainer' : null;
+  if (!nom) { try { nom = localStorage.getItem(CLE_ONGLET); } catch { /* idem */ } }
+  choisirOnglet(nom === 'entrainer' ? 'entrainer' : 'jouer');
+})();
+
 // ---------- Accès ----------
 
 // La page Jouer affiche le choix des jeux ; « Match X01 » (#match) ouvre la création de match
