@@ -341,14 +341,33 @@ function ligneJoueur(m, cote) {
     </div>`;
 }
 
-// ---------- Poules : une cible par poule ----------
-// Dans une poule, un seul match à la fois ; les matchs s'enchaînent dans l'ordre des journées.
+// ---------- Poules : cibles de chaque poule (script 042) ----------
+// Chaque poule joue sur N cibles (réglé par l'organisateur, 1 par défaut) : jusqu'à N matchs
+// de la poule en même temps. Un joueur ne joue qu'un match à la fois. Les matchs suivent l'ordre des journées.
 const ordrePoule = (a, b) => a.round_no - b.round_no || a.match_no - b.match_no;
+const ciblesParPoule = () => Math.max(1, Number(t?.cibles_par_poule) || 1);
 function matchsDePoule(k) { return matchs.filter((x) => x.phase === 'pool' && x.pool_no === k).sort(ordrePoule); }
-function enCoursDePoule(k) { return matchsDePoule(k).find((x) => x.status === 'live') || null; }
-// Cible libre : les 2 prochains matchs de la poule sont proposés (si des joueurs du 1er ne sont pas prêts)
-const PROPOSES_PAR_POULE = 2;
+function enCoursDePoule(k) { return matchsDePoule(k).filter((x) => x.status === 'live'); }
 function fileDePoule(k) { return matchsDePoule(k).filter((x) => x.status === 'ready'); }
+// Joueurs (inscriptions) qui ont un match en cours dans le tournoi
+function occupes() {
+  const s = new Set();
+  matchs.forEach((x) => { if (x.status === 'live') { s.add(x.entry_a); s.add(x.entry_b); } });
+  return s;
+}
+const joueurOccupe = (m, occ = occupes()) => occ.has(m.entry_a) || occ.has(m.entry_b);
+// État des cibles d'une poule : en cours, cibles libres, matchs lançables maintenant (joueurs libres)
+// et matchs proposés (une proposition de plus que de cibles libres, si des joueurs ne sont pas prêts)
+function etatPoule(k) {
+  const enCours = enCoursDePoule(k);
+  const file = fileDePoule(k);
+  const libres = Math.max(0, ciblesParPoule() - enCours.length);
+  const occ = occupes();
+  const lancables = file.filter((x) => !joueurOccupe(x, occ));
+  const proposes = libres ? lancables.slice(0, libres + 1) : [];
+  return { enCours, file, libres, lancables, proposes };
+}
+const nomCibles = (n) => (n > 1 ? `${n} cibles` : '1 cible');
 
 function boutonMatch(m) {
   const orga = role === 'organisateur';
@@ -356,12 +375,12 @@ function boutonMatch(m) {
   const jeTiensLeScore = moi && m.game_created_by === moi.id;
   const boutons = [];
   if (m.status === 'ready' && autorise && m.phase === 'pool') {
-    const enCours = enCoursDePoule(m.pool_no);
-    const rang = fileDePoule(m.pool_no).findIndex((x) => x.id === m.id);
-    if (enCours) {
-      // La cible de la poule est occupée : rien à lancer
-    } else if (rang >= 0 && rang < PROPOSES_PAR_POULE) {
-      boutons.push(`<button type="button" class="bouton bouton--petit${rang === 0 ? ' bouton--plein' : ''}" data-lancer="${m.id}">Lancer le match</button>`);
+    const e = etatPoule(m.pool_no);
+    const rang = e.proposes.findIndex((x) => x.id === m.id);
+    if (!e.libres || joueurOccupe(m)) {
+      // Toutes les cibles de la poule sont prises, ou un joueur est déjà en match : rien à lancer
+    } else if (rang >= 0) {
+      boutons.push(`<button type="button" class="bouton bouton--petit${rang < e.libres ? ' bouton--plein' : ''}" data-lancer="${m.id}">Lancer le match</button>`);
     } else if (orga) {
       boutons.push(`<button type="button" class="bouton bouton--petit" data-lancer="${m.id}" title="Ce n'est pas le prochain match de la poule">Lancer hors ordre</button>`);
     }
@@ -398,13 +417,16 @@ function etatPartieMatch(m) {
   const notes = [];
   if (m.status === 'live' && m.game_status === 'finished') notes.push('<p class="m-carte__note">Partie terminée : résultat à valider.</p>');
   if (m.status === 'ready' && m.phase === 'pool') {
-    const enCours = enCoursDePoule(m.pool_no);
-    const file = fileDePoule(m.pool_no);
-    const rang = file.findIndex((x) => x.id === m.id);
-    if (enCours) notes.push(`<p class="m-carte__note m-carte__note--gris">Cible de la poule ${lettrePoule(m.pool_no)} occupée : M${enCours.match_no} en cours.${rang === 0 ? ' Ce match est le suivant.' : ''}</p>`);
-    else if (rang === 0) notes.push(`<p class="m-carte__note">Prochain match sur la cible de la poule ${lettrePoule(m.pool_no)}.</p>`);
-    else if (rang > 0 && rang < PROPOSES_PAR_POULE) notes.push(`<p class="m-carte__note">Peut aussi être lancé maintenant sur la cible de la poule ${lettrePoule(m.pool_no)} (si les joueurs de M${file[0].match_no} ne sont pas prêts).</p>`);
-    else if (rang > 0) notes.push(`<p class="m-carte__note m-carte__note--gris">À jouer après M${file[rang - 1].match_no} sur la cible de la poule ${lettrePoule(m.pool_no)}.</p>`);
+    const L = lettrePoule(m.pool_no);
+    const e = etatPoule(m.pool_no);
+    const rang = e.proposes.findIndex((x) => x.id === m.id);
+    const rangFile = e.file.findIndex((x) => x.id === m.id);
+    const n = ciblesParPoule();
+    if (joueurOccupe(m)) notes.push('<p class="m-carte__note m-carte__note--gris">Un des joueurs a déjà un match en cours : ce match attend la fin du sien.</p>');
+    else if (!e.libres) notes.push(`<p class="m-carte__note m-carte__note--gris">${n > 1 ? `Les ${n} cibles de la poule ${L} sont occupées` : `Cible de la poule ${L} occupée`} : ${e.enCours.map((x) => `M${x.match_no}`).join(', ')} en cours.${rangFile === 0 ? ' Ce match est le suivant.' : ''}</p>`);
+    else if (rang >= 0 && rang < e.libres) notes.push(`<p class="m-carte__note">À lancer maintenant${n > 1 ? ` sur une cible libre de la poule ${L}` : ` sur la cible de la poule ${L}`}.</p>`);
+    else if (rang >= 0) notes.push(`<p class="m-carte__note">Peut aussi être lancé maintenant (si les joueurs d'un match précédent ne sont pas prêts).</p>`);
+    else if (rangFile > 0) notes.push(`<p class="m-carte__note m-carte__note--gris">À jouer après M${e.file[rangFile - 1].match_no} dans la poule ${L}.</p>`);
   }
   if (m.corrected_at) notes.push('<p class="m-carte__note m-carte__note--gris">Score corrigé par l\'organisateur</p>');
   if (m.format && m.status !== 'done' && m.status !== 'bye') notes.push(`<p class="m-carte__note m-carte__note--gris">${esc(formatPartie(m.format))}</p>`);
@@ -430,18 +452,41 @@ function carteMatch(m, { avecLibelle = true, compacte = false } = {}) {
 
 // ---------- Poules ----------
 
-// Sous le classement de chaque poule : sa cible (match en cours, ou les prochains à lancer)
+// Titre court de l'état des cibles d'une poule
+function resumeCibles(e) {
+  const n = ciblesParPoule();
+  const pris = e.enCours.length;
+  if (n === 1) return pris ? 'en cours' : (e.proposes.length > 1 ? 'à lancer, au choix' : 'à lancer');
+  if (!e.libres) return `${pris} en cours · toutes prises`;
+  return `${pris ? `${pris} en cours · ` : ''}${e.libres} libre${e.libres > 1 ? 's' : ''} sur ${n}`;
+}
+
+// Sous le classement de chaque poule : ses cibles (matchs en cours, puis les prochains à lancer)
 function blocCible(k) {
   if (t.status !== 'running') return '';
-  const enCours = enCoursDePoule(k);
-  const file = fileDePoule(k);
-  if (!enCours && !file.length) return '';
-  const tetes = enCours ? [enCours] : file.slice(0, PROPOSES_PAR_POULE);
+  const e = etatPoule(k);
+  if (!e.enCours.length && !e.file.length) return '';
+  const tetes = [...e.enCours, ...e.proposes];
+  if (!tetes.length) return '';
   return `
         <div class="p-cible">
-          <h4 class="p-journee">Cible de la poule · ${enCours ? 'en cours' : (tetes.length > 1 ? 'à lancer, au choix' : 'à lancer')}</h4>
+          <h4 class="p-journee">${ciblesParPoule() > 1 ? `${nomCibles(ciblesParPoule())} pour la poule` : 'Cible de la poule'} · ${resumeCibles(e)}</h4>
           <div class="m-liste">${tetes.map((x) => carteMatch(x, { avecLibelle: false })).join('')}</div>
         </div>`;
+}
+
+// Réglage de l'organisateur : nombre de cibles par poule (modifiable pendant le tournoi)
+function reglageCibles() {
+  if (role !== 'organisateur' || t.format !== 'pools' || t.status === 'finished') return '';
+  if (matchs.some((m) => m.phase === 'final')) return '';
+  const n = ciblesParPoule();
+  return `
+    <div class="c-reglage">
+      <label class="champ c-reglage__champ">Cibles par poule
+        <select data-cibles-poule>${Array.from({ length: 8 }, (_, i) => i + 1).map((v) => `<option value="${v}" ${v === n ? 'selected' : ''}>${v}</option>`).join('')}</select>
+      </label>
+      <p class="c-reglage__aide">Nombre de matchs d'une même poule qui peuvent se jouer en même temps. Un joueur ne joue qu'un match à la fois.</p>
+    </div>`;
 }
 
 // Filtre des poules sur téléphone (une poule à la fois) ; null = pas encore choisi
@@ -502,6 +547,7 @@ function vuePoules() {
       ${Array.from({ length: nbPoules }, (_, i) => i + 1).map((k) => `<button type="button" data-filtre-poule="${k}" aria-pressed="${filtrePoule === String(k)}">Poule ${lettrePoule(k)}${mi?.pool_no === k ? ' ★' : ''}</button>`).join('')}
       <button type="button" data-filtre-poule="tout" aria-pressed="${filtrePoule === 'tout'}">Toutes</button>
     </div>
+    ${t.status === 'running' ? reglageCibles() : ''}
     <div class="p-poules">${blocs.join('')}</div>`;
 }
 
@@ -560,27 +606,29 @@ function vueMatchs() {
   ];
   const mien = vrais.filter(estMonMatch);
   const sections = [];
-  // Poules en cours : une cible par poule, avec le match en cours et ceux qui suivent
+  // Poules en cours : les cibles de chaque poule, avec les matchs en cours et ceux qui suivent
   const nbPoules = t.format === 'pools' ? (t.pools_count || 0) : 0;
   const cibles = [];
+  const nC = ciblesParPoule();
   for (let k = 1; k <= nbPoules; k++) {
-    const enCours = enCoursDePoule(k);
-    const file = fileDePoule(k);
-    if (!enCours && !file.length) continue;
-    const tetes = enCours ? [enCours] : file.slice(0, PROPOSES_PAR_POULE);
-    const ensuite = enCours ? file : file.slice(PROPOSES_PAR_POULE);
+    const e = etatPoule(k);
+    if (!e.enCours.length && !e.file.length) continue;
+    const tetes = [...e.enCours, ...e.proposes];
+    const ensuite = e.file.filter((x) => !e.proposes.includes(x));
+    const etat = resumeCibles(e);
     cibles.push(`
       <div class="c-cible">
-        <h4 class="c-cible__titre">Cible poule ${lettrePoule(k)} <span>${enCours ? 'En cours' : `Libre · ${tetes.length > 1 ? 'au choix' : 'à lancer'}`}</span></h4>
+        <h4 class="c-cible__titre">${nC > 1 ? 'Cibles' : 'Cible'} poule ${lettrePoule(k)} <span>${etat.charAt(0).toUpperCase()}${etat.slice(1)}</span></h4>
         ${tetes.map((x) => carteMatch(x)).join('')}
-        ${ensuite.length ? `<p class="c-cible__suite">Ensuite : ${ensuite.slice(0, 6).map((x) => `M${x.match_no} (${esc(nomEntree(x.entry_a))} – ${esc(nomEntree(x.entry_b))})`).join(' · ')}${ensuite.length > 6 ? ` · et ${ensuite.length - 6} autre${ensuite.length - 6 > 1 ? 's' : ''}` : ''}</p>` : '<p class="c-cible__suite">Dernier match de la poule.</p>'}
+        ${ensuite.length ? `<p class="c-cible__suite">Ensuite : ${ensuite.slice(0, 6).map((x) => `M${x.match_no} (${esc(nomEntree(x.entry_a))} – ${esc(nomEntree(x.entry_b))})`).join(' · ')}${ensuite.length > 6 ? ` · et ${ensuite.length - 6} autre${ensuite.length - 6 > 1 ? 's' : ''}` : ''}</p>` : `<p class="c-cible__suite">${e.file.length > 1 ? 'Derniers matchs de la poule.' : (e.file.length ? 'Dernier match de la poule.' : 'Plus de match à lancer dans cette poule.')}</p>`}
       </div>`);
   }
   if (cibles.length) {
     sections.push(`
       <section class="m-groupe">
-        <h3 class="m-groupe__titre">Poules : une cible par poule</h3>
-        <p class="t-legende">Chaque poule joue sur sa cible : les poules avancent en même temps, et dans une poule les matchs s'enchaînent l'un après l'autre.</p>
+        <h3 class="m-groupe__titre">Poules : ${nomCibles(nC)} par poule</h3>
+        <p class="t-legende">${nC > 1 ? `Chaque poule joue sur ${nC} cibles : jusqu'à ${nC} matchs d'une même poule en même temps, un joueur ne jouant qu'un match à la fois.` : 'Chaque poule joue sur sa cible : les poules avancent en même temps, et dans une poule les matchs s\'enchaînent l\'un après l\'autre.'}</p>
+        ${reglageCibles()}
         <div class="c-cibles">${cibles.join('')}</div>
       </section>`);
   }
@@ -709,6 +757,7 @@ function vueInfos() {
     lignes.push(['Poules', `${t.pools_count ? `${t.pools_count} poules` : 'Nombre choisi au lancement'} · ${t.pool_qualifiers} qualifié${t.pool_qualifiers > 1 ? 's' : ''} par poule`]);
     lignes.push(['Classement des poules', `${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite. Égalité : le plus de manches gagnées, puis le vainqueur du match entre les joueurs à égalité.`]);
     if (t.pool_format) lignes.push(['Matchs de poule', esc(formatPartie(t.pool_format))]);
+    lignes.push(['Cibles par poule', `${ciblesParPoule()} : jusqu'à ${ciblesParPoule()} match${ciblesParPoule() > 1 ? 's' : ''} d'une même poule en même temps`]);
   }
   if (t.final_format) lignes.push([t.format === 'pools' ? 'Matchs de la phase finale' : 'Matchs', esc(formatPartie(t.final_format))]);
   if (!t.pool_format && !t.final_format) lignes.push(['Format des matchs', 'Choisi par l\'organisateur au lancement de chaque phase']);
@@ -782,6 +831,21 @@ function brancher() {
   zone.querySelectorAll('[data-corriger]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirCorrection(b.dataset.corriger); }));
   zone.querySelectorAll('[data-format-tour]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirLancement('tour', Number(b.dataset.formatTour)); }));
   zone.querySelectorAll('[data-reinit]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); reinitialiser(b.dataset.reinit); }));
+  zone.querySelectorAll('[data-cibles-poule]').forEach((s) => s.addEventListener('change', () => changerCibles(s)));
+}
+
+async function changerCibles(select) {
+  const n = Number(select.value);
+  select.disabled = true;
+  const { error } = await supabase.rpc('definir_cibles_poule', { p_tournoi: id, p_nombre: n });
+  if (error) {
+    select.disabled = false;
+    select.value = String(ciblesParPoule());
+    message(zoneMsg, error.code === 'PGRST202' ? 'Réglage indisponible : le script SQL 042 doit être exécuté dans Supabase.' : erreurFr(error));
+    return;
+  }
+  message(zoneMsg, n > 1 ? `${n} cibles par poule : jusqu'à ${n} matchs d'une même poule en même temps.` : '1 cible par poule : un match à la fois dans chaque poule.', 'ok');
+  await charger();
 }
 
 async function copier(texte) {

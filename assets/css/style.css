@@ -1193,7 +1193,11 @@ details.carte-info:not([open]) { gap: 0; }
 .adm-tournoi__confirmer p { margin: 0; font-size: 14px; }
 .bouton--mini { min-height: 30px; padding: 0 10px; font-size: 12px; border-radius: 8px; }
 
-/* Tournoi en poules : une cible par poule */
+/* Tournoi en poules : cibles de chaque poule */
+.c-reglage { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--bord); border-radius: 12px; }
+.c-reglage__champ { margin: 0; flex-direction: row; align-items: center; gap: 8px; }
+.c-reglage__champ select { width: auto; min-width: 64px; }
+.c-reglage__aide { margin: 0; flex: 1 1 220px; font-size: 13px; color: var(--gris-clair); line-height: 1.4; }
 .c-cibles { display: grid; gap: 12px; }
 @media (min-width: 900px) { .c-cibles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .c-cible { display: grid; gap: 6px; align-content: start; }
