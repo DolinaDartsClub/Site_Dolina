@@ -226,7 +226,7 @@ function carteJeuClub(g) {
   const lignes = enCours ? joueurs.map((j, p) => `<li class="${p === moiIdx ? 'mp-camp--moi' : ''}"><span class="mp-camp__nom">${esc(j.nom)}</span></li>`).join('') : groupes.flat().map((p) => `
     <li class="${p === moiIdx ? 'mp-camp--moi' : ''}${rangs[p] === 1 ? ' mp-camp--gagnant' : ''}">
       <span class="mp-camp__nom">${rangs[p]}. ${esc(joueurs[p]?.nom || '?')}</span>
-      <b class="mp-camp__score">${r.totaux?.[p] ?? ''}${capital ? '' : g.jeu === 'cricket' ? '<small> /27</small>' : '<small> pts</small>'}</b>
+      <b class="mp-camp__score">${r.totaux?.[p] ?? ''}${capital ? '' : g.jeu === 'cricket' ? (r.unite === 'manches' ? `<small> manche${(r.totaux?.[p] || 0) > 1 ? 's' : ''}</small>` : '<small> /27</small>') : '<small> pts</small>'}</b>
     </li>`).join('');
   const feuille = !seul && r.jeux ? `
     <details class="mp-feuille"><summary>Voir la feuille</summary>

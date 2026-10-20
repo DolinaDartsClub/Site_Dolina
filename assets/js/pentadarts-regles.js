@@ -264,6 +264,12 @@ export function calculer(config, actions) {
   const ordre0 = config.ordre?.length === n ? config.ordre : config.joueurs.map((_, i) => i);
   const phases = phasesDe(config);
   const etat = { phases, k: 0, jeux: {}, resultats: {}, departage: null, final: null, termine: false };
+  // Format en manches (cricket seul) : « premier à N » ou « au meilleur de N »
+  const f = config.format || { type: 'premier', n: 1 };
+  etat.format = f;
+  etat.objectif = f.type === 'meilleur' ? Math.floor(Math.max(1, f.n) / 2) + 1 : Math.max(1, f.n);
+  etat.manches = [];
+  etat.gagnees = config.joueurs.map(() => 0);
 
   const ouvrir = (k) => {
     const cle = phases[k];
@@ -300,6 +306,17 @@ export function calculer(config, actions) {
     res.points = Object.fromEntries(config.joueurs.map((_, p) => [p, 0]));
     pos = 0;
     res.groupes.forEach((g) => { g.forEach((p, i) => { res.points[p] = points(cle)[pos + i] ?? 0; }); pos += g.length; });
+    // Cricket seul : un match en plusieurs manches (comme en X01)
+    if (config.mode === 'cricket') {
+      const gagnant = res.groupes[0].length === 1 ? res.groupes[0][0] : null;
+      etat.manches.push({ gagnant, touches: Object.fromEntries(st.ordre.map((p) => [p, MOTEURS.mickey.total(st, p)])) });
+      if (gagnant !== null) etat.gagnees[gagnant] += 1;
+      if (Math.max(...etat.gagnees) >= etat.objectif) { finir(); return; }
+      // Manche suivante : le joueur suivant commence
+      delete etat.resultats.mickey;
+      etat.jeux.mickey = MOTEURS.mickey.creer(rotation(ordre0, etat.manches.length));
+      return;
+    }
     if (etat.k + 1 < phases.length) { etat.k += 1; ouvrir(etat.k); } else finir();
   };
 
@@ -323,8 +340,12 @@ export function calculer(config, actions) {
   // Fin de partie : total des points ; égalité pour la 1re ou la 2e place → manche de 501
   const finir = () => {
     if (config.mode === 'cricket') {
-      const st = etat.jeux.mickey;
-      etat.final = { groupes: etat.resultats.mickey.groupes, totaux: Object.fromEntries(st.ordre.map((p) => [p, MOTEURS.mickey.total(st, p)])) };
+      // Classement du match : manches gagnées, puis touches sur toutes les manches
+      const touches = (p) => etat.manches.reduce((t, m) => t + (m.touches[p] || 0), 0);
+      const groupes = grouper(ordre0, (p) => etat.gagnees[p] * 1000 + touches(p));
+      // Une seule manche : on affiche les touches ; sinon les manches gagnées
+      const unite = etat.objectif === 1 ? 'touches' : 'manches';
+      etat.final = { groupes, unite, totaux: Object.fromEntries(ordre0.map((p) => [p, unite === 'touches' ? touches(p) : etat.gagnees[p]])), manches: etat.manches };
       etat.termine = true;
       return;
     }

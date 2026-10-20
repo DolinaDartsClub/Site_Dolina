@@ -74,7 +74,7 @@ async function synchroniser() {
   if (!moi || moi.status !== 'active' || enregistre || enLigneIndispo || !config.joueurs.length) return;
   if (!partieId) {
     const { data, error } = await supabase.from('jeux_parties')
-      .insert({ jeu: MODE, joueurs: joueursEnLigne(), ordre: config.ordre, actions, statut: 'live' }).select('id').single();
+      .insert({ jeu: MODE, joueurs: joueursEnLigne(), ordre: config.ordre, actions, statut: 'live', resultat: config.format ? { format: config.format } : {} }).select('id').single();
     if (error) { enLigneIndispo = true; return; }   // script 040 pas encore lancé : sur cet appareil seulement
     partieId = data.id;
     try { localStorage.setItem(CLE, JSON.stringify({ config, actions, enregistre, partieId, quand: Date.now() })); } catch { /* idem */ }
@@ -85,6 +85,23 @@ async function synchroniser() {
 function oublier() { try { localStorage.removeItem(CLE); } catch { /* idem */ } }
 function lireSauvegarde() {
   try { const s = JSON.parse(localStorage.getItem(CLE) || 'null'); return s && Date.now() - s.quand < 3 * 86400000 ? s : null; } catch { return null; }
+}
+
+// ---------- Format en manches (cricket seul) ----------
+function lireFormat() {
+  const type = $('pd-format-type').value; let n = Number($('pd-format-n').value) || 1;
+  if (type === 'meilleur' && n % 2 === 0) n += 1;   // au meilleur de : un nombre impair
+  return { type, n };
+}
+const objectifDe = (f) => (f?.type === 'meilleur' ? Math.floor(f.n / 2) + 1 : (f?.n || 1));
+const texteFormat = (f) => (!f || (f.type === 'premier' && f.n === 1) ? 'En une manche'
+  : `${f.type === 'meilleur' ? `Au meilleur de ${f.n} manches` : `Premier à ${f.n} manches`} · ${objectifDe(f)} manche${objectifDe(f) > 1 ? 's' : ''} gagnante${objectifDe(f) > 1 ? 's' : ''}`);
+if (MODE === 'cricket') {
+  $('pd-bloc-format').hidden = false;
+  const maj = () => { const f = lireFormat(); $('pd-format-n').value = String(f.n); $('pd-format-resume').textContent = texteFormat(f); };
+  $('pd-format-type').addEventListener('change', maj);
+  $('pd-format-n').addEventListener('change', maj);
+  maj();
 }
 
 // ---------- Réglages ----------
@@ -157,6 +174,7 @@ $('pd-form').addEventListener('submit', (e) => {
   const n = config.joueurs.length;
   if (n < MIN || n > MAX) return;
   config.ordre = n === 1 ? [0] : (tirage.length === n ? [...tirage] : config.joueurs.map((_, i) => i));
+  if (MODE === 'cricket') config.format = lireFormat();
   actions = [];
   volee = [];
   enregistre = false;
@@ -192,6 +210,11 @@ function rendre() {
   $('pd-num').textContent = cle === 'final' ? '=' : (MODE === 'capital' ? '$' : MODE === 'cricket' ? 'C' : JEUX[cle].num);
   $('pd-jeu-titre').textContent = d ? (d.type === '501' ? 'Départage : manche de 501' : `${JEUX[cle].titre} · départage`) : JEUX[cle].titre;
   $('pd-jeu-regle').textContent = d ? texteDepartage(d) : REGLES[cle];
+  // Cricket en manches : manche en cours et score du match
+  if (MODE === 'cricket' && etat.objectif > 1) {
+    $('pd-jeu-titre').textContent = `${d ? 'Départage · ' : ''}Manche ${etat.manches.length + 1}`;
+    $('pd-jeu-regle').innerHTML = `${esc(texteFormat(config.format))}<span class="pd-score-match">${config.ordre.map((p) => `${esc(nom(p))} <b>${etat.gagnees[p]}</b>`).join(' · ')}</span>`;
+  }
   $('pd-voir-feuille').hidden = SEUL;
   $('pd-tableau').innerHTML = d ? tableauDepartage(etat, d) : TABLEAUX[cle](etat, etat.jeux[cle]);
   $('pd-saisie').innerHTML = `<p class="pd-tour">À <strong>${esc(nom(etat.joueur))}</strong> de lancer${infoTour(etat)}</p>` + saisieHtml(etat);
@@ -420,7 +443,12 @@ const COURTS = { centre: 'Centre', mickey: 'Cricket', finish: 'Finish', '301a': 
 function feuilleHtml(etat) {
   const ordre = config.ordre;
   if (MODE === 'capital') return TABLEAUX.capital({ joueur: -1 }, etat.jeux.capital);
-  if (MODE === 'cricket') return TABLEAUX.mickey({ joueur: -1 }, etat.jeux.mickey);
+  if (MODE === 'cricket') {
+    const m = etat.final?.manches || etat.manches || [];
+    const liste = m.length > 1 || etat.objectif > 1
+      ? `<ol class="pd-manches">${m.map((x, i) => `<li>Manche ${i + 1} : <strong>${x.gagnant !== null ? esc(nom(x.gagnant)) : '—'}</strong></li>`).join('')}</ol>` : '';
+    return liste + (m.length <= 1 ? TABLEAUX.mickey({ joueur: -1 }, etat.jeux.mickey) : '');
+  }
   const lignes = etat.phases.map((c) => {
     const r = etat.resultats[c];
     return `<tr><th><span class="pd-num-mini">${JEUX[c].num}</span>${esc(COURTS[c])}</th>${ordre.map((p) => `<td>${r?.points ? `<b>${r.points[p]}</b><small>${r.rangs[p]}${r.rangs[p] === 1 ? 'er' : 'e'}</small>` : ''}</td>`).join('')}</tr>`;
@@ -451,7 +479,7 @@ function finPartie(etat) {
     <div class="carte-info pd-fin">
       <p class="pd-fin__sur">${NOMS_MODE[MODE]} terminé</p>
       <h1 class="pd-fin__gagnant">${groupes[0].map((p) => esc(nom(p))).join(' et ')} ${groupes[0].length > 1 ? 'gagnent' : 'gagne'} !</h1>
-      <ol class="pd-podium">${podium.map(({ p, r }) => `<li class="pd-podium__ligne${r === 1 ? ' pd-podium__ligne--1' : ''}"><span class="pd-podium__rang">${r}</span><span class="pd-podium__nom">${esc(nom(p))}</span><b>${totaux[p]}<small>${MODE === 'capital' ? '' : MODE === 'cricket' ? ' /27' : ' pts'}</small></b></li>`).join('')}</ol>
+      <ol class="pd-podium">${podium.map(({ p, r }) => `<li class="pd-podium__ligne${r === 1 ? ' pd-podium__ligne--1' : ''}"><span class="pd-podium__rang">${r}</span><span class="pd-podium__nom">${esc(nom(p))}</span><b>${totaux[p]}<small>${MODE === 'capital' ? '' : MODE === 'cricket' ? (etat.final.unite === 'manches' ? ` manche${totaux[p] > 1 ? 's' : ''}` : ' /27') : ' pts'}</small></b></li>`).join('')}</ol>
       ${(etat.final.departages || []).length ? '<p class="match__format">Égalité au total départagée par une manche de 501.</p>' : ''}
       ${feuilleHtml(etat)}
       <p class="match__format" id="pd-etat-enregistrement"></p>
@@ -479,6 +507,7 @@ async function enregistrer(etat) {
     classement: etat.final.groupes,
     totaux: etat.final.totaux,
     jeux: Object.fromEntries(Object.entries(etat.resultats).map(([c, r]) => [c, { points: r.points, rangs: r.rangs }])),
+    ...(config.format ? { format: config.format, unite: etat.final.unite, manches: (etat.final.manches || []).map((m) => m.gagnant) } : {}),
   };
   clearTimeout(attenteSync);
   let { error } = partieId
@@ -524,7 +553,7 @@ function reprendre(cfg, acts, id, dejaEnregistre = false) {
   garder();
   demarrer();
 }
-const versConfig = (g) => ({ mode: MODE, joueurs: (g.joueurs || []).map((j) => ({ nom: j.nom, id: j.profile_id || undefined })), ordre: g.ordre || [] });
+const versConfig = (g) => ({ mode: MODE, joueurs: (g.joueurs || []).map((j) => ({ nom: j.nom, id: j.profile_id || undefined })), ordre: g.ordre || [], ...(g.resultat?.format ? { format: g.resultat.format } : {}) });
 
 async function afficherReprises() {
   const local = lireSauvegarde();

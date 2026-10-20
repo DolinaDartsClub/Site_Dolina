@@ -187,5 +187,23 @@ console.log('Totaux :', JSON.stringify(tot), e.final.groupes.map((g) => g.map((p
   egal(calculer(c2, E).final.groupes, [[1], [0]], 'J2 gagne à la bulle');
 }
 
+// ---------- Cricket seul en manches ----------
+{
+  const c2 = { ...cfg(2, 'cricket'), format: { type: 'premier', n: 2 } };
+  const tout = [V('20*3', '19*3', '18*3'), V('17*3', '16*3', '15*3'), V('C*2', 'C', 'T'), V('T', 'T', 'D'), V('D', 'D', null)];
+  const B = [];
+  tout.forEach((v) => { B.push(v); B.push(V()); });          // manche 1 : J1 commence et gagne
+  let s = calculer(c2, B);
+  egal([s.termine, s.gagnees, s.joueur], [false, [1, 0], 1], 'manche 1 à J1 ; J2 commence la manche 2');
+  tout.forEach((v) => { B.push(v); B.push(V()); });          // manche 2 : J2 commence et gagne
+  s = calculer(c2, B);
+  egal([s.termine, s.gagnees], [false, [1, 1]], '1 manche partout');
+  tout.forEach((v) => { B.push(v); B.push(V()); });          // manche 3 : J1 commence et gagne
+  s = calculer(c2, B);
+  egal([s.termine, s.final.groupes, s.final.totaux], [true, [[0], [1]], { 0: 2, 1: 1 }], 'J1 gagne 2 manches à 1');
+  const m = calculer({ ...cfg(2, 'cricket'), format: { type: 'meilleur', n: 3 } }, []);
+  egal(m.objectif, 2, 'au meilleur de 3 = 2 manches gagnantes');
+}
+
 console.log(`${ok} PASS, ${ko} FAIL`);
 process.exit(ko ? 1 : 0);

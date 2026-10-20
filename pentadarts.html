@@ -50,6 +50,18 @@
           </div>
         </div>
       </fieldset>
+      <fieldset class="bloc-choix" id="pd-bloc-format" hidden>
+        <legend>Format du match</legend>
+        <div class="deux-colonnes">
+          <label class="champ">Manches
+            <select id="pd-format-type"><option value="premier">Premier à</option><option value="meilleur">Au meilleur de</option></select>
+          </label>
+          <label class="champ">Nombre
+            <select id="pd-format-n"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select>
+          </label>
+        </div>
+        <p class="match__format" id="pd-format-resume" style="margin:0"></p>
+      </fieldset>
       <fieldset class="bloc-choix" id="pd-bloc-bulle" hidden>
         <legend>Tirage à la bulle</legend>
         <p class="match__format" style="margin:0">Chaque joueur lance une fléchette sur la bulle, puis <strong>touchez les noms ci-dessous</strong>, du plus près au plus loin : le premier commencera.</p>
