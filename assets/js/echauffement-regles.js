@@ -2,7 +2,7 @@
 //  Échauffement du club — règles (module pur, testé par outils/test-echauffement.mjs)
 //
 //  1. Scoring : 10 points sur le 20 (simple = 1, double = 2, triple = 3),
-//     puis 10 points sur le 19, 10 points sur le 18 ou le 16 (au choix),
+//     puis 10 points sur le 19, puis sur le 18, puis sur le 16,
 //     puis 5 points à la bulle (25 = 1, 50 = 2). Il faut tout compléter.
 //  2. Doubles (entraînement de Danny Noppert) : doubles pairs de 20 à 2,
 //     puis le double 1, avec 3 fléchettes par volée. On finit « comme au
@@ -18,7 +18,8 @@
 export const ETAPES_SCORING = [
   { cible: '20', but: 10 },
   { cible: '19', but: 10 },
-  { cible: '18/16', but: 10, choix: ['18', '16'] },
+  { cible: '18', but: 10 },
+  { cible: '16', but: 10 },
   { cible: 'B', but: 5 },
 ];
 export const DOUBLES = [20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 1];

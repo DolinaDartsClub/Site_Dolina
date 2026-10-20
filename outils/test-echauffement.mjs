@@ -12,18 +12,19 @@ egal([e.phase, e.etape, e.points], ['scoring', 0, 9], '9 points sur le 20');
 A.push(F('S'));                                       // 10 → le 19
 e = calculer({ mode: 'normal' }, A);
 egal([e.etape, e.points], [1, 0], '20 validé à 10 points');
-A.push(F('T'), F('T'), F('T'), F('D'));               // 11 sur le 19 → étape 18/16
+A.push(F('T'), F('T'), F('T'), F('D'));               // 11 sur le 19 → le 18
 e = calculer({ mode: 'normal' }, A);
-egal(cibleActuelle(e).aChoisir, true, 'il faut choisir 18 ou 16');
-A.push(F('T'));                                       // ignoré tant que pas choisi
-egal(calculer({ mode: 'normal' }, A).points, 0, 'fléchette ignorée avant le choix');
-A.push({ choix: 16 }, F('T'), F('T'), F('T'), F('T'));
+egal(cibleActuelle(e).cible, '18', 'après le 19 : le 18');
+A.push(F('T'), F('T'), F('T'), F('T'));               // 18 validé → le 16
 e = calculer({ mode: 'normal' }, A);
-egal([e.etape, cibleActuelle(e).cible], [3, 'B'], '16 choisi et validé, place à la bulle');
+egal(cibleActuelle(e).cible, '16', 'après le 18 : le 16');
+A.push(F('D'), F('D'), F('D'), F('D'), F('S'), F('0'), F('S'));   // 16 : 2+2+2+2+1+0+1 = 10
+e = calculer({ mode: 'normal' }, A);
+egal([e.etape, cibleActuelle(e).cible], [4, 'B'], '16 validé, place à la bulle');
 A.push(F('50'), F('25'), F('0'), F('50'));           // 2 + 1 + 0 + 2 = 5
 e = calculer({ mode: 'normal' }, A);
 egal([e.phase, cibleActuelle(e).double, cibleActuelle(e).vise], ['doubles', 20, 20], 'bulle à 5 points : place aux doubles (D20)');
-egal(e.flechettesScoring, 16, 'fléchettes de scoring comptées (la fléchette avant le choix ne compte pas)');
+egal(e.flechettesScoring, 23, 'fléchettes de scoring comptées');
 
 // ---------- Doubles : exemple de la règle (D18 : simple 18, D9, D18 = 2 finishs) ----------
 const D = (...f) => f.map(F);

@@ -63,7 +63,7 @@ function jouer(a) { actions.push(a); garder(); rendre(); }
 function progres(e) {
   const scoring = config.sansScoring ? '' : `<div class="ec-etapes">${ETAPES_SCORING.map((et, k) => {
     const etat = e.phase !== 'scoring' || k < e.etape ? 'fait' : (k === e.etape ? 'encours' : '');
-    const nom = et.cible === 'B' ? 'Bulle' : (et.cible === '18/16' ? (e.choix || '18/16') : et.cible);
+    const nom = et.cible === 'B' ? 'Bulle' : et.cible;
     return `<span class="ec-etape ec-etape--${etat}">${esc(nom)}<small>${et.but} pts</small></span>`;
   }).join('')}</div>`;
   const doubles = `<div class="ec-etapes ec-etapes--doubles">${DOUBLES.map((d, k) => {
@@ -123,7 +123,6 @@ $('ec-saisie').addEventListener('click', (ev) => {
   if (b.dataset.f !== undefined) return jouer({ f: b.dataset.f });
 });
 $('ec-annuler').addEventListener('click', () => {
-  // On retire aussi un choix 18/16 resté seul
   actions.pop();
   garder();
   rendre();
