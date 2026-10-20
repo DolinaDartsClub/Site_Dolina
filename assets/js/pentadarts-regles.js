@@ -253,7 +253,9 @@ function jouerDepartage(d, a, etapes, points) {
 // ---------- La partie ----------
 
 export function phasesDe(config) {
-  return config.mode === 'capital' ? ['capital'] : ORDRE_PENTADARTS;
+  if (config.mode === 'capital') return ['capital'];
+  if (config.mode === 'cricket') return ['mickey'];   // le cricket seul : mêmes règles que dans le Pentadarts
+  return ORDRE_PENTADARTS;
 }
 
 // Rejoue la partie : renvoie l'état complet pour l'affichage
@@ -270,7 +272,8 @@ export function calculer(config, actions) {
   };
   ouvrir(0);
 
-  const points = (cle) => (config.mode === 'capital' ? [] : JEUX[cle].points);
+  // Jeu seul : pas de points ; au cricket seul, une égalité pour la victoire se départage à la bulle
+  const points = (cle) => (config.mode === 'capital' ? [] : config.mode === 'cricket' ? [1] : JEUX[cle].points);
 
   // Fin d'un jeu : classement, départage éventuel, puis points
   const cloturer = () => {
@@ -319,6 +322,12 @@ export function calculer(config, actions) {
 
   // Fin de partie : total des points ; égalité pour la 1re ou la 2e place → manche de 501
   const finir = () => {
+    if (config.mode === 'cricket') {
+      const st = etat.jeux.mickey;
+      etat.final = { groupes: etat.resultats.mickey.groupes, totaux: Object.fromEntries(st.ordre.map((p) => [p, MOTEURS.mickey.total(st, p)])) };
+      etat.termine = true;
+      return;
+    }
     if (config.mode === 'capital') {
       const st = etat.jeux.capital;
       etat.final = { groupes: MOTEURS.capital.groupes(st), totaux: Object.fromEntries(st.ordre.map((p) => [p, st.capital[p]])) };

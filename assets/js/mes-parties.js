@@ -9,7 +9,8 @@
 import { supabase, esc, formatPartie, etatPartie, profilConnecte, etiquetteType } from './app.js?v=__VERSION__';
 import { JEUX, ORDRE_PENTADARTS } from './pentadarts-regles.js?v=__VERSION__';
 
-const JEUX_CLUB = ['pentadarts', 'capital'];
+const JEUX_CLUB = ['pentadarts', 'capital', 'cricket'];
+const NOMS_JEUX = { pentadarts: 'Pentadarts', capital: 'Le capital', cricket: 'Le cricket' };
 const COURTS = { centre: 'Centre', mickey: 'Cricket', finish: 'Finish', '301a': '301', '301b': '301', capital: 'Capital' };
 
 const PAR_PAGE = 20;
@@ -221,12 +222,13 @@ function carteJeuClub(g) {
     : monRang === 1 ? { cle: 'victoire', texte: 'Victoire' } : monRang ? { cle: 'defaite', texte: `${monRang}e place` } : { cle: 'arbitre', texte: 'Terminée' };
   const date = new Date(g.created_at);
   const capital = g.jeu === 'capital';
+  const seul = g.jeu !== 'pentadarts';
   const lignes = enCours ? joueurs.map((j, p) => `<li class="${p === moiIdx ? 'mp-camp--moi' : ''}"><span class="mp-camp__nom">${esc(j.nom)}</span></li>`).join('') : groupes.flat().map((p) => `
     <li class="${p === moiIdx ? 'mp-camp--moi' : ''}${rangs[p] === 1 ? ' mp-camp--gagnant' : ''}">
       <span class="mp-camp__nom">${rangs[p]}. ${esc(joueurs[p]?.nom || '?')}</span>
-      <b class="mp-camp__score">${r.totaux?.[p] ?? ''}${capital ? '' : '<small> pts</small>'}</b>
+      <b class="mp-camp__score">${r.totaux?.[p] ?? ''}${capital ? '' : g.jeu === 'cricket' ? '<small> /27</small>' : '<small> pts</small>'}</b>
     </li>`).join('');
-  const feuille = !capital && r.jeux ? `
+  const feuille = !seul && r.jeux ? `
     <details class="mp-feuille"><summary>Voir la feuille</summary>
       <div class="pd-defile"><table class="pd-table pd-table--feuille">
         <thead><tr><th></th>${groupes.flat().map((p) => `<th>${esc(joueurs[p]?.nom || '?')}</th>`).join('')}</tr></thead>
@@ -236,13 +238,13 @@ function carteJeuClub(g) {
   return `
     <article class="mp-carte mp-carte--${res.cle} mp-carte--jeu">
       <header class="mp-carte__haut">
-        <span class="mp-carte__ctx mp-carte__ctx--jeu">${capital ? 'Le capital' : 'Pentadarts'}</span>
+        <span class="mp-carte__ctx mp-carte__ctx--jeu">${NOMS_JEUX[g.jeu] || 'Jeu du club'}</span>
         <span class="mp-carte__date">${esc(fmtJour.format(date))} · ${esc(fmtHeure.format(date))}</span>
         <span class="mp-resultat mp-resultat--${res.cle}">${esc(res.texte)}</span>
       </header>
       <ul class="mp-camps">${lignes}</ul>
       <p class="mp-carte__format">Jeu du club · ${joueurs.length} joueur${joueurs.length > 1 ? 's' : ''} · hors statistiques</p>
-      ${enCours ? `<div class="actions"><a class="bouton bouton--petit bouton--plein" href="pentadarts.html?${capital ? 'jeu=capital&' : ''}reprendre=${encodeURIComponent(g.id)}">Reprendre</a></div>` : feuille}
+      ${enCours ? `<div class="actions"><a class="bouton bouton--petit bouton--plein" href="pentadarts.html?${seul ? `jeu=${g.jeu}&` : ''}reprendre=${encodeURIComponent(g.id)}">Reprendre</a></div>` : feuille}
     </article>`;
 }
 

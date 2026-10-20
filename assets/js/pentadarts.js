@@ -11,9 +11,12 @@ import {
   CENTRE_BUT, IMPOSSIBLES_301, pointsCentre, totalMickey, mancheCapital, mickeyFerme, libelleCricket, touchesFleche,
 } from './pentadarts-regles.js?v=__VERSION__';
 
-const MODE = new URLSearchParams(location.search).get('jeu') === 'capital' ? 'capital' : 'pentadarts';
-const MIN = MODE === 'capital' ? 1 : 3;
-const MAX = MODE === 'capital' ? 8 : 5;
+const MODE = ['capital', 'cricket'].includes(new URLSearchParams(location.search).get('jeu')) ? new URLSearchParams(location.search).get('jeu') : 'pentadarts';
+const SEUL = MODE !== 'pentadarts';   // un jeu seul (capital ou cricket), sans points ni feuille de 5 jeux
+const MIN = SEUL ? 1 : 3;
+const MAX = SEUL ? 8 : 5;
+const NOMS_MODE = { pentadarts: 'Pentadarts', capital: 'Le capital', cricket: 'Le cricket' };
+const PARAM = MODE === 'pentadarts' ? '' : `?jeu=${MODE}`;
 const CLE = `dolina-${MODE}`;
 const $ = (id) => document.getElementById(id);
 const zoneMsg = $('message');
@@ -40,7 +43,13 @@ const REGLES = {
   '301b': 'Le premier qui finit sur un double gagne. Les autres : classés selon leur reste.',
   capital: '1re volée : votre capital. Ensuite, seuls les points sur la case comptent ; 0 point = capital divisé par 2.',
 };
-if (MODE === 'capital') {
+if (MODE === 'cricket') {
+  document.title = 'Cricket – Dolina Darts Club';
+  $('pd-nom-jeu').textContent = 'Cricket';
+  $('pd-titre').textContent = 'Le cricket';
+  $('pd-intro').textContent = 'Fermez le 20, 19, 18, 17, 16, 15, le centre, le triple et le double (3 touches chacun), dans l\'ordre de votre choix. Un triple 20 ferme le 20 d\'un coup, ou coche une fois la case Triple. Le premier qui ferme tout gagne, à la fin du tour ; les autres sont classés selon leurs touches. Mêmes règles que dans le Pentadarts.';
+  $('pd-legende-joueurs').textContent = 'Joueurs (1 à 8)';
+} else if (MODE === 'capital') {
   document.title = 'Capital – Dolina Darts Club';
   $('pd-nom-jeu').textContent = 'Capital';
   $('pd-titre').textContent = 'Le capital';
@@ -180,10 +189,10 @@ function rendre() {
   if (etat.termine) return finPartie(etat);
   const cle = etat.jeu;
   const d = etat.departage;
-  $('pd-num').textContent = cle === 'final' ? '=' : (MODE === 'capital' ? '$' : JEUX[cle].num);
+  $('pd-num').textContent = cle === 'final' ? '=' : (MODE === 'capital' ? '$' : MODE === 'cricket' ? 'C' : JEUX[cle].num);
   $('pd-jeu-titre').textContent = d ? (d.type === '501' ? 'Départage : manche de 501' : `${JEUX[cle].titre} · départage`) : JEUX[cle].titre;
   $('pd-jeu-regle').textContent = d ? texteDepartage(d) : REGLES[cle];
-  $('pd-voir-feuille').hidden = MODE === 'capital';
+  $('pd-voir-feuille').hidden = SEUL;
   $('pd-tableau').innerHTML = d ? tableauDepartage(etat, d) : TABLEAUX[cle](etat, etat.jeux[cle]);
   $('pd-saisie').innerHTML = `<p class="pd-tour">À <strong>${esc(nom(etat.joueur))}</strong> de lancer${infoTour(etat)}</p>` + saisieHtml(etat);
   $('pd-annuler').disabled = !actions.length && !volee.length && !saisie;
@@ -402,7 +411,7 @@ $('pd-abandonner').addEventListener('click', () => {
   if (!confirm('Abandonner la partie ? Elle ne sera pas enregistrée.')) return;
   oublier();
   clearTimeout(attenteSync);
-  const fin = () => { location.href = location.pathname + (MODE === 'capital' ? '?jeu=capital' : ''); };
+  const fin = () => { location.href = location.pathname + PARAM; };
   if (partieId) supabase.from('jeux_parties').delete().eq('id', partieId).then(fin, fin); else fin();
 });
 
@@ -410,10 +419,8 @@ $('pd-abandonner').addEventListener('click', () => {
 const COURTS = { centre: 'Centre', mickey: 'Cricket', finish: 'Finish', '301a': '301', '301b': '301', capital: 'Capital' };
 function feuilleHtml(etat) {
   const ordre = config.ordre;
-  if (MODE === 'capital') {
-    const st = etat.jeux.capital;
-    return TABLEAUX.capital({ joueur: -1 }, st);
-  }
+  if (MODE === 'capital') return TABLEAUX.capital({ joueur: -1 }, etat.jeux.capital);
+  if (MODE === 'cricket') return TABLEAUX.mickey({ joueur: -1 }, etat.jeux.mickey);
   const lignes = etat.phases.map((c) => {
     const r = etat.resultats[c];
     return `<tr><th><span class="pd-num-mini">${JEUX[c].num}</span>${esc(COURTS[c])}</th>${ordre.map((p) => `<td>${r?.points ? `<b>${r.points[p]}</b><small>${r.rangs[p]}${r.rangs[p] === 1 ? 'er' : 'e'}</small>` : ''}</td>`).join('')}</tr>`;
@@ -442,9 +449,9 @@ function finPartie(etat) {
   const podium = groupes.map((g) => { const r = rang; rang += g.length; return g.map((p) => ({ p, r })); }).flat();
   zone.innerHTML = `
     <div class="carte-info pd-fin">
-      <p class="pd-fin__sur">${MODE === 'capital' ? 'Le capital' : 'Pentadarts'} terminé</p>
+      <p class="pd-fin__sur">${NOMS_MODE[MODE]} terminé</p>
       <h1 class="pd-fin__gagnant">${groupes[0].map((p) => esc(nom(p))).join(' et ')} ${groupes[0].length > 1 ? 'gagnent' : 'gagne'} !</h1>
-      <ol class="pd-podium">${podium.map(({ p, r }) => `<li class="pd-podium__ligne${r === 1 ? ' pd-podium__ligne--1' : ''}"><span class="pd-podium__rang">${r}</span><span class="pd-podium__nom">${esc(nom(p))}</span><b>${totaux[p]}<small>${MODE === 'capital' ? '' : ' pts'}</small></b></li>`).join('')}</ol>
+      <ol class="pd-podium">${podium.map(({ p, r }) => `<li class="pd-podium__ligne${r === 1 ? ' pd-podium__ligne--1' : ''}"><span class="pd-podium__rang">${r}</span><span class="pd-podium__nom">${esc(nom(p))}</span><b>${totaux[p]}<small>${MODE === 'capital' ? '' : MODE === 'cricket' ? ' /27' : ' pts'}</small></b></li>`).join('')}</ol>
       ${(etat.final.departages || []).length ? '<p class="match__format">Égalité au total départagée par une manche de 501.</p>' : ''}
       ${feuilleHtml(etat)}
       <p class="match__format" id="pd-etat-enregistrement"></p>

@@ -168,5 +168,24 @@ console.log('Totaux :', JSON.stringify(tot), e.final.groupes.map((g) => g.map((p
   egal([s.jeux.mickey.touches[1]['20'], s.jeux.mickey.touches[1].T, s.jeux.mickey.touches[1].C], [3, 1, 2], 'T20 → 20 fermé ; Triple 1 ; bulle 2 touches');
 }
 
+// ---------- Cricket seul ----------
+{
+  const c2 = cfg(2, 'cricket');
+  const tout = [V('20*3', '19*3', '18*3'), V('17*3', '16*3', '15*3'), V('C*2', 'C', 'T'), V('T', 'T', 'D'), V('D', 'D', null)];
+  const B = [];
+  tout.forEach((v, i) => { B.push(v); B.push(V(i < 3 ? '20' : null, null, null)); });
+  const s = calculer(c2, B);
+  egal(s.termine, true, 'cricket seul : fini quand J1 a tout fermé (fin du tour)');
+  egal(s.final.groupes, [[0], [1]], 'J1 gagne');
+  egal(s.final.totaux, { 0: 27, 1: 3 }, 'touches 27 / 3');
+  // Égalité : les deux ferment tout au même tour → bulle
+  const E = [];
+  tout.forEach((v) => { E.push(v); E.push(v); });
+  const e2 = calculer(c2, E);
+  egal(e2.departage?.type, 'bulle', 'les deux ferment au même tour : bulle');
+  E.push({ bulle: 25 }, { bulle: 50 });
+  egal(calculer(c2, E).final.groupes, [[1], [0]], 'J2 gagne à la bulle');
+}
+
 console.log(`${ok} PASS, ${ko} FAIL`);
 process.exit(ko ? 1 : 0);
