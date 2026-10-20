@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pentadarts – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/pentadarts.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom" id="pd-nom-jeu">Pentadarts</span>
+      <span class="entete__sous">Dolina Darts Club</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page page--penta">
+  <div class="message" id="message" role="alert" hidden></div>
+
+  <!-- Réglages : joueurs et tirage à la bulle -->
+  <section id="pd-reglages">
+    <a class="retour-jeux" href="jouer.html">← Tous les jeux</a>
+    <h1 class="section__titre" id="pd-titre">Pentadarts</h1>
+    <p class="intro" id="pd-intro"></p>
+    <div id="pd-reprise"></div>
+    <form class="formulaire-jeu" id="pd-form" novalidate>
+      <fieldset class="bloc-choix">
+        <legend id="pd-legende-joueurs">Joueurs</legend>
+        <div id="pd-joueurs" class="pd-joueurs"></div>
+        <div class="pd-ajout">
+          <label class="champ" id="pd-champ-membre" hidden>Ajouter un membre
+            <select id="pd-membre"><option value="">— Choisir un membre —</option></select>
+          </label>
+          <div class="pd-invite">
+            <label class="champ">Ajouter un invité<input id="pd-invite" maxlength="30" placeholder="Prénom" autocomplete="off"></label>
+            <button type="button" class="bouton" id="pd-ajouter-invite">Ajouter</button>
+          </div>
+        </div>
+      </fieldset>
+      <fieldset class="bloc-choix" id="pd-bloc-bulle" hidden>
+        <legend>Tirage à la bulle</legend>
+        <p class="match__format" style="margin:0">Chaque joueur lance une fléchette sur la bulle. Touchez les joueurs du plus près au plus loin : le premier commencera.</p>
+        <div class="pd-bulle" id="pd-bulle"></div>
+        <button type="button" class="lien-discret" id="pd-bulle-effacer">Recommencer le tirage</button>
+      </fieldset>
+      <button type="submit" class="bouton bouton--plein bouton--large" id="pd-commencer" disabled>Commencer</button>
+    </form>
+    <section class="section" id="pd-historique" hidden>
+      <h2 class="section__titre">Dernières parties</h2>
+      <div class="liste-cartes" id="pd-liste-historique"></div>
+    </section>
+  </section>
+
+  <!-- Partie en cours -->
+  <section id="pd-jeu" hidden>
+    <div class="pd-entete">
+      <span class="pd-entete__num" id="pd-num">1</span>
+      <div class="pd-entete__titre"><strong id="pd-jeu-titre">Le centre</strong><small id="pd-jeu-regle"></small></div>
+      <button type="button" class="bouton bouton--petit" id="pd-voir-feuille">Feuille</button>
+    </div>
+    <div class="pd-tableau" id="pd-tableau"></div>
+    <div class="pd-saisie" id="pd-saisie"></div>
+    <div class="pd-actions">
+      <button type="button" class="bouton-annuler" id="pd-annuler">Annuler la dernière volée</button>
+      <button type="button" class="lien-discret lien-danger" id="pd-abandonner">Abandonner la partie</button>
+    </div>
+  </section>
+
+  <!-- Fin de partie -->
+  <section id="pd-fin" hidden aria-live="polite"></section>
+
+  <!-- Feuille de score -->
+  <div class="fenetre" id="pd-fen-feuille" role="dialog" aria-modal="true" aria-labelledby="pd-t-feuille" hidden>
+    <div class="fenetre__boite pd-feuille-boite">
+      <h2 id="pd-t-feuille">Feuille de score</h2>
+      <div id="pd-feuille"></div>
+      <button type="button" class="bouton" data-fermer>Fermer</button>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

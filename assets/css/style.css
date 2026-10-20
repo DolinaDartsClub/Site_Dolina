@@ -2227,3 +2227,89 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .recadrage__masque { position: absolute; inset: 0; pointer-events: none; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0,0,0,.55); outline: 2px solid var(--orange); outline-offset: -2px; }
 .recadrage__zoom { display: flex; align-items: center; gap: 10px; color: var(--gris-clair); font-size: 20px; font-weight: 700; }
 .recadrage__zoom input { flex: 1; accent-color: var(--orange); }
+
+/* ===================== Pentadarts et Capital ===================== */
+.page--penta { display: grid; gap: 18px; }
+.pd-joueurs { display: flex; flex-wrap: wrap; gap: 8px; }
+.pd-joueur { display: inline-flex; align-items: center; gap: 8px; padding: 6px 6px 6px 8px; border-radius: 999px; background: rgba(255,255,255,.05); border: 1px solid var(--bord-fort); font-weight: 600; }
+.pd-joueur b { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--orange); color: var(--noir); font-size: 12px; }
+.pd-joueur button { width: 26px; height: 26px; border-radius: 50%; border: 0; background: #2a2a2a; color: var(--gris-clair); font-size: 16px; cursor: pointer; }
+.pd-ajout { display: grid; gap: 10px; margin-top: 10px; }
+.pd-invite { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+.pd-bulle { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.pd-bulle__joueur { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--bord-fort); background: var(--carte); color: var(--blanc); font: inherit; font-weight: 600; cursor: pointer; }
+.pd-bulle__joueur--place { border-color: var(--orange); background: rgba(245,122,0,.12); opacity: 1; }
+.pd-bulle__joueur b { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--orange); color: var(--noir); font-size: 12px; }
+.pd-reprise { display: grid; gap: 6px; border-color: var(--orange); }
+.pd-entete { display: flex; align-items: center; gap: 12px; }
+.pd-entete__num { width: 40px; height: 40px; flex: none; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--orange); color: var(--noir); font-family: var(--police-titre); font-size: 20px; font-weight: 700; }
+.pd-entete__titre { display: grid; flex: 1; min-width: 0; }
+.pd-entete__titre strong { font-family: var(--police-titre); font-size: 22px; text-transform: uppercase; }
+.pd-entete__titre small { color: var(--gris); font-size: 13px; line-height: 1.35; }
+.pd-defile { overflow-x: auto; border-radius: 12px; border: 1px solid var(--verre-bord, var(--bord)); background: var(--verre, var(--carte)); }
+.pd-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.pd-table th, .pd-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid rgba(255,255,255,.06); white-space: nowrap; }
+.pd-table thead th { font-size: 13px; color: var(--gris-clair); font-weight: 700; }
+.pd-table tbody th { text-align: left; font-weight: 700; padding-left: 12px; }
+.pd-table td small { display: block; font-size: 11px; color: var(--gris); }
+.pd-table .pd-actif { background: rgba(245,122,0,.1); }
+.pd-table thead .pd-actif { color: var(--orange); }
+.pd-table tr.pd-actif th { color: var(--orange); }
+.pd-table .pd-total { font-weight: 800; color: var(--orange); border-left: 1px solid rgba(255,255,255,.08); }
+.pd-table .pd-ferme { color: var(--orange); font-weight: 800; }
+.pd-table--mickey td { font-size: 18px; font-weight: 700; min-width: 56px; }
+.pd-ligne-total th, .pd-ligne-total td { font-weight: 800; border-top: 1px solid rgba(255,255,255,.12); }
+.pd-table--capital tr.pd-manche th { color: var(--orange); }
+.pd-table--capital tr.pd-manche { background: rgba(245,122,0,.06); }
+.pd-moitie { color: var(--gris); }
+.pd-x01 { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; }
+.pd-x01__joueur { display: grid; justify-items: center; gap: 2px; padding: 10px 6px; border-radius: 12px; border: 2px solid var(--bord); background: var(--carte); }
+.pd-x01__joueur.pd-actif { border-color: var(--orange); }
+.pd-x01__nom { font-weight: 700; font-size: 14px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pd-x01__reste { font-family: var(--police-titre); font-size: 40px; line-height: 1; }
+.pd-x01__joueur small { color: var(--gris); font-size: 12px; }
+.pd-departage { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pd-departage i { color: var(--gris); font-style: normal; }
+.pd-departage__joueur { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--bord-fort); font-weight: 700; }
+.pd-departage__joueur.pd-actif { border-color: var(--orange); background: rgba(245,122,0,.14); }
+.pd-departage p { flex-basis: 100%; margin: 0; }
+.pd-saisie { display: grid; gap: 10px; }
+.pd-tour { margin: 0; font-size: 16px; }
+.pd-tour strong { color: var(--orange); }
+.pd-cible { margin: 0; font-size: 18px; text-align: center; }
+.pd-cible b { font-family: var(--police-titre); font-size: 34px; color: var(--orange); margin-left: 6px; }
+.pd-fleches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pd-fleche { display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 10px; border: 1px dashed var(--bord-fort); color: var(--gris); font-weight: 700; }
+.pd-fleche--pleine { border-style: solid; border-color: var(--orange); color: var(--blanc); background: rgba(245,122,0,.12); }
+.pd-touches { display: grid; gap: 6px; }
+.pd-touches .touche { min-height: 52px; font-size: 20px; }
+.pd-touches--3 { grid-template-columns: repeat(3, 1fr); }
+.pd-touches--mickey { grid-template-columns: repeat(5, 1fr); }
+.pd-touches--mickey .touche { font-size: 15px; }
+.pd-touches--numeros { grid-template-columns: repeat(5, 1fr); }
+.pd-touches--numeros .touche { min-height: 46px; font-size: 18px; }
+.pd-multi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.pd-deux { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pd-gros { min-height: 72px; font-size: 18px; display: grid; place-items: center; align-content: center; gap: 2px; }
+.pd-gros small { font-size: 12px; font-weight: 500; opacity: .8; }
+.pd-ecran { margin: 0; }
+.pd-pave { grid-template-rows: repeat(4, 56px); }
+.pd-actions { display: grid; gap: 10px; justify-items: center; }
+.pd-actions .bouton-annuler { width: 100%; }
+.pd-feuille-boite { max-width: 640px; }
+.pd-num-mini { display: inline-flex; width: 20px; height: 20px; margin-right: 6px; border-radius: 50%; align-items: center; justify-content: center; background: var(--orange); color: var(--noir); font-size: 11px; font-weight: 800; }
+.pd-table--feuille td b { font-size: 17px; }
+.pd-fin { display: grid; gap: 14px; }
+.pd-fin__sur { margin: 0; color: var(--gris); text-transform: uppercase; letter-spacing: .06em; font-size: 12px; font-weight: 700; }
+.pd-fin__gagnant { margin: 0; font-family: var(--police-titre); font-size: 30px; color: var(--orange); text-transform: uppercase; }
+.pd-podium { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pd-podium__ligne { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--bord); background: rgba(255,255,255,.03); }
+.pd-podium__ligne--1 { border-color: var(--orange); background: rgba(245,122,0,.12); }
+.pd-podium__rang { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #2a2a2a; font-weight: 800; }
+.pd-podium__ligne--1 .pd-podium__rang { background: var(--orange); color: var(--noir); }
+.pd-podium__nom { font-weight: 700; }
+.pd-podium b { font-family: var(--police-titre); font-size: 22px; }
+.pd-podium b small { font-size: 13px; color: var(--gris); font-family: var(--police); }
+.pd-histo { display: grid; gap: 4px; }
+.pd-histo__scores { font-size: 13px; color: var(--gris-clair); }
+.pd-histo__scores b { color: var(--orange); }
