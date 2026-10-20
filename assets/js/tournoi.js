@@ -369,6 +369,26 @@ function etatPoule(k) {
 }
 const nomCibles = (n) => (n > 1 ? `${n} cibles` : '1 cible');
 
+// Phase finale (script 043) : N cibles, ou sans limite (null, comme avant)
+const ciblesFinale = () => { const n = Number(t?.cibles_finale); return n >= 1 ? n : null; };
+const ordreFinale = (a, b) => a.round_no - b.round_no || Number(!!a.is_third_place) - Number(!!b.is_third_place) || a.position - b.position || a.match_no - b.match_no;
+function etatFinale() {
+  const finals = matchs.filter((x) => x.phase === 'final').sort(ordreFinale);
+  const enCours = finals.filter((x) => x.status === 'live');
+  const file = finals.filter((x) => x.status === 'ready');
+  const n = ciblesFinale();
+  const libres = n ? Math.max(0, n - enCours.length) : Infinity;
+  const occ = occupes();
+  const lancables = file.filter((x) => !joueurOccupe(x, occ));
+  const proposes = n ? (libres ? lancables.slice(0, libres + 1) : []) : lancables;
+  return { enCours, file, libres, lancables, proposes, n };
+}
+function resumeFinale(e) {
+  const pris = e.enCours.length;
+  if (!e.libres) return `${pris} en cours · ${e.n > 1 ? 'toutes prises' : 'occupée'}`;
+  return `${pris ? `${pris} en cours · ` : ''}${e.libres} libre${e.libres > 1 ? 's' : ''} sur ${e.n}`;
+}
+
 function boutonMatch(m) {
   const orga = role === 'organisateur';
   const autorise = orga || role === 'participant';
@@ -383,6 +403,16 @@ function boutonMatch(m) {
       boutons.push(`<button type="button" class="bouton bouton--petit${rang < e.libres ? ' bouton--plein' : ''}" data-lancer="${m.id}">Lancer le match</button>`);
     } else if (orga) {
       boutons.push(`<button type="button" class="bouton bouton--petit" data-lancer="${m.id}" title="Ce n'est pas le prochain match de la poule">Lancer hors ordre</button>`);
+    }
+  } else if (m.status === 'ready' && autorise && m.phase === 'final' && ciblesFinale()) {
+    const e = etatFinale();
+    const rang = e.proposes.findIndex((x) => x.id === m.id);
+    if (!e.libres || joueurOccupe(m)) {
+      // Toutes les cibles de la phase finale sont prises, ou un joueur est déjà en match
+    } else if (rang >= 0) {
+      boutons.push(`<button type="button" class="bouton bouton--petit${rang < e.libres ? ' bouton--plein' : ''}" data-lancer="${m.id}">Lancer le match</button>`);
+    } else if (orga) {
+      boutons.push(`<button type="button" class="bouton bouton--petit" data-lancer="${m.id}" title="Ce n'est pas le prochain match de la phase finale">Lancer hors ordre</button>`);
     }
   } else if (m.status === 'ready' && autorise) {
     boutons.push(`<button type="button" class="bouton bouton--petit${estMonMatch(m) ? ' bouton--plein' : ''}" data-lancer="${m.id}">Lancer le match</button>`);
@@ -427,6 +457,16 @@ function etatPartieMatch(m) {
     else if (rang >= 0 && rang < e.libres) notes.push(`<p class="m-carte__note">À lancer maintenant${n > 1 ? ` sur une cible libre de la poule ${L}` : ` sur la cible de la poule ${L}`}.</p>`);
     else if (rang >= 0) notes.push(`<p class="m-carte__note">Peut aussi être lancé maintenant (si les joueurs d'un match précédent ne sont pas prêts).</p>`);
     else if (rangFile > 0) notes.push(`<p class="m-carte__note m-carte__note--gris">À jouer après M${e.file[rangFile - 1].match_no} dans la poule ${L}.</p>`);
+  }
+  if (m.status === 'ready' && m.phase === 'final' && ciblesFinale()) {
+    const e = etatFinale();
+    const rang = e.proposes.findIndex((x) => x.id === m.id);
+    const rangFile = e.file.findIndex((x) => x.id === m.id);
+    if (joueurOccupe(m)) notes.push('<p class="m-carte__note m-carte__note--gris">Un des joueurs a déjà un match en cours : ce match attend la fin du sien.</p>');
+    else if (!e.libres) notes.push(`<p class="m-carte__note m-carte__note--gris">${e.n > 1 ? `Les ${e.n} cibles de la phase finale sont occupées` : 'Cible de la phase finale occupée'} : ${e.enCours.map((x) => `M${x.match_no}`).join(', ')} en cours.${rangFile === 0 ? ' Ce match est le suivant.' : ''}</p>`);
+    else if (rang >= 0 && rang < e.libres) notes.push(`<p class="m-carte__note">À lancer maintenant${e.n > 1 ? ' sur une cible libre' : ' sur la cible de la phase finale'}.</p>`);
+    else if (rang >= 0) notes.push('<p class="m-carte__note">Peut aussi être lancé maintenant (si les joueurs d\'un match précédent ne sont pas prêts).</p>');
+    else if (rangFile > 0) notes.push(`<p class="m-carte__note m-carte__note--gris">À jouer après M${e.file[rangFile - 1].match_no}.</p>`);
   }
   if (m.corrected_at) notes.push('<p class="m-carte__note m-carte__note--gris">Score corrigé par l\'organisateur</p>');
   if (m.format && m.status !== 'done' && m.status !== 'bye') notes.push(`<p class="m-carte__note m-carte__note--gris">${esc(formatPartie(m.format))}</p>`);
@@ -475,18 +515,50 @@ function blocCible(k) {
         </div>`;
 }
 
+// Choix du nombre de cibles (réglages et fenêtre de lancement)
+const optionsCibles = (max, n) => Array.from({ length: max }, (_, i) => i + 1).map((v) => `<option value="${v}" ${v === n ? 'selected' : ''}>${v}</option>`).join('');
+const optionsCiblesFinale = (n) => `<option value="0" ${n ? '' : 'selected'}>Sans limite</option>${optionsCibles(16, n)}`;
+
 // Réglage de l'organisateur : nombre de cibles par poule (modifiable pendant le tournoi)
 function reglageCibles() {
   if (role !== 'organisateur' || t.format !== 'pools' || t.status === 'finished') return '';
   if (matchs.some((m) => m.phase === 'final')) return '';
-  const n = ciblesParPoule();
   return `
     <div class="c-reglage">
       <label class="champ c-reglage__champ">Cibles par poule
-        <select data-cibles-poule>${Array.from({ length: 8 }, (_, i) => i + 1).map((v) => `<option value="${v}" ${v === n ? 'selected' : ''}>${v}</option>`).join('')}</select>
+        <select data-cibles-poule>${optionsCibles(8, ciblesParPoule())}</select>
       </label>
       <p class="c-reglage__aide">Nombre de matchs d'une même poule qui peuvent se jouer en même temps. Un joueur ne joue qu'un match à la fois.</p>
     </div>`;
+}
+
+// Réglage de l'organisateur : cibles de la phase finale (modifiable pendant le tournoi)
+function reglageCiblesFinale() {
+  if (role !== 'organisateur' || t.status !== 'running') return '';
+  if (!matchs.some((m) => m.phase === 'final' && (m.status === 'ready' || m.status === 'waiting' || m.status === 'live'))) return '';
+  return `
+    <div class="c-reglage">
+      <label class="champ c-reglage__champ">Cibles de la phase finale
+        <select data-cibles-finale>${optionsCiblesFinale(ciblesFinale())}</select>
+      </label>
+      <p class="c-reglage__aide">Nombre de matchs de la phase finale qui peuvent se jouer en même temps. Un joueur ne joue qu'un match à la fois.</p>
+    </div>`;
+}
+
+// Cibles de la phase finale : matchs en cours et prochains à lancer
+function blocCiblesFinale({ compacte = false } = {}) {
+  if (t.status !== 'running' || !ciblesFinale()) return '';
+  const e = etatFinale();
+  const tetes = [...e.enCours, ...e.proposes];
+  if (!tetes.length) return '';
+  const ensuite = e.file.filter((x) => !e.proposes.includes(x));
+  const etat = resumeFinale(e);
+  return `
+      <div class="c-cible${compacte ? ' c-cible--finale' : ''}">
+        <h4 class="c-cible__titre">${e.n > 1 ? `${e.n} cibles` : 'Cible'} phase finale <span>${etat.charAt(0).toUpperCase()}${etat.slice(1)}</span></h4>
+        ${tetes.map((x) => carteMatch(x)).join('')}
+        ${ensuite.length ? `<p class="c-cible__suite">Ensuite : ${ensuite.slice(0, 6).map((x) => `M${x.match_no} (${esc(nomEntree(x.entry_a))} – ${esc(nomEntree(x.entry_b))})`).join(' · ')}${ensuite.length > 6 ? ` · et ${ensuite.length - 6} autre${ensuite.length - 6 > 1 ? 's' : ''}` : ''}</p>` : ''}
+      </div>`;
 }
 
 // Filtre des poules sur téléphone (une poule à la fois) ; null = pas encore choisi
@@ -589,7 +661,10 @@ function vueArbre() {
       </div>`);
   }
   const mien = finals.some(estMonMatch);
+  const cibleF = blocCiblesFinale();
   return `
+    ${reglageCiblesFinale()}
+    ${cibleF ? `<div class="c-cibles a-cibles">${cibleF}</div>` : ''}
     <p class="t-legende">Faites défiler l'arbre de gauche à droite. ${mien ? 'Vos matchs sont encadrés en orange (« Mon match »).' : ''} Touchez un match pour voir ses détails dans l'onglet Matchs.</p>
     <div class="a-cadre"><div class="a-arbre" style="--tours:${tours}">${colonnes.join('')}</div></div>`;
 }
@@ -632,6 +707,18 @@ function vueMatchs() {
         <div class="c-cibles">${cibles.join('')}</div>
       </section>`);
   }
+  const cibleF = blocCiblesFinale();
+  const reglageF = reglageCiblesFinale();
+  if (cibleF || reglageF) {
+    const nF = ciblesFinale();
+    sections.push(`
+      <section class="m-groupe">
+        <h3 class="m-groupe__titre">Phase finale : ${nF ? nomCibles(nF) : 'cibles sans limite'}</h3>
+        <p class="t-legende">${nF ? `Jusqu'à ${nF} match${nF > 1 ? 's' : ''} de la phase finale en même temps, dans l'ordre de l'arbre ; un joueur ne joue qu'un match à la fois.` : 'Tous les matchs prêts peuvent être lancés en même temps. Choisissez un nombre de cibles pour que le site les enchaîne dans l\'ordre.'}</p>
+        ${reglageF}
+        ${cibleF ? `<div class="c-cibles">${cibleF}</div>` : ''}
+      </section>`);
+  }
   if (mien.length) {
     const ordre = { live: 0, ready: 1, waiting: 2, done: 3 };
     sections.push(`
@@ -642,7 +729,9 @@ function vueMatchs() {
   }
   // Mes matchs sont regroupés en tête : on ne les répète pas dans les autres groupes
   for (const [st, titre] of groupes) {
-    const liste = vrais.filter((m) => m.status === st && !estMonMatch(m) && !(cibles.length && m.phase === 'pool' && (st === 'live' || st === 'ready')));
+    const liste = vrais.filter((m) => m.status === st && !estMonMatch(m)
+      && !(cibles.length && m.phase === 'pool' && (st === 'live' || st === 'ready'))
+      && !(cibleF && m.phase === 'final' && (st === 'live' || st === 'ready')));
     if (!liste.length) continue;
     sections.push(`
       <section class="m-groupe">
@@ -759,6 +848,7 @@ function vueInfos() {
     if (t.pool_format) lignes.push(['Matchs de poule', esc(formatPartie(t.pool_format))]);
     lignes.push(['Cibles par poule', `${ciblesParPoule()} : jusqu'à ${ciblesParPoule()} match${ciblesParPoule() > 1 ? 's' : ''} d'une même poule en même temps`]);
   }
+  lignes.push(['Cibles de la phase finale', ciblesFinale() ? `${ciblesFinale()} : jusqu'à ${ciblesFinale()} match${ciblesFinale() > 1 ? 's' : ''} en même temps` : 'Sans limite']);
   if (t.final_format) lignes.push([t.format === 'pools' ? 'Matchs de la phase finale' : 'Matchs', esc(formatPartie(t.final_format))]);
   if (!t.pool_format && !t.final_format) lignes.push(['Format des matchs', 'Choisi par l\'organisateur au lancement de chaque phase']);
   lignes.push(['Placement', 'Tirage au sort ; les exemptions éventuelles sont réparties dans l\'arbre']);
@@ -832,6 +922,7 @@ function brancher() {
   zone.querySelectorAll('[data-format-tour]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirLancement('tour', Number(b.dataset.formatTour)); }));
   zone.querySelectorAll('[data-reinit]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); reinitialiser(b.dataset.reinit); }));
   zone.querySelectorAll('[data-cibles-poule]').forEach((s) => s.addEventListener('change', () => changerCibles(s)));
+  zone.querySelectorAll('[data-cibles-finale]').forEach((s) => s.addEventListener('change', () => changerCiblesFinale(s)));
 }
 
 async function changerCibles(select) {
@@ -845,6 +936,20 @@ async function changerCibles(select) {
     return;
   }
   message(zoneMsg, n > 1 ? `${n} cibles par poule : jusqu'à ${n} matchs d'une même poule en même temps.` : '1 cible par poule : un match à la fois dans chaque poule.', 'ok');
+  await charger();
+}
+
+async function changerCiblesFinale(select) {
+  const n = Number(select.value);
+  select.disabled = true;
+  const { error } = await supabase.rpc('definir_cibles_finale', { p_tournoi: id, p_nombre: n });
+  if (error) {
+    select.disabled = false;
+    select.value = String(ciblesFinale() || 0);
+    message(zoneMsg, error.code === 'PGRST202' ? 'Réglage indisponible : le script SQL 043 doit être exécuté dans Supabase.' : erreurFr(error));
+    return;
+  }
+  message(zoneMsg, n ? `Phase finale sur ${nomCibles(n)} : jusqu'à ${n} match${n > 1 ? 's' : ''} en même temps.` : 'Phase finale sans limite de cibles.', 'ok');
   await charger();
 }
 
@@ -923,6 +1028,7 @@ let modeLancement = 'tournoi';     // 'tournoi' (tirage), 'finale' (après les p
 let tourChoisi = null;
 
 function ouvrirLancement(mode = 'tournoi', tour = null) {
+  if (typeof mode !== 'string') mode = 'tournoi';   // appelé directement par un clic
   modeLancement = mode;
   tourChoisi = tour;
   const f = document.getElementById('form-lancer');
@@ -933,6 +1039,15 @@ function ouvrirLancement(mode = 'tournoi', tour = null) {
   const n = inscrits.length;
   const blocPoules = document.getElementById('lancer-poules');
   blocPoules.hidden = t.format !== 'pools' || mode === 'finale';
+  // Cibles : par poule au lancement des poules, phase finale au lancement de l'arbre
+  const blocCP = document.getElementById('lancer-cibles-poule');
+  const blocCF = document.getElementById('lancer-cibles-finale');
+  blocCP.hidden = mode !== 'tournoi' || t.format !== 'pools';
+  blocCF.hidden = !((mode === 'tournoi' && t.format !== 'pools') || mode === 'finale');
+  f.elements.cibles_poule.innerHTML = optionsCibles(8, ciblesParPoule());
+  // Phase finale : par défaut, les cibles utilisées pendant les poules
+  const defautF = ciblesFinale() || (mode === 'finale' ? Math.min(16, (t.pools_count || 1) * ciblesParPoule()) : null);
+  f.elements.cibles_finale.innerHTML = optionsCiblesFinale(defautF);
   document.getElementById('t-lancer').textContent = mode === 'finale' ? 'Lancer la phase finale' : 'Lancer le tournoi';
   f.querySelector('[type=submit]').textContent = mode === 'finale' ? 'Créer l\'arbre final' : 'Lancer et tirer au sort';
   if (mode === 'tour') {
@@ -1044,6 +1159,19 @@ document.getElementById('form-lancer').addEventListener('submit', (e) => {
       const params = { p_tournoi: t.id, p_format: format };
       if (t.format === 'pools') params.p_poules = Number(e.target.elements.poules.value);
       ({ error } = await supabase.rpc('lancer_tournoi', params));
+    }
+    if (!error && modeLancement !== 'tour') {
+      // Cibles choisies dans la fenêtre (scripts 042 et 043)
+      const el = e.target.elements;
+      const reglages = [];
+      if (!document.getElementById('lancer-cibles-poule').hidden && Number(el.cibles_poule.value) !== ciblesParPoule()) {
+        reglages.push(supabase.rpc('definir_cibles_poule', { p_tournoi: t.id, p_nombre: Number(el.cibles_poule.value) }));
+      }
+      if (!document.getElementById('lancer-cibles-finale').hidden && Number(el.cibles_finale.value) !== (ciblesFinale() || 0)) {
+        reglages.push(supabase.rpc('definir_cibles_finale', { p_tournoi: t.id, p_nombre: Number(el.cibles_finale.value) }));
+      }
+      const echecs = (await Promise.all(reglages)).filter((r) => r.error);
+      if (echecs.length) console.warn('Cibles non enregistrées', echecs.map((r) => r.error.message));
     }
     bouton.disabled = false;
     if (error) { erreur.textContent = erreurFr(error); return; }

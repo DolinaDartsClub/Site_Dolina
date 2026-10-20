@@ -181,10 +181,6 @@ end;
 $$;
 
 
-revoke execute on function public.corriger_score_match(uuid, int, int, int, int) from public, anon;
-revoke execute on function public.definir_format_tour(uuid, int, jsonb) from public, anon;
-grant execute on function public.corriger_score_match(uuid, int, int, int, int) to authenticated;
-grant execute on function public.definir_format_tour(uuid, int, jsonb) to authenticated;
 grant execute on function public.tournoi_detail(uuid) to anon, authenticated;
 
 notify pgrst, 'reload schema';
