@@ -178,39 +178,62 @@ function creerDepartage(type, groupe, position, ordre, info = {}) {
   // Les joueurs du groupe lancent dans l'ordre du jeu
   const g = ordre.filter((p) => groupe.includes(p));
   return { type, restants: g, position, places: [], t: 0, ...info,
+    groupes: type === 'bulle' ? [g] : null, tour: [],
     x01: type === '501' ? MOTEURS.x01.creer(g, 501) : null };
 }
 
 function joueurDepartage(d) {
   if (d.type === '501') return MOTEURS.x01.courant(d.x01);
+  if (d.type === 'bulle') return d.groupes[0][d.tour.length];
   return d.restants[d.t % d.restants.length];
 }
+
+// Valeur d'une fléchette à la bulle : 50 > 25 > raté (ancien format « touche » accepté)
+const valeurBulle = (a) => (a.bulle !== undefined ? Number(a.bulle) || 0 : (a.touche ? 25 : 0));
 
 // Renvoie true quand le départage est terminé ; d.places reçoit les joueurs dans l'ordre gagné
 function jouerDepartage(d, a, etapes, points) {
   const p = joueurDepartage(d);
+  d.journal = [...(d.journal || []), { joueur: p, ...a }];
+  const finiSi = () => {
+    const pos = d.position + d.places.length;
+    const vals = d.restants.map((_, i) => points[pos + i] ?? 0);
+    return d.restants.length <= 1 || new Set(vals).size <= 1;
+  };
+
+  // Bulle : chaque joueur encore à égalité lance une fléchette par tour ; à la fin du tour,
+  // 50 bat 25 qui bat raté. Ceux qui restent à égalité (25 et 25, ou tous ratés) recommencent.
+  if (d.type === 'bulle') {
+    d.tour.push(valeurBulle(a));
+    const groupe = d.groupes[0];
+    if (d.tour.length < groupe.length) return false;
+    const valeurs = new Map(groupe.map((q, i) => [q, d.tour[i]]));
+    const sous = [];
+    [50, 25, 0].forEach((v) => { const g = groupe.filter((q) => valeurs.get(q) === v); if (g.length) sous.push(g); });
+    d.groupes.splice(0, 1, ...sous);
+    d.tour = [];
+    // Les joueurs seuls dans leur groupe sont placés
+    while (d.groupes.length && d.groupes[0].length === 1) d.places.push(d.groupes.shift()[0]);
+    d.restants = d.groupes.flat();
+    return finiSi();
+  }
+
   let gagne = false;
-  if (d.type === 'bulle') gagne = !!a.touche;
-  else if (d.type === 'finish') {
+  if (d.type === 'finish') {
     gagne = !!a.reussi;
     if (gagne) etapes[p] += 1;
   } else if (d.type === '501') {
     MOTEURS.x01.jouer(d.x01, a);
     gagne = d.x01.gagnant === p;
   }
-  d.journal = [...(d.journal || []), { joueur: p, ...a }];
   if (gagne) {
     d.places.push(p);
     d.restants = d.restants.filter((x) => x !== p);
-    if (d.type === '501') {
-      d.x01 = MOTEURS.x01.creer(d.restants, 501);
-    }
+    if (d.type === '501') d.x01 = MOTEURS.x01.creer(d.restants, 501);
     d.t = 0;
   } else d.t += 1;
   // Fini quand il reste un seul joueur, ou quand les places restantes rapportent toutes la même chose
-  const pos = d.position + d.places.length;
-  const vals = d.restants.map((_, i) => points[pos + i] ?? 0);
-  return d.restants.length <= 1 || new Set(vals).size <= 1;
+  return finiSi();
 }
 
 // ---------- La partie ----------

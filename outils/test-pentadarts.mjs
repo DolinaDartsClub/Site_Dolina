@@ -76,7 +76,7 @@ tour({ score: 101, fin: true });
 e = calculer(c4, A);
 egal(e.departage?.type, 'bulle', 'égalité au 301 : départage à la bulle');
 egal(e.departage?.restants, [0, 2], 'J1 et J3 à la bulle');
-tour({ touche: false }, { touche: true });   // J1 rate, J3 touche → J3 2e
+tour({ bulle: 0 }, { bulle: 50 });   // J1 rate, J3 touche → J3 2e
 e = calculer(c4, A);
 egal(e.resultats['301a'].classement, [3, 2, 0, 1], 'classement du 301');
 egal(e.jeu, '301b', '2e manche de 301');
@@ -84,7 +84,7 @@ egal(e.joueur, 0, "301 2e manche : J1 commence (4' = 5e jeu)");
 tour({ score: 180 }, { score: 0 }, { score: 0 }, { score: 0 }, { score: 121, fin: true });
 e = calculer(c4, A);
 egal(e.departage?.restants, [1, 2, 3], '301 2e manche : J2 J3 J4 à égalité pour la 2e place → bulle');
-tour({ touche: true });   // J2 touche : 2e ; J3 et J4 restent à égalité (0 point chacun)
+tour({ bulle: 50 }, { bulle: 0 }, { bulle: 0 });   // J2 50 : 2e ; J3 et J4 restent à égalité (0 point chacun)
 e = calculer(c4, A);
 egal(e.resultats['301b'].classement[0], 0, 'J1 gagne la 2e manche');
 egal(e.jeu, 'capital', 'capital');
@@ -95,7 +95,7 @@ for (let m = 0; m < 8; m++) tour(V('T20', 'T20', 'T20'), V('0'), V('1'), V('2'))
 e = calculer(c4, A);
 // J4 et J1 finissent à 1 (1 ou 2, puis divisés par 2) : égalité pour la 2e place → bulle
 egal(e.departage?.restants, [3, 0], 'capital : J4 et J1 à la bulle');
-tour({ touche: true });
+tour({ bulle: 50 }, { bulle: 0 });
 e = calculer(c4, A);
 egal(e.resultats.capital.classement[0], 1, 'J2 gagne le capital');
 egal(e.termine || !!e.departage, true, 'partie finie (ou départage final)');
@@ -112,9 +112,9 @@ console.log('Totaux :', JSON.stringify(tot), e.final.groupes.map((g) => g.map((p
   for (let v = 0; v < 9; v++) t3(V(...C.slice((v % 3) * 3, (v % 3) * 3 + 3)), V(C[v]), V()); // mickey : J2 3, J3 1
   for (let v = 0; v < 6; v++) t3({ reussi: v < 2 }, { reussi: true }, { reussi: false });    // finish : J1 6, J3 2
   t3({ score: 0 }, { score: 0 }, { score: 0 }, { score: 0 }, { score: 301, fin: true });   // 301a : J2 gagne
-  t3({ touche: false }, { touche: true });                                                  // bulle : J3 2e
+  t3({ bulle: 0 }, { bulle: 50 });                                                  // bulle : J3 2e
   t3({ score: 0 }, { score: 0 }, { score: 301, fin: true });                                // 301b : J1 gagne
-  t3({ touche: true });                                                                     // bulle : J2 2e
+  t3({ bulle: 50 }, { bulle: 0 });                                                      // bulle : J2 2e
   for (let m = 0; m < 8; m++) t3(V('0'), V('T20'), V('T19'));                              // capital : J2 7, J1 3
   const s = calculer(c3, B);
   egal(s.final?.totaux, { 0: 15, 1: 15, 2: 4 }, 'totaux 15 / 15 / 4');
@@ -124,6 +124,37 @@ console.log('Totaux :', JSON.stringify(tot), e.final.groupes.map((g) => g.map((p
   const f = calculer(c3, B);
   egal(f.termine, true, 'partie terminée après la manche de 501');
   egal(f.final.groupes.map((g) => g.join('=')), ['1', '0', '2'], 'J2 gagne le 501 et le Pentadarts');
+}
+
+// ---------- Bulle : 25 contre 50, et 25 / 25 on recommence ----------
+{
+  const c3 = cfg(3);
+  // Centre : J1 et J2 à égalité à 12 pour la 1re place, J3 à 0
+  const B = [V(50, 50, 50), V(50, 50, 50), V(0), V(50, 50, 50), V(50, 50, 50), V(0)];
+  let s = calculer(c3, B);
+  egal(s.departage?.type, 'bulle', 'égalité 1re place au centre : bulle');
+  B.push({ bulle: 25 });
+  s = calculer(c3, B);
+  egal(s.departage?.type, 'bulle', 'J1 fait 25 : J2 lance quand même');
+  egal(s.joueur, 1, 'au tour de J2');
+  B.push({ bulle: 25 });
+  s = calculer(c3, B);
+  egal(s.departage?.type, 'bulle', '25 et 25 : on recommence');
+  egal(s.joueur, 0, 'J1 relance');
+  B.push({ bulle: 25 }, { bulle: 50 });
+  s = calculer(c3, B);
+  egal(s.resultats.centre.classement, [1, 0, 2], '25 contre 50 : J2 gagne');
+  egal(s.jeu, 'mickey', 'puis le mickey');
+  // Trois à égalité : un 50, deux ratés → les deux ratés se départagent pour la 2e place
+  const T3 = [V(50), V(50), V(50), V(50), V(50), V(50), V(50), V(50), V(50), V(50), V(50), V(50), V(50), V(50), V(50), V(50), V(50), V(50)];
+  let r = calculer(c3, T3);
+  egal(r.departage?.restants, [0, 1, 2], 'trois à égalité');
+  T3.push({ bulle: 0 }, { bulle: 50 }, { bulle: 0 });
+  r = calculer(c3, T3);
+  egal(r.departage?.restants, [0, 2], 'J2 1er ; J1 et J3 rejouent pour la 2e place');
+  T3.push({ bulle: 0 }, { bulle: 25 });
+  r = calculer(c3, T3);
+  egal(r.resultats.centre.classement, [1, 2, 0], 'J3 2e, J1 3e');
 }
 
 console.log(`${ok} PASS, ${ko} FAIL`);

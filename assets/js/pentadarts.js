@@ -180,7 +180,7 @@ function infoTour(etat) {
 
 function texteDepartage(d) {
   const place = d.position + d.places.length + 1;
-  if (d.type === 'bulle') return `Égalité pour la ${place === 1 ? '1re' : `${place}e`} place : chacun son tour, une fléchette sur la bulle. Le premier qui touche la bulle ou la demi-bulle passe devant.`;
+  if (d.type === 'bulle') return `Égalité pour la ${place === 1 ? '1re' : `${place}e`} place : chacun lance une fléchette sur la bulle. 50 bat 25, qui bat raté. Encore à égalité (25 et 25, ou tous ratés) : on recommence.`;
   if (d.type === 'finish') return `Égalité pour la ${place === 1 ? '1re' : `${place}e`} place : les joueurs rejouent le ${d.cible}. Le premier qui le réussit passe devant.`;
   return `Égalité au total pour la ${place === 1 ? '1re' : `${place}e`} place : une manche de 501, le premier qui finit gagne.`;
 }
@@ -235,7 +235,9 @@ function tableauX01(etat, st) {
 
 function tableauDepartage(etat, d) {
   if (d.type === '501') return tableauX01({ joueur: etat.joueur }, d.x01);
-  return `<div class="pd-departage">${d.restants.map((p) => `<span class="pd-departage__joueur${p === etat.joueur ? ' pd-actif' : ''}">${esc(nom(p))}</span>`).join('<i>=</i>')}
+  const groupe = d.type === 'bulle' ? d.groupes[0] : d.restants;
+  const lance = (p) => { if (d.type !== 'bulle') return ''; const i = groupe.indexOf(p); return i >= 0 && i < d.tour.length ? `<b>${d.tour[i] || 'raté'}</b>` : ''; };
+  return `<div class="pd-departage">${groupe.map((p) => `<span class="pd-departage__joueur${p === etat.joueur ? ' pd-actif' : ''}">${esc(nom(p))}${lance(p)}</span>`).join('<i>=</i>')}
     ${d.places.length ? `<p class="match__format">Déjà départagés : ${d.places.map((p) => esc(nom(p))).join(', ')}</p>` : ''}</div>`;
 }
 
@@ -246,8 +248,9 @@ const boutonValider = (pret, texte = 'Valider la volée') => `<button type="butt
 function saisieHtml(etat) {
   const d = etat.departage;
   if (d?.type === 'bulle') {
-    return `<div class="pd-deux"><button type="button" class="bouton bouton--plein pd-gros" data-action='{"touche":true}'>Bulle touchée<small>25 ou 50</small></button>
-      <button type="button" class="bouton pd-gros" data-action='{"touche":false}'>Raté</button></div>`;
+    return `<div class="pd-trois"><button type="button" class="bouton bouton--plein pd-gros" data-action='{"bulle":50}'>50<small>bulle</small></button>
+      <button type="button" class="bouton pd-gros pd-gros--25" data-action='{"bulle":25}'>25<small>demi-bulle</small></button>
+      <button type="button" class="bouton pd-gros" data-action='{"bulle":0}'>Raté</button></div>`;
   }
   if (d?.type === 'finish') return saisieReussite(d.cible);
   if (d?.type === '501') return saisieX01(d.x01, etat.joueur);

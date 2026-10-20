@@ -2319,3 +2319,6 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .pd-bulle__joueur:not(:disabled):hover { background: rgba(245,122,0,.1); }
 .pd-bulle__joueur--place { opacity: .75; }
 .pd-bulle__outils { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+.pd-trois { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pd-gros--25 { border-color: var(--orange); }
+.pd-departage__joueur b { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--orange); color: var(--noir); font-size: 12px; }
