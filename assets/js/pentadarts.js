@@ -242,7 +242,11 @@ function tableauDepartage(etat, d) {
 }
 
 // ---------- Saisie ----------
-const emplacements = (labels) => `<div class="pd-fleches">${[0, 1, 2].map((i) => `<span class="pd-fleche${labels[i] !== undefined ? ' pd-fleche--pleine' : ''}">${labels[i] !== undefined ? esc(labels[i]) : i + 1}</span>`).join('')}</div>`;
+// Fléchettes de la volée : touchez-en une pour l'effacer ; « Tout effacer » vide la volée
+const emplacements = (labels) => `<div class="pd-fleches">${[0, 1, 2].map((i) => (labels[i] !== undefined
+  ? `<button type="button" class="pd-fleche pd-fleche--pleine" data-retirer-fleche="${i}" aria-label="Effacer la fléchette ${i + 1} (${esc(labels[i])})">${esc(labels[i])}<span class="pd-fleche__x" aria-hidden="true">×</span></button>`
+  : `<span class="pd-fleche">${i + 1}</span>`)).join('')}</div>
+  ${labels.length ? '<button type="button" class="lien-discret pd-tout-effacer" data-vider-volee>Tout effacer</button>' : '<p class="pd-astuce">Touchez une fléchette pour l\'effacer.</p>'}`;
 const boutonValider = (pret, texte = 'Valider la volée') => `<button type="button" class="bouton bouton--plein bouton--large" data-valider ${pret ? '' : 'disabled'}>${texte}</button>`;
 
 function saisieHtml(etat) {
@@ -335,6 +339,8 @@ $('pd-saisie').addEventListener('click', (e) => {
     multi = 1;
     return rendre();
   }
+  if (b.dataset.retirerFleche !== undefined) { volee.splice(Number(b.dataset.retirerFleche), 1); return rendre(); }
+  if (b.hasAttribute('data-vider-volee')) { volee = []; multi = 1; return rendre(); }
   if (b.dataset.multi) { multi = Number(b.dataset.multi); return rendre(); }
   if (b.dataset.num) {
     const n = b.dataset.num;

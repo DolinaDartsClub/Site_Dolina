@@ -2325,3 +2325,9 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .pd-touches--cricket { grid-template-columns: repeat(4, 1fr); }
 .pd-touches--cricket .touche { font-size: 17px; line-height: 1.1; }
 .pd-touches--cricket .touche small { display: block; font-family: var(--police); font-size: 10px; font-weight: 500; color: var(--gris); }
+/* Volée en cours : effacer une fléchette en la touchant */
+button.pd-fleche { position: relative; font: inherit; font-weight: 700; cursor: pointer; }
+button.pd-fleche:hover { background: rgba(245,122,0,.22); }
+.pd-fleche__x { position: absolute; top: 4px; right: 6px; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); color: var(--blanc); font-size: 13px; line-height: 1; }
+.pd-tout-effacer { justify-self: end; margin-top: -4px; }
+.pd-astuce { margin: -4px 0 0; font-size: 12px; color: var(--gris); text-align: right; }
