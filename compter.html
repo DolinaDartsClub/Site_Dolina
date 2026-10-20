@@ -30,8 +30,23 @@
 <main class="page page--compter">
   <section id="cp-reglages">
     <h1 class="section__titre">Compter une manche</h1>
-    <p class="intro">Entraînez-vous à marquer comme au club : le dartbot lance, vous comptez la volée et le reste. En cas d'erreur, le site vous montre la façon la plus simple de calculer.</p>
+    <p class="intro">Entraînez-vous à marquer comme au club : le dartbot lance, vous comptez la volée et le reste. En cas d'erreur, le site vous montre la façon la plus simple de calculer. En mode match, deux dartbots s'affrontent et vous scorez tout le match.</p>
     <form class="formulaire-jeu" id="form-compter">
+      <fieldset class="bloc-choix">
+        <legend>Mode</legend>
+        <div class="pastilles pastilles--2" data-groupe="mode">
+          <button type="button" class="pastille-choix" data-valeur="manche" aria-pressed="true">Une manche<small>un dartbot</small></button>
+          <button type="button" class="pastille-choix" data-valeur="match">Un match<small>dartbot contre dartbot</small></button>
+        </div>
+      </fieldset>
+      <fieldset class="bloc-choix" id="cp-bloc-manches" hidden>
+        <legend>Match : premier à</legend>
+        <div class="pastilles" data-groupe="manches">
+          <button type="button" class="pastille-choix" data-valeur="1">1 manche</button>
+          <button type="button" class="pastille-choix" data-valeur="2" aria-pressed="true">2 manches</button>
+          <button type="button" class="pastille-choix" data-valeur="3">3 manches</button>
+        </div>
+      </fieldset>
       <fieldset class="bloc-choix">
         <legend>Niveau</legend>
         <div class="pastilles" data-groupe="niveau">
@@ -59,7 +74,8 @@
       <span class="cp-info"><small>Série</small><b id="cp-serie">0</b></span>
       <span class="cp-info cp-info--chrono" id="cp-chrono-bloc" hidden><small>Chrono</small><b id="cp-chrono">15</b></span>
     </div>
-    <div class="cp-reste-avant">Reste avant la volée : <b id="cp-avant">501</b></div>
+    <div class="cp-tableau" id="cp-tableau" hidden></div>
+    <div class="cp-reste-avant" id="cp-reste-avant">Reste avant la volée : <b id="cp-avant">501</b></div>
     <div class="cp-cible" id="cp-cible"></div>
     <p class="cp-fleches" id="cp-fleches" hidden></p>
     <form class="cp-saisie" id="form-reponse" novalidate>

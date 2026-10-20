@@ -1950,6 +1950,20 @@ body { background: transparent; }
 .cp-info--urgent b { color: #ff6b5a; animation: fin-brille 1s ease-in-out infinite; }
 .cp-reste-avant { text-align: center; color: var(--gris-clair); margin-bottom: 6px; }
 .cp-reste-avant b { font-family: var(--police-titre); font-size: 28px; color: var(--blanc); margin-left: 6px; }
+/* Compter : match dartbot contre dartbot */
+.cp-tableau { margin-bottom: 8px; }
+.cp-tableau__manche { margin: 0 0 6px; text-align: center; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+.cp-tableau__joueurs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cp-joueur { display: grid; justify-items: center; gap: 2px; padding: 8px; border-radius: 12px; border: 1px solid var(--bord); background: var(--carte); opacity: .7; }
+.cp-joueur--actif { border-color: var(--orange); background: var(--orange-fond); opacity: 1; }
+.cp-joueur__nom { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; }
+.cp-joueur__lance { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+.cp-joueur__reste { font-family: var(--police-titre); font-size: 34px; line-height: 1; }
+.cp-joueur small { color: var(--gris-clair); font-size: 12px; }
+.cp-manche-gagnee { margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--orange-fond); color: var(--orange); font-weight: 700; text-align: center; }
+.cp-score-final { display: flex; justify-content: center; align-items: baseline; gap: 12px; margin: 0; font-size: 16px; }
+.cp-score-final b { font-family: var(--police-titre); font-size: 34px; color: var(--orange); margin-left: 6px; }
+.cp-score-final i { color: var(--gris); font-style: normal; }
 .cp-cible { display: flex; justify-content: center; }
 .cp-cible .cible-svg { max-width: 300px; cursor: default; }
 .cp-fleche { animation: fleche-arrive .35s ease-out; }
