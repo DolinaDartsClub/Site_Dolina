@@ -2331,3 +2331,9 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .pd-fleche__x { position: absolute; top: 4px; right: 6px; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); color: var(--blanc); font-size: 13px; line-height: 1; }
 .pd-tout-effacer { justify-self: end; margin-top: -4px; }
 .pd-astuce { margin: -4px 0 0; font-size: 12px; color: var(--gris); text-align: right; }
+/* Mes parties : jeux du club */
+.mp-carte__ctx--jeu { color: var(--orange); }
+.mp-camp__score small { font-size: 11px; color: var(--gris); font-family: var(--police); }
+.mp-feuille summary { cursor: pointer; color: var(--orange); font-weight: 600; font-size: 14px; }
+.mp-feuille .pd-defile { margin-top: 8px; }
+.mp-carte { min-width: 0; } .mp-feuille { min-width: 0; max-width: 100%; } .mp-feuille .pd-defile { max-width: 100%; }

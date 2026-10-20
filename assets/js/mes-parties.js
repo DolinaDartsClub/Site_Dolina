@@ -7,6 +7,10 @@
 // =====================================================================
 
 import { supabase, esc, formatPartie, etatPartie, profilConnecte, etiquetteType } from './app.js?v=__VERSION__';
+import { JEUX, ORDRE_PENTADARTS } from './pentadarts-regles.js?v=__VERSION__';
+
+const JEUX_CLUB = ['pentadarts', 'capital'];
+const COURTS = { centre: 'Centre', mickey: 'Cricket', finish: 'Finish', '301a': '301', '301b': '301', capital: 'Capital' };
 
 const PAR_PAGE = 20;
 const DUREE_REPRISE_H = 24;
@@ -58,8 +62,36 @@ function filtrer(q) {
   return q.order('created_at', { ascending: false }).range(page * PAR_PAGE, page * PAR_PAGE + PAR_PAGE - 1);
 }
 
+// Jeux du club (Pentadarts, Capital : script 039) : parties où je joue avec mon compte, ou que j'ai créées
+let jeuxClub = [];
+async function chargerJeuxClub() {
+  jeuxClub = [];
+  if ((filtres.jeu && !JEUX_CLUB.includes(filtres.jeu)) || filtres.statut === 'live' || filtres.type) return;
+  const base = () => {
+    let q = supabase.from('jeux_parties').select('id, jeu, joueurs, resultat, created_by, created_at');
+    if (filtres.jeu) q = q.eq('jeu', filtres.jeu);
+    return q.order('created_at', { ascending: false }).limit(100);
+  };
+  const [a, b] = await Promise.all([
+    base().contains('joueurs', JSON.stringify([{ profile_id: moi.id }])),
+    base().eq('created_by', moi.id),
+  ]);
+  if (a.error && b.error) return;   // script 039 pas encore lancé
+  jeuxClub = [...(a.data || []), ...(b.data || [])].filter((g, i, t) => t.findIndex((x) => x.id === g.id) === i)
+    .map((g) => ({ ...g, jeuClub: true }));
+}
+
 async function chargerPage() {
   btnPlus.disabled = true;
+  if (page === 0) await chargerJeuxClub();
+  // Filtre sur un jeu du club : pas de match X01 à charger
+  if (JEUX_CLUB.includes(filtres.jeu)) {
+    btnPlus.disabled = false;
+    fin = true;
+    parties = [...jeuxClub];
+    afficher();
+    return;
+  }
   // 1. Parties jouées avec mon compte ; 2. parties que j'ai créées (j'ai pu tenir le score sans jouer)
   const lire = () => Promise.all([
     filtrer(supabase.from('games').select(`${COLONNES}, moi:game_players!inner(profile_id)`).eq('moi.profile_id', moi.id)),
@@ -107,7 +139,7 @@ async function chargerPage() {
       g.etat = etatPartie(g, sides, (finishs || []).filter((v) => v.game_id === g.id));
     }
   }
-  parties = [...parties, ...nouvelles].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  parties = [...parties, ...nouvelles, ...(page === 0 ? jeuxClub : [])].sort((a, b) => b.created_at.localeCompare(a.created_at));
   afficher();
 }
 
@@ -174,10 +206,47 @@ function carte(g) {
     </article>`;
 }
 
+// Carte d'une partie de Pentadarts ou de Capital
+function carteJeuClub(g) {
+  const joueurs = g.joueurs || [];
+  const r = g.resultat || {};
+  const groupes = r.classement || [];
+  const moiIdx = joueurs.findIndex((j) => j.profile_id === moi.id);
+  let rang = 1; const rangs = {};
+  groupes.forEach((gr) => { gr.forEach((p) => { rangs[p] = rang; }); rang += gr.length; });
+  const monRang = moiIdx >= 0 ? rangs[moiIdx] : null;
+  const res = monRang === 1 ? { cle: 'victoire', texte: 'Victoire' } : monRang ? { cle: 'defaite', texte: `${monRang}e place` } : { cle: 'arbitre', texte: 'Terminée' };
+  const date = new Date(g.created_at);
+  const capital = g.jeu === 'capital';
+  const lignes = groupes.flat().map((p) => `
+    <li class="${p === moiIdx ? 'mp-camp--moi' : ''}${rangs[p] === 1 ? ' mp-camp--gagnant' : ''}">
+      <span class="mp-camp__nom">${rangs[p]}. ${esc(joueurs[p]?.nom || '?')}</span>
+      <b class="mp-camp__score">${r.totaux?.[p] ?? ''}${capital ? '' : '<small> pts</small>'}</b>
+    </li>`).join('');
+  const feuille = !capital && r.jeux ? `
+    <details class="mp-feuille"><summary>Voir la feuille</summary>
+      <div class="pd-defile"><table class="pd-table pd-table--feuille">
+        <thead><tr><th></th>${groupes.flat().map((p) => `<th>${esc(joueurs[p]?.nom || '?')}</th>`).join('')}</tr></thead>
+        <tbody>${ORDRE_PENTADARTS.filter((c) => r.jeux[c]).map((c) => `<tr><th><span class="pd-num-mini">${JEUX[c].num}</span>${esc(COURTS[c])}</th>${groupes.flat().map((p) => `<td><b>${r.jeux[c].points?.[p] ?? 0}</b></td>`).join('')}</tr>`).join('')}
+        <tr class="pd-ligne-total"><th>Total</th>${groupes.flat().map((p) => `<td>${r.totaux?.[p] ?? ''}</td>`).join('')}</tr></tbody></table></div>
+    </details>` : '';
+  return `
+    <article class="mp-carte mp-carte--${res.cle} mp-carte--jeu">
+      <header class="mp-carte__haut">
+        <span class="mp-carte__ctx mp-carte__ctx--jeu">${capital ? 'Le capital' : 'Pentadarts'}</span>
+        <span class="mp-carte__date">${esc(fmtJour.format(date))} · ${esc(fmtHeure.format(date))}</span>
+        <span class="mp-resultat mp-resultat--${res.cle}">${esc(res.texte)}</span>
+      </header>
+      <ul class="mp-camps">${lignes}</ul>
+      <p class="mp-carte__format">Jeu du club · ${joueurs.length} joueur${joueurs.length > 1 ? 's' : ''} · hors statistiques</p>
+      ${feuille}
+    </article>`;
+}
+
 function afficher() {
-  const visibles = parties.filter((g) => !filtres.type || contexte(g).type === filtres.type);
+  const visibles = parties.filter((g) => g.jeuClub || !filtres.type || contexte(g).type === filtres.type);
   liste.innerHTML = visibles.length
-    ? visibles.map(carte).join('')
+    ? visibles.map((g) => (g.jeuClub ? carteJeuClub(g) : carte(g))).join('')
     : `<p class="vide">${filtres.statut || filtres.jeu ? 'Aucune partie avec ces filtres.' : 'Vous n\'avez pas encore de partie. <a href="jouer.html#match">Lancer un match</a>'}</p>`;
   btnPlus.hidden = fin;
 }
