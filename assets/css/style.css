@@ -2195,3 +2195,23 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .cs-forme__pt--V { background: var(--orange); color: var(--noir); }
 .cs-forme__pt--N { background: #444; color: var(--blanc); }
 @media (min-width: 900px) { .rubriques-page { margin: 0; padding: 4px 0 10px; background: none; } }
+
+/* Espace admin : récap des membres */
+.recap-membres { display: grid; gap: 10px; margin-bottom: 16px; }
+.recap-tuiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 760px) { .recap-tuiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.recap-tuile { display: grid; justify-items: center; gap: 2px; padding: 12px 6px; border-radius: 12px; border: 1px solid var(--verre-bord, var(--bord)); background: var(--verre, var(--carte)); text-align: center; }
+.recap-tuile b { font-family: var(--police-titre); font-size: 26px; line-height: 1; }
+.recap-tuile span { font-size: 11px; color: var(--gris); text-transform: uppercase; letter-spacing: .04em; }
+.recap-tuile--fort b { color: var(--orange); }
+.recap-tuile--alerte { border-color: var(--orange); background: rgba(245,122,0,.1); }
+.recap-equipes { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+.recap-equipe { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--verre-bord, var(--bord)); background: var(--verre, var(--carte)); }
+.recap-equipe span { color: var(--gris-clair); font-size: 14px; }
+.recap-equipe span b { color: var(--orange); font-size: 18px; }
+.recap-equipe small { color: var(--gris); font-size: 12px; }
+.recap-note { margin: 0; }
+.recap-equipes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.recap-equipe { padding: 8px 10px; text-align: center; justify-items: center; }
+.recap-equipe strong { font-size: 14px; }
+.recap-equipe small { font-size: 11px; line-height: 1.3; }

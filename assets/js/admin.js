@@ -63,6 +63,7 @@ async function charger() {
   profils = rp.data;
   equipes = rt.data;
   afficherInscriptions();
+  afficherRecap();
   afficherMembres();
   afficherEquipes();
 }
@@ -103,6 +104,42 @@ function afficherInscriptions() {
 }
 
 // ---------- Membres ----------
+
+// ---------- Récap des membres (haut de la rubrique Membres) ----------
+function afficherRecap() {
+  let zone = document.getElementById('recap-membres');
+  if (!zone) {
+    zone = document.createElement('section');
+    zone.id = 'recap-membres';
+    zone.className = 'recap-membres';
+    const vue = document.getElementById('vue-membres');
+    vue.insertBefore(zone, vue.firstChild);
+  }
+  const actifs = profils.filter((p) => p.status === 'active');
+  const nb = (f) => profils.filter(f).length;
+  const dansEquipe = (p, id) => (p.team_members || []).some((m) => m.status === 'accepted' && (!id || m.team_id === id));
+  const debutMois = new Date(); debutMois.setDate(1); debutMois.setHours(0, 0, 0, 0);
+  const tuile = (valeur, libelle, classe = '') => `<div class="recap-tuile ${classe}"><b>${valeur}</b><span>${libelle}</span></div>`;
+  zone.innerHTML = `
+    <div class="recap-tuiles">
+      ${tuile(actifs.length, `Membre${actifs.length > 1 ? 's' : ''} validé${actifs.length > 1 ? 's' : ''}`, 'recap-tuile--fort')}
+      ${tuile(nb((p) => p.status === 'pending'), 'En attente', nb((p) => p.status === 'pending') ? 'recap-tuile--alerte' : '')}
+      ${tuile(nb((p) => new Date(p.created_at) >= debutMois), 'Nouveaux ce mois')}
+      ${tuile(actifs.filter((p) => !dansEquipe(p)).length, 'Sans équipe')}
+      ${tuile(actifs.filter((p) => p.role === 'admin').length, 'Admins')}
+      ${tuile(actifs.filter((p) => p.compte === 'identifiant' || p.compte === 'gere').length, 'Sans email')}
+    </div>
+    <div class="recap-equipes">
+      ${equipes.map((t) => {
+        const n = actifs.filter((p) => dansEquipe(p, t.id)).length;
+        const cap = profils.find((p) => p.id === t.captain_id);
+        const vice = profils.find((p) => p.id === t.vice_captain_id);
+        return `<div class="recap-equipe"><strong>${esc(t.name)}</strong><span><b>${n}</b> joueur${n > 1 ? 's' : ''}</span>
+          <small>${cap ? `Cap. ${esc(nomComplet(cap))}` : 'Pas de capitaine'}${vice ? ` · Vice ${esc(nomComplet(vice))}` : ''}</small></div>`;
+      }).join('')}
+    </div>
+    ${nb((p) => p.status === 'refused') ? `<p class="match__format recap-note">${nb((p) => p.status === 'refused')} inscription(s) refusée(s) dans la liste.</p>` : ''}`;
+}
 
 function afficherMembres() {
   const q = recherche.value.trim().toLowerCase();
