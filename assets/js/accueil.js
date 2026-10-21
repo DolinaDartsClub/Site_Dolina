@@ -94,6 +94,81 @@ function carteMatch(g, visits) {
     </a>`;
 }
 
+// ---------- Derniers matchs publics terminés ----------
+
+const NB_DERNIERS = 6;
+async function chargerDerniers() {
+  const bloc = document.getElementById('derniers-matchs');
+  const zone = document.getElementById('derniers');
+  const { data: games, error } = await supabase
+    .from('games')
+    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, finished_at, updated_at, game_sides(side, name, is_bot), game_players(side, display_name, throw_order)')
+    .eq('status', 'finished')
+    .eq('visibility', 'public')
+    .order('finished_at', { ascending: false, nullsFirst: false })
+    .limit(NB_DERNIERS);
+  if (error || !games?.length) { bloc.hidden = true; return; }
+  const { data: visits } = await supabase
+    .from('visits')
+    .select('id, game_id, set_no, leg_no, visit_no, side, score, remaining_before, is_bust, is_checkout, darts_used, darts_at_double')
+    .in('game_id', games.map((g) => g.id));
+  zone.innerHTML = games.map((g) => carteTerminee(g, (visits || []).filter((v) => v.game_id === g.id))).join('');
+  bloc.hidden = false;
+}
+
+// « il y a 2 h », « hier », sinon la date
+function quand(date) {
+  if (!date) return '';
+  const min = Math.round((Date.now() - Date.parse(date)) / 60000);
+  if (min < 1) return 'à l\'instant';
+  if (min < 60) return `il y a ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `il y a ${h} h`;
+  const j = Math.round(h / 24);
+  return j === 1 ? 'hier' : (j < 7 ? `il y a ${j} jours` : dateFr(date));
+}
+
+function carteTerminee(g, visits) {
+  const sides = [...g.game_sides].sort((a, b) => a.side - b.side);
+  const etat = etatPartie(g, sides, visits);
+  const lien = `live.html?id=${encodeURIComponent(g.id)}`;
+  const moy = (side) => {
+    const st = etat.stats?.[side];
+    return st && st.flechettes ? ((st.points / st.flechettes) * 3).toFixed(1).replace('.', ',') : '–';
+  };
+  const score = (side) => (g.sets_n ? etat.sets[side] : etat.manches[side]);
+  const entete = `<span class="match__format">${esc(formatPartie(g))} · ${esc(quand(g.finished_at || g.updated_at))}</span>`;
+  if (sides.length === 2) {
+    const [a, b] = sides.map((s) => s.side);
+    const camp = (side, droite) => `
+          <span class="match__camp${droite ? ' match__camp--droite' : ''}${g.winner_side === side ? ' match__camp--gagnant' : ''}">
+            <span class="match__nom">${esc(nomCamp(g, side))}</span>
+            <span class="match__reste">moy. ${moy(side)}${g.winner_side === side ? ' · <b>Vainqueur</b>' : ''}</span>
+          </span>`;
+    return `
+      <a class="match match--fini" href="${lien}">
+        ${entete}
+        <span class="match__ligne">
+          ${camp(a, false)}
+          <span class="match__score"><span class="${g.winner_side === a ? 'match__pt--gagnant' : ''}">${score(a)}</span> – <span class="${g.winner_side === b ? 'match__pt--gagnant' : ''}">${score(b)}</span></span>
+          ${camp(b, true)}
+        </span>
+        <span class="match__lien">Voir le récapitulatif →</span>
+      </a>`;
+  }
+  const lignes = sides.map((s) => `
+    <span class="match__ligne match__ligne--multi${g.winner_side === s.side ? ' match__camp--gagnant' : ''}">
+      <span class="match__nom">${esc(nomCamp(g, s.side))}</span>
+      <span class="match__reste">${score(s.side)} manche${score(s.side) > 1 ? 's' : ''} · moy. ${moy(s.side)}</span>
+    </span>`).join('');
+  return `
+    <a class="match match--fini" href="${lien}">
+      ${entete}
+      ${lignes}
+      <span class="match__lien">Voir le récapitulatif →</span>
+    </a>`;
+}
+
 // ---------- Tournois en cours (visible des visiteurs) ----------
 
 // Prochaines rencontres (tout le monde) : la prochaine de chaque équipe ; celle du joueur connecté est mise en valeur
@@ -336,7 +411,7 @@ function carrouselActus(racine) {
 let attente = null;
 function rafraichirBientot() {
   clearTimeout(attente);
-  attente = setTimeout(chargerMatchs, 400);
+  attente = setTimeout(() => { chargerMatchs(); chargerDerniers(); }, 400);
 }
 
 supabase
@@ -350,6 +425,7 @@ chargerProchaines();
 chargerResultats();
 
 chargerMatchs();
+chargerDerniers();
 chargerArticles();
 
 // ---------- Diaporama « Rejoindre le club » ----------

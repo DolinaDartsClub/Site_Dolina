@@ -161,6 +161,12 @@ img { max-width: 100%; display: block; }
 .match__reste { font-size: 13px; color: var(--gris); }
 .match__score { font-family: var(--police-titre); font-weight: 700; font-size: 34px; color: var(--orange); white-space: nowrap; }
 .match__lien { font-size: 14px; font-weight: 600; color: var(--orange); }
+/* Accueil : derniers matchs terminés */
+.match--fini .match__score { color: var(--gris-clair); }
+.match--fini .match__pt--gagnant { color: var(--orange); }
+.match--fini .match__camp--gagnant .match__nom { color: var(--orange); }
+.match--fini .match__reste b { color: var(--orange); font-weight: 700; }
+.match__ligne--multi { grid-template-columns: minmax(0, 1fr) auto; }
 
 /* ---------- Actualités ---------- */
 
