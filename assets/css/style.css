@@ -2448,3 +2448,8 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .fil-badge--record { border-color: var(--orange); background: var(--orange); color: #111; }
 .eq-onglets { flex-wrap: nowrap; }
 .eq-onglets .onglet { padding: 8px 12px; white-space: nowrap; }
+
+/* Derniers tournois du club (script 048) */
+.t-carte__vainqueur { font-size: 14px; color: var(--gris-clair); }
+.t-carte__vainqueur b { color: var(--orange); }
+.t-derniers-plus { grid-column: 1 / -1; }

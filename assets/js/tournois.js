@@ -38,6 +38,7 @@ async function init() {
     champCode.focus();
   }
   chargerTournois();
+  chargerDerniers();
 }
 
 // ---------- Mes tournois ----------
@@ -65,6 +66,42 @@ async function chargerTournois() {
 
   document.getElementById('bloc-admin').hidden = !autres.length;
   document.getElementById('autres-tournois').innerHTML = autres.map((t) => carte(t, false)).join('');
+}
+
+// ---------- Derniers tournois du club (script 048) ----------
+
+const DERNIERS_PAR_PAGE = 6;
+let decalageDerniers = 0;
+const fmtDate = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+async function chargerDerniers() {
+  const bloc = document.getElementById('bloc-derniers');
+  const zone = document.getElementById('derniers-tournois');
+  const { data, error } = await supabase.rpc('derniers_tournois', { p_decalage: decalageDerniers, p_limite: DERNIERS_PAR_PAGE });
+  zone.querySelector('.t-derniers-plus')?.remove();
+  if (error || (!data?.length && !decalageDerniers)) { bloc.hidden = decalageDerniers === 0; return; }
+  zone.insertAdjacentHTML('beforeend', data.map(carteDernier).join(''));
+  decalageDerniers += data.length;
+  bloc.hidden = false;
+  if (data.length === DERNIERS_PAR_PAGE) {
+    zone.insertAdjacentHTML('beforeend', '<button type="button" class="bouton bouton--large t-derniers-plus">Afficher plus de tournois</button>');
+    zone.querySelector('.t-derniers-plus').addEventListener('click', (e) => { e.target.disabled = true; chargerDerniers(); });
+  }
+}
+
+function carteDernier(t) {
+  const date = t.finished_at || t.started_at;
+  return `
+    <a class="t-carte${t.vainqueur ? ' t-carte--fini' : ''}" href="tournoi.html?id=${encodeURIComponent(t.id)}">
+      <span class="t-carte__haut">${badgeStatut(t.status)}${t.est_ligue ? '<span class="t-role">Ligue interne</span>' : ''}</span>
+      <strong class="t-carte__nom">${esc(t.name)}</strong>
+      <span class="t-carte__format">${esc(resumeFormat(t))}</span>
+      ${t.vainqueur ? `<span class="t-carte__vainqueur"><span aria-hidden="true">🏆</span> Vainqueur : <b>${esc(t.vainqueur)}</b></span>` : `<span class="t-carte__format">${t.matchs_joues} / ${t.matchs_total} matchs joués</span>`}
+      <span class="t-carte__bas">
+        <span>${t.inscrits} ${t.team_mode === 'double' ? 'doublettes' : 'joueurs'}</span>
+        <span>${date ? `${t.status === 'finished' ? 'Terminé le' : 'Lancé le'} ${esc(fmtDate.format(new Date(date)))}` : ''}</span>
+      </span>
+    </a>`;
 }
 
 function carte(t, inscrit) {
