@@ -8,6 +8,7 @@
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar, estCapitaineDe } from './app.js?v=__VERSION__';
 import { debutSaison, nomSaison } from './profil-commun.js?v=__VERSION__';
 import { telechargerIcs } from './ics.js?v=__VERSION__';
+import { afficherFil } from './fil.js?v=__VERSION__';
 import { chargerClubs, clubDe, logoAdversaire, logoDolina, enregistrerLogo, affiche, scoreOrdonne } from './logos.js?v=__VERSION__';
 
 const zone = document.getElementById('eq-contenu');
@@ -99,7 +100,7 @@ async function charger() {
 
   const demandee = decodeURIComponent(location.hash.slice(1));
   const mienne = moi && equipes.find((t) => estCapitaineDe(t, moi.id) || (effectifs[t.id] || []).some((p) => p.id === moi.id));
-  equipeActive = (equipes.find((t) => t.id === demandee || t.name === demandee) || mienne || equipes[0])?.id || null;
+  equipeActive = demandee === FIL && voitLeFil() ? FIL : ((equipes.find((t) => t.id === demandee || t.name === demandee) || mienne || equipes[0])?.id || null);
   saison = isoJour(debutSaison());
   afficher();
   // Raccourcis depuis l'espace capitaine : ?ajouter=1 ou ?modifier=<rencontre>
@@ -116,8 +117,12 @@ async function charger() {
 
 // ---------- Affichage ----------
 
+// Onglet « Fil du club » : réservé aux membres connectés (script 047)
+const FIL = 'fil';
+const voitLeFil = () => moi?.status === 'active';
 function afficherOnglets() {
-  onglets.innerHTML = equipes.map((t) => `<button type="button" class="onglet" data-equipe="${t.id}" aria-selected="${t.id === equipeActive}">${esc(t.name)}</button>`).join('');
+  onglets.innerHTML = equipes.map((t) => `<button type="button" class="onglet" data-equipe="${t.id}" aria-selected="${t.id === equipeActive}">${esc(t.name)}</button>`).join('')
+    + (voitLeFil() ? `<button type="button" class="onglet onglet--fil" data-equipe="${FIL}" aria-selected="${equipeActive === FIL}">Fil du club</button>` : '');
 }
 
 function carteRencontre(r, gerer) {
@@ -170,6 +175,7 @@ function carteRencontre(r, gerer) {
 
 function afficher() {
   afficherOnglets();
+  if (equipeActive === FIL && voitLeFil()) { afficherFil(zone); return; }
   const t = equipes.find((x) => x.id === equipeActive);
   if (!t) { zone.innerHTML = '<p class="vide">Aucune équipe pour le moment.</p>'; return; }
   const gerer = peutGerer(t.id);
@@ -481,7 +487,7 @@ onglets.addEventListener('click', (e) => {
   if (!b) return;
   equipeActive = b.dataset.equipe;
   const t = equipes.find((x) => x.id === equipeActive);
-  history.replaceState(null, '', `#${encodeURIComponent(t?.name || equipeActive)}`);
+  history.replaceState(null, '', `#${encodeURIComponent(equipeActive === FIL ? FIL : (t?.name || equipeActive))}`);
   saison = isoJour(debutSaison());
   message(zoneMsg, '');
   afficher();

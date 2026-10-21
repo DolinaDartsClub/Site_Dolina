@@ -2428,3 +2428,23 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .live__format + .ardoise__onglets { margin-bottom: 4px; }
 .recap--manche td { white-space: nowrap; }
 .recap--manche th, .recap--manche td { padding-left: 6px; padding-right: 6px; }
+
+/* Fil du club (script 047) */
+
+.fil-intro { margin-top: 0; }
+.fil { display: grid; gap: 10px; }
+.fil-carte { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--bord); background: var(--carte); color: inherit; text-decoration: none; }
+.fil-carte:hover { border-color: var(--bord-fort); }
+.fil-carte--record { border-color: var(--orange); background: var(--orange-fond); }
+.fil-avatar { width: 44px; height: 44px; font-size: 15px; }
+.fil-carte__corps { display: grid; gap: 4px; min-width: 0; }
+.fil-carte__titre { font-size: 15px; line-height: 1.3; }
+.fil-carte__match { font-size: 13px; color: var(--gris-clair); line-height: 1.4; }
+.fil-carte__quand { font-size: 12px; color: var(--gris); }
+.fil-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+.fil-badge { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--bord-fort); font-size: 12px; font-weight: 700; color: var(--gris-clair); }
+.fil-badge--fort { border-color: var(--orange); color: var(--orange); }
+.fil-badge--perso { border-color: var(--orange-clair); color: var(--orange-clair); }
+.fil-badge--record { border-color: var(--orange); background: var(--orange); color: #111; }
+.eq-onglets { flex-wrap: nowrap; }
+.eq-onglets .onglet { padding: 8px 12px; white-space: nowrap; }
