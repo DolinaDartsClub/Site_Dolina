@@ -173,6 +173,7 @@ function afficherJoueurs() {
   document.getElementById('ajout-joueurs').hidden = plein;
   document.getElementById('bloc-bot').hidden = !bot;
   document.getElementById('bloc-type').hidden = bot;
+  document.getElementById('bloc-visi').hidden = bot;   // contre le dartbot : partie toujours privée
   document.getElementById('aide-joueurs').textContent = choix.mode === 'double'
     ? `Double 2v2 : ajoutez 4 joueurs (${joueurs.length}/4), puis formez les deux doublettes.`
     : bot ? (joueurs.length > 1 ? 'Contre le dartbot, un seul joueur : retirez les autres.' : 'Un joueur seul contre le dartbot.')
@@ -518,7 +519,7 @@ async function creerPartie(premier) {
     legs_n: Number(f.legs_n.value) || 1,
     sets_kind: f.sets_kind.value || null,
     sets_n: f.sets_kind.value ? Number(f.sets_n.value) || 1 : null,
-    visibility: choix.public ? 'public' : 'private',
+    visibility: choix.public && choix.mode !== 'bot' ? 'public' : 'private',
     first_side: premier,
     show_checkout: choix.guide,
     match_type: choix.mode === 'bot' ? 'club' : (typeMatch.valeur() || 'club'),
