@@ -163,7 +163,7 @@ function afficher() {
         <h2 class="section__titre">Pas encore classé${vue === 'joueurs' ? 's' : 'es'} <small class="t-petit">(moins de ${seuil} manches jouées)</small></h2>
         ${tableau(autres)}
       </section>` : ''}
-    <p class="t-legende">Comptent : les parties terminées en 301 et 501 (matchs de tournoi, de ligue et parties contre un invité compris ; les matchs amicaux joués à l'extérieur ne comptent pas)${vue === 'joueurs' ? ', en individuel. Les parties à deux contre deux sont dans l\'onglet Doublettes' : ', à deux contre deux, pour chaque paire de joueurs'}.</p>`;
+    <p class="t-legende">Comptent uniquement les matchs de ligue et de tournoi (ligue interne comprise) terminés en 301 et 501. Les parties de club libres et les matchs amicaux comptent dans « Mes stats », pas au classement${vue === 'joueurs' ? ', en individuel. Les parties à deux contre deux sont dans l\'onglet Doublettes' : ', à deux contre deux, pour chaque paire de joueurs'}.</p>`;
   zone.querySelectorAll('[data-tri]').forEach((b) => b.addEventListener('click', () => {
     const cle = b.dataset.tri;
     tri = tri.cle === cle ? { cle, sens: -tri.sens } : { cle, sens: ['nom', 'equipes', 'rang'].includes(cle) ? 1 : -1 };

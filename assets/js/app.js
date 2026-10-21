@@ -462,7 +462,7 @@ export function choisirLieu() {
       <div class="fenetre__boite lieu-fenetre">
         <h2 id="t-lieu">Où jouez-vous ?</h2>
         <button type="button" class="lieu-choix${actuel === 'club' ? ' lieu-choix--actuel' : ''}" data-lieu="club">
-          <strong>Au club</strong><small>Les parties fonctionnent comme d'habitude et comptent au classement.</small>
+          <strong>Au club</strong><small>Les parties fonctionnent comme d'habitude et comptent dans vos stats.</small>
         </button>
         <button type="button" class="lieu-choix${actuel === 'exterieur' ? ' lieu-choix--actuel' : ''}" data-lieu="exterieur">
           <strong>À l'extérieur</strong><small>Pour chaque match et tournoi, vous indiquerez s'il s'agit d'un match de ligue ou d'un match amical (un amical ne compte pas au classement).</small>
@@ -518,6 +518,8 @@ initLieu();
 
 // Type de match d'une nouvelle partie ou d'un tournoi, selon le lieu :
 //   au club : « Partie de club » ou « Match de ligue » ;  à l'extérieur : « Match de ligue » ou « Match amical » (choix obligatoire)
+// « Match de ligue » est grisé pour l'instant (LIGUE_ACTIVE) : la ligue se joue depuis la page de la ligue interne.
+const LIGUE_ACTIVE = false;
 export function brancherTypeMatch(zone, valeurInitiale = null) {
   let valeur = valeurInitiale;
   const afficher = () => {
@@ -525,15 +527,19 @@ export function brancherTypeMatch(zone, valeurInitiale = null) {
     const options = lieu === 'exterieur'
       ? [['ligue', 'Match de ligue'], ['amical', 'Match amical']]
       : [['club', 'Partie de club'], ['ligue', 'Match de ligue']];
+    if (!LIGUE_ACTIVE && valeur === 'ligue') valeur = null;
     if (lieu === 'exterieur' && valeur === 'club') valeur = null;
-    if (lieu !== 'exterieur' && (valeur === 'amical' || !valeur)) valeur = valeurInitiale === 'ligue' ? 'ligue' : 'club';
+    if (lieu === 'exterieur' && !LIGUE_ACTIVE && !valeur) valeur = 'amical';
+    if (lieu !== 'exterieur' && (valeur === 'amical' || !valeur)) valeur = LIGUE_ACTIVE && valeurInitiale === 'ligue' ? 'ligue' : 'club';
     zone.innerHTML = `
       <div class="pastilles pastilles--2" role="group" aria-label="Type de match">
-        ${options.map(([v, l]) => `<button type="button" class="pastille-choix" data-type-match="${v}" aria-pressed="${valeur === v}">${l}</button>`).join('')}
+        ${options.map(([v, l]) => (v === 'ligue' && !LIGUE_ACTIVE
+    ? `<button type="button" class="pastille-choix" disabled aria-disabled="true" title="Bientôt disponible">${l}<small>bientôt</small></button>`
+    : `<button type="button" class="pastille-choix" data-type-match="${v}" aria-pressed="${valeur === v}">${l}</button>`)).join('')}
       </div>
       <small class="type-match__aide">${lieu === 'exterieur'
     ? `Vous jouez à l'extérieur. ${valeur === 'amical' ? 'Un match amical compte dans vos stats, mais pas au classement.' : (valeur === 'ligue' ? 'Un match de ligue compte au classement.' : 'Choisissez le type du match.')}`
-    : `Vous jouez au club. ${valeur === 'ligue' ? 'Match de ligue : compte au classement.' : 'Compte au classement.'}`}
+    : `Vous jouez au club. ${valeur === 'ligue' ? 'Match de ligue : compte au classement.' : 'Compte dans vos stats. Le classement ne compte que les matchs de ligue et de tournoi.'}`}
         <button type="button" class="lien-discret" data-changer-lieu>Changer de lieu</button></small>`;
   };
   zone.addEventListener('click', (e) => {

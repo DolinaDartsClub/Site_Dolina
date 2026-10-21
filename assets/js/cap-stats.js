@@ -91,7 +91,7 @@ function sansPartie(liste) {
 async function blocJoueurs(zone, t, effectif) {
   zone.innerHTML = '<p class="vide">Chargement des statistiques…</p>';
   const [rc, rf] = await Promise.all([
-    supabase.rpc('classement_membres', { ...bornes(), p_variant: reglages.jeu || null, p_equipe: t.id }),
+    supabase.rpc('classement_membres', { ...bornes(), p_variant: reglages.jeu || null, p_equipe: t.id, p_tous: true }),
     supabase.rpc('forme_equipe', { p_equipe: t.id, p_n: 5 }),
   ]);
   if (rc.error) { zone.innerHTML = `<p class="vide">Statistiques indisponibles : ${esc(rc.error.message)}</p>`; return; }
@@ -110,7 +110,7 @@ async function blocJoueurs(zone, t, effectif) {
     ${actifs.length ? `<div class="cs-joueurs">${actifs.map((m) => carteJoueur(m, lignes.get(m.profile_id), formes.get(m.profile_id))).join('')}</div>` : ''}
     ${sansPartie(inactifs)}
     ${effectif.length ? '' : '<p class="vide">Aucun joueur dans l\'équipe.</p>'}
-    <p class="match__format cs-note">Parties de 301 et 501 contre un adversaire, hors matchs amicaux et dartbot (comme le classement). Forme : 5 dernières parties, la plus récente à gauche.</p>`;
+    <p class="match__format cs-note">Parties de 301 et 501 contre un adversaire, hors matchs amicaux et dartbot (parties de club comprises, comme « Mes stats »). Forme : 5 dernières parties, la plus récente à gauche.</p>`;
 }
 
 export async function afficherStatsEquipe(conteneur, t, effectif) {
