@@ -96,7 +96,9 @@ function carteMatch(g, visits) {
 
 // ---------- Derniers matchs publics terminés ----------
 
-const NB_DERNIERS = 6;
+const NB_DERNIERS = 6;      // au maximum
+const NB_VISIBLES = 3;      // affichés d'abord ; le bouton montre les autres
+let tousLesDerniers = false;
 async function chargerDerniers() {
   const bloc = document.getElementById('derniers-matchs');
   const zone = document.getElementById('derniers');
@@ -112,7 +114,15 @@ async function chargerDerniers() {
     .from('visits')
     .select('id, game_id, set_no, leg_no, visit_no, side, score, remaining_before, is_bust, is_checkout, darts_used, darts_at_double')
     .in('game_id', games.map((g) => g.id));
-  zone.innerHTML = games.map((g) => carteTerminee(g, (visits || []).filter((v) => v.game_id === g.id))).join('');
+  const cartes = games.map((g, i) => carteTerminee(g, (visits || []).filter((v) => v.game_id === g.id), !tousLesDerniers && i >= NB_VISIBLES));
+  const caches = games.length - NB_VISIBLES;
+  zone.innerHTML = cartes.join('')
+    + (!tousLesDerniers && caches > 0 ? `<button type="button" class="bouton bouton--large matchs__plus" id="derniers-plus">Afficher plus de matchs (${caches})</button>` : '');
+  zone.querySelector('#derniers-plus')?.addEventListener('click', () => {
+    tousLesDerniers = true;
+    zone.querySelectorAll('.match[hidden]').forEach((c) => { c.hidden = false; });
+    zone.querySelector('#derniers-plus').remove();
+  });
   bloc.hidden = false;
 }
 
@@ -128,7 +138,7 @@ function quand(date) {
   return j === 1 ? 'hier' : (j < 7 ? `il y a ${j} jours` : dateFr(date));
 }
 
-function carteTerminee(g, visits) {
+function carteTerminee(g, visits, cache = false) {
   const sides = [...g.game_sides].sort((a, b) => a.side - b.side);
   const etat = etatPartie(g, sides, visits);
   const lien = `live.html?id=${encodeURIComponent(g.id)}`;
@@ -146,7 +156,7 @@ function carteTerminee(g, visits) {
             <span class="match__reste">moy. ${moy(side)}${g.winner_side === side ? ' · <b>Vainqueur</b>' : ''}</span>
           </span>`;
     return `
-      <a class="match match--fini" href="${lien}">
+      <a class="match match--fini" href="${lien}"${cache ? ' hidden' : ''}>
         ${entete}
         <span class="match__ligne">
           ${camp(a, false)}
@@ -162,7 +172,7 @@ function carteTerminee(g, visits) {
       <span class="match__reste">${score(s.side)} manche${score(s.side) > 1 ? 's' : ''} · moy. ${moy(s.side)}</span>
     </span>`).join('');
   return `
-    <a class="match match--fini" href="${lien}">
+    <a class="match match--fini" href="${lien}"${cache ? ' hidden' : ''}>
       ${entete}
       ${lignes}
       <span class="match__lien">Voir le récapitulatif →</span>
