@@ -171,8 +171,28 @@ function afficher() {
     ? `<div class="ardoise__onglets" role="group" aria-label="Choisir la manche">${manches.map((m) => `<button type="button" class="ardoise__onglet" aria-pressed="${m.cle === cleVue}" data-manche="${m.cle}">${game.sets_n ? `S${m.set} · M${m.leg}` : `Manche ${m.leg}`}</button>`).join('')}</div>`
     : '';
 
+  // Récapitulatif : stats de la manche affichée, en haut
+  const statsManche = fini && vue ? (() => {
+    const cols = sides.map((s) => s.side);
+    const st = Object.fromEntries(cols.map((c) => [c, statsVolees(voleesVue, c)]));
+    const l = (titre, f) => `<tr><th>${titre}</th>${cols.map((c) => `<td>${f(st[c])}</td>`).join('')}</tr>`;
+    return `
+    <div class="recap-cadre stats-manche">
+      <table class="recap recap--${cols.length}">
+        <thead><tr><th>${esc(libelle(vue))}</th>${cols.map((c) => `<th class="${gagnantVue === c ? 'recap--vainqueur' : ''}">${esc(nomCamp(c))}${gagnantVue === c ? '<small>Gagne la manche</small>' : ''}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${l('Moy. 9 premières', moy9)}
+          ${l('Moyenne (3 fl.)', moy3)}
+          ${l('Réussite au double', (x) => `${pctDouble(x)}<small>${x.finishs}/${x.auDouble}</small>`)}
+        </tbody>
+      </table>
+    </div>`;
+  })() : '';
+
   zone.innerHTML = `
     <p class="match__format live__format">${esc(formatPartie(game))} · finish double</p>
+    ${onglets}
+    ${statsManche}
     <div class="tablette">
       <div class="plaques plaques--${sides.length}">
         ${duel ? plaque(sides[0]) + centre + plaque(sides[1]) : sides.map(plaque).join('')}
@@ -189,7 +209,6 @@ function afficher() {
         <span>${enCours ? 'En cours' : (fini && vue === manches.at(-1) ? 'Partie terminée' : 'Manche terminée')}</span>
       </div>
     </div>
-    ${onglets}
     <p class="match__format">● a commencé la manche · ▸ au lancer · Le score se met à jour automatiquement.</p>
     ${fini ? recapitulatif(sides, ordre, manches, etat, libelle) : ''}`;
 
@@ -216,11 +235,19 @@ function afficher() {
 
 // Statistiques d'un camp sur une liste de volées
 function statsVolees(liste, side) {
-  const st = { points: 0, flechettes: 0, auDouble: 0, finishs: 0, cent: 0, cent40: 0, cent80: 0, meilleur: 0, meilleurFinish: 0, volees: 0 };
+  const st = { points: 0, flechettes: 0, auDouble: 0, finishs: 0, cent: 0, cent40: 0, cent80: 0, meilleur: 0, meilleurFinish: 0, volees: 0, points9: 0, flechettes9: 0 };
+  const parManche = {};
   for (const v of liste) {
     if (v.side !== side) continue;
     st.volees += 1;
     st.flechettes += v.is_checkout ? v.darts_used : 3;
+    // 9 premières fléchettes : les 3 premières volées de chaque manche
+    const cle = `${v.set_no}-${v.leg_no}`;
+    parManche[cle] = (parManche[cle] || 0) + 1;
+    if (parManche[cle] <= 3) {
+      st.flechettes9 += v.is_checkout ? v.darts_used : 3;
+      if (!v.is_bust) st.points9 += v.score;
+    }
     st.auDouble += v.darts_at_double || 0;
     if (v.is_bust) continue;
     st.points += v.score;
@@ -233,7 +260,8 @@ function statsVolees(liste, side) {
   return st;
 }
 const virgule = (n) => String(n).replace('.', ',');
-const moy3 = (st) => (st.flechettes ? virgule(Math.round((st.points / st.flechettes) * 30) / 10) : '–');
+const moy3 = (st) => (st.flechettes ? virgule(((st.points / st.flechettes) * 3).toFixed(1)) : '–');
+const moy9 = (st) => (st.flechettes9 ? virgule(((st.points9 / st.flechettes9) * 3).toFixed(1)) : '–');
 const pctDouble = (st) => (st.auDouble ? `${virgule(Math.round((st.finishs / st.auDouble) * 1000) / 10)} %` : '–');
 
 function recapitulatif(sides, ordre, manches, etat, libelle) {
@@ -253,6 +281,7 @@ function recapitulatif(sides, ordre, manches, etat, libelle) {
         ${game.sets_n ? ligne('Sets', (st, c) => etat.sets[c], (st) => 0) : ''}
         ${ligne('Manches gagnées', (st) => st.finishs, (st) => st.finishs)}
         ${ligne('Moyenne (3 fl.)', (st) => moy3(st), (st) => (st.flechettes ? st.points / st.flechettes : 0))}
+        ${ligne('Moy. 9 premières', (st) => moy9(st), (st) => (st.flechettes9 ? st.points9 / st.flechettes9 : 0))}
         ${ligne('Fléchettes', (st) => st.flechettes)}
         ${ligne('100+', (st) => st.cent, (st) => st.cent)}
         ${ligne('140+', (st) => st.cent40, (st) => st.cent40)}
@@ -270,7 +299,7 @@ function recapitulatif(sides, ordre, manches, etat, libelle) {
       const st = statsVolees(liste, c);
       const der = [...liste].reverse().find((v) => v.side === c);
       const reste = !der ? game.start_score : der.is_checkout ? 0 : (der.is_bust ? der.remaining_before : der.remaining_before - der.score);
-      return `<tr class="${fin?.side === c ? 'recap--vainqueur' : ''}"><th>${esc(nomCamp(c))}</th><td>${moy3(st)}</td><td>${st.flechettes}</td><td>${fin?.side === c ? `✓ ${fin.remaining_before}` : reste}</td></tr>`;
+      return `<tr class="${fin?.side === c ? 'recap--vainqueur' : ''}"><th>${esc(nomCamp(c))}</th><td>${moy9(st)}</td><td>${moy3(st)}</td><td>${pctDouble(st)}</td><td>${fin?.side === c ? `✓ ${fin.remaining_before}` : reste}</td></tr>`;
     }).join('');
     return `
       <article class="recap-manche">
@@ -279,7 +308,7 @@ function recapitulatif(sides, ordre, manches, etat, libelle) {
           <span>${fin ? `${esc(nomCamp(fin.side))} · ${statsVolees(liste, fin.side).flechettes} fléchettes · finish ${fin.remaining_before}` : 'Non terminée'}</span>
         </header>
         <table class="recap recap--manche">
-          <thead><tr><th></th><th>Moy.</th><th>Fl.</th><th>Reste</th></tr></thead>
+          <thead><tr><th></th><th title="Moyenne des 9 premières fléchettes">9 prem.</th><th title="Moyenne 3 fléchettes">Moy.</th><th title="Réussite au double">Double</th><th>Reste</th></tr></thead>
           <tbody>${lignes}</tbody>
         </table>
         <button type="button" class="bouton bouton--petit" data-voir-manche="${m.cle}">Voir les volées</button>

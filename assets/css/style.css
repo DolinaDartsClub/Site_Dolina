@@ -2417,3 +2417,8 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .ec-stats small { color: var(--gris); font-size: 11px; }
 .ec-vise { display: block; font-size: 22px; }
 .jeux__onglets { margin: 4px 0 6px; } .jeux__onglets button { flex: 1 0 auto; }
+
+.stats-manche { margin: 8px 0 10px; }
+.live__format + .ardoise__onglets { margin-bottom: 4px; }
+.recap--manche td { white-space: nowrap; }
+.recap--manche th, .recap--manche td { padding-left: 6px; padding-right: 6px; }
