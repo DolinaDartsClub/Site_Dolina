@@ -25,7 +25,7 @@ export function badgeStatut(status) {
 
 // Résumé du format, ex. « Individuel · Poules puis élimination directe · 2 qualifiés par poule »
 export function resumeFormat(t) {
-  if (t.est_ligue) return `Ligue interne · chacun contre chacun${t.pool_qualifiers ? ` · ${t.pool_qualifiers} qualifiés pour le Master` : ''}`;
+  if (t.est_ligue) return `Ligue interne · chacun contre chacun${t.pools_count > 1 ? ` · ${t.pools_count} poules` : ''}${t.pool_qualifiers ? ` · ${t.pool_qualifiers} qualifiés${t.pools_count > 1 ? ' par poule' : ''} pour le Master` : ''}`;
   const morceaux = [MODES[t.team_mode] || '', FORMATS[t.format] || ''];
   if (t.format === 'pools' && t.pool_qualifiers) {
     morceaux.push(`${t.pool_qualifiers} qualifié${t.pool_qualifiers > 1 ? 's' : ''} par poule`);

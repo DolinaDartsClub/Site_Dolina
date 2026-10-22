@@ -48,7 +48,7 @@ function blocLigue() {
           <label class="champ">Nom<input name="nom" required maxlength="80" value="Ligue interne ${saison}"></label>
           <div class="deux-colonnes">
             <label class="champ">Places maximum<input type="number" name="places" min="3" max="64" value="40" inputmode="numeric"></label>
-            <label class="champ">Qualifiés pour le Master<select name="qualifies">${[4, 8, 12, 16].map((v) => `<option value="${v}" ${v === 8 ? 'selected' : ''}>${v}</option>`).join('')}</select><small>Modifiable jusqu'au lancement du Master.</small></label>
+            <label class="champ">Qualifiés pour le Master (par poule)<select name="qualifies">${[4, 8, 12, 16].map((v) => `<option value="${v}" ${v === 8 ? 'selected' : ''}>${v}</option>`).join('')}</select><small>Le nombre de poules se choisit au lancement ; modifiable jusqu'au Master.</small></label>
           </div>
           <label class="champ">Description (facultatif)<textarea name="description" rows="2" maxlength="1000"></textarea></label>
           <button type="submit" class="bouton bouton--plein">Créer la ligue (masquée)</button>
