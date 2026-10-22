@@ -173,13 +173,17 @@ function podium() {
   }
   const finale = matchs.find((m) => m.phase === 'final' && !m.is_third_place && !m.next_match_id);
   const petite = matchs.find((m) => m.is_third_place);
-  if (!finale?.winner_entry) return '';
-  const second = finale.winner_entry === finale.entry_a ? finale.entry_b : finale.entry_a;
-  const places = [
-    ['1', 'Vainqueur', finale.winner_entry],
-    ['2', 'Finaliste', second],
-    ...(petite?.winner_entry ? [['3', '3e place', petite.winner_entry]] : []),
-  ];
+  const finieSansVainqueur = (x) => x?.status === 'done' && !x.winner_entry && (x.nul || x.sans_suite);
+  if (!finale?.winner_entry && !finieSansVainqueur(finale)) return '';
+  const places = [];
+  if (finale.winner_entry) {
+    places.push(['1', 'Vainqueur', finale.winner_entry], ['2', 'Finaliste', finale.winner_entry === finale.entry_a ? finale.entry_b : finale.entry_a]);
+  } else {
+    // Finale non terminée (nul ou sans suite) : les deux finalistes ex aequo
+    places.push(['1', 'Ex aequo', finale.entry_a], ['1', 'Ex aequo', finale.entry_b]);
+  }
+  if (petite?.winner_entry) places.push(['3', '3e place', petite.winner_entry]);
+  else if (finieSansVainqueur(petite)) places.push(['3', '3e ex aequo', petite.entry_a], ['3', '3e ex aequo', petite.entry_b]);
   const mi = monInscription();
   return `
     <section class="t-podium" aria-label="Podium">
@@ -452,7 +456,7 @@ function ligneJoueur(m, cote) {
   const idE = cote === 'a' ? m.entry_a : m.entry_b;
   const score = cote === 'a' ? m.score_a : m.score_b;
   const gagnant = m.winner_entry && m.winner_entry === idE;
-  const nul = m.status === 'done' && m.nul;
+  const nul = m.status === 'done' && (m.nul || m.sans_suite);
   const mi = monInscription();
   const moiIci = mi && idE === mi.id;
   if (!idE) {
@@ -464,7 +468,7 @@ function ligneJoueur(m, cote) {
     <div class="m-joueur${gagnant ? ' m-joueur--gagnant' : ''}${m.status === 'done' && !gagnant && !nul ? ' m-joueur--perdant' : ''}${moiIci ? ' m-joueur--moi' : ''}">
       ${m.phase === 'final' && seed ? `<span class="m-joueur__seed">${seed}</span>` : ''}
       <span class="m-joueur__nom">${esc(nomEntree(idE))}</span>
-      <span class="m-joueur__score">${m.status === 'done' ? (nul ? 'N' : m.forfeit ? (gagnant ? 'V' : 'F') : (score ?? '')) : (m.status === 'bye' && gagnant ? '✓' : '')}</span>
+      <span class="m-joueur__score">${m.status === 'done' ? (m.sans_suite ? (score ?? '–') : nul ? 'N' : m.forfeit ? (gagnant ? 'V' : 'F') : (score ?? '')) : (m.status === 'bye' && gagnant ? '✓' : '')}</span>
     </div>`;
 }
 
@@ -574,7 +578,7 @@ function boutonMatch(m) {
   }
   if (orga) {
     if (m.status === 'ready' || m.status === 'live') boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-forfait="${m.id}">Forfait…</button>`);
-    if (estLigue() && m.phase === 'pool' && (m.status === 'ready' || m.status === 'live')) boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-nul="${m.id}">Match nul</button>`);
+    if ((m.status === 'ready' || m.status === 'live') && !m.next_match_id && !m.loser_match_id) boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-cloturer="${m.id}">Nul / sans suite…</button>`);
     if (m.status === 'done') boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-corriger="${m.id}">Corriger le score</button>`);
     if (m.status === 'done' || m.status === 'live') boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-reinit="${m.id}">Remettre à jouer</button>`);
   }
@@ -600,7 +604,8 @@ function etatPartieMatch(m) {
   if (m.status === 'live' && m.game_status === 'finished') notes.push('<p class="m-carte__note">Partie terminée : résultat à valider.</p>');
   const prop = estLigue() ? propositionDe(m) : null;
   if (prop && m.status === 'ready') notes.push(`<p class="m-carte__note m-carte__note--proposition">${texteProposition(prop)}${prop.pour_moi ? ' Confirmez-vous ?' : ''}</p>`);
-  if (m.status === 'done' && m.nul) notes.push('<p class="m-carte__note m-carte__note--gris">Match nul : 1 point pour chaque joueur.</p>');
+  if (m.status === 'done' && m.nul) notes.push(`<p class="m-carte__note m-carte__note--gris">Match nul${m.phase === 'pool' ? ' : 1 point pour chaque joueur' : ' : pas de vainqueur'}.</p>`);
+  if (m.status === 'done' && m.sans_suite) notes.push('<p class="m-carte__note m-carte__note--gris">Arrêté sans suite par l\'organisateur : pas de résultat. Les manches terminées comptent dans les statistiques.</p>');
   if (m.status === 'ready' && m.phase === 'pool' && estLigue() && prop) {
     // la note de la proposition suffit
   } else if (m.status === 'ready' && m.phase === 'pool' && estLigue()) {
@@ -741,7 +746,7 @@ function ligneMonMatch(m, mi) {
   let actions = '';
   if (m.status === 'done') {
     const g = m.winner_entry === mi.id;
-    etat = m.nul ? '<span class="lm-res lm-res--nul">Nul</span>'
+    etat = m.sans_suite ? '<span class="lm-res lm-res--nul">Sans suite</span>' : m.nul ? '<span class="lm-res lm-res--nul">Nul</span>'
       : m.forfeit ? `<span class="lm-res ${g ? 'lm-res--v' : 'lm-res--d'}">${g ? 'Gagné par forfait' : 'Forfait'}</span>`
       : `<span class="lm-res ${g ? 'lm-res--v' : 'lm-res--d'}">${g ? 'Gagné' : 'Perdu'} ${pour ?? ''}–${contre ?? ''}</span>`;
     if (m.game_id) actions = `<a class="lm-lien" href="live.html?id=${encodeURIComponent(m.game_id)}">Récap</a>`;
@@ -888,6 +893,7 @@ function vueLigue() {
       if (m.status === 'live') return '<td class="lg-live" title="En cours">●</td>';
       if (m.status !== 'done') return `<td class="lg-a-jouer">${propositions.some((p) => p.match_id === m.id) ? '?' : ''}</td>`;
       if (m.nul) return '<td class="lg-n" title="Match nul">N</td>';
+      if (m.sans_suite) return '<td class="lg-n" title="Sans suite">–</td>';
       const pour = m.entry_a === x ? m.score_a : m.score_b;
       const contre = m.entry_a === x ? m.score_b : m.score_a;
       const g = m.winner_entry === x;
@@ -1339,7 +1345,7 @@ function brancher() {
   zone.querySelectorAll('[data-proposer-forfait]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirForfait(b.dataset.proposerForfait, 'proposer'); }));
   zone.querySelectorAll('[data-proposer-nul]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); proposerNul(b.dataset.proposerNul); }));
   zone.querySelectorAll('[data-repondre]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); repondreProposition(b.dataset.repondre, b.dataset.reponse); }));
-  zone.querySelectorAll('[data-nul]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); nulOrganisateur(b.dataset.nul); }));
+  zone.querySelectorAll('[data-cloturer]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirCloture(b.dataset.cloturer); }));
   zone.querySelectorAll('[data-options-ligue]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirOptionsLigue(b.dataset.optionsLigue); }));
   zone.querySelector('[data-ligue-visible]')?.addEventListener('click', (e) => changerVisibiliteLigue(e.currentTarget.dataset.ligueVisible === '1'));
 }
@@ -1402,6 +1408,40 @@ function repondreProposition(idProp, reponse) {
     const { error } = await supabase.rpc('repondre_proposition_ligue', { p_proposition: idProp, p_reponse: reponse });
     if (error) return message(zoneMsg, erreurFr(error));
     message(zoneMsg, reponse === 'accepter' ? 'Résultat enregistré.' : (reponse === 'refuser' ? 'Proposition refusée : le match reste à jouer.' : 'Proposition annulée.'), 'ok');
+    await charger();
+  });
+}
+
+// Organisateur : clôturer un match qui ne peut pas aller au bout (script 053)
+function ouvrirCloture(idMatch) {
+  const m = matchs.find((x) => x.id === idMatch);
+  if (!m) return;
+  const f = document.createElement('div');
+  f.className = 'fenetre';
+  f.setAttribute('role', 'dialog');
+  f.setAttribute('aria-modal', 'true');
+  f.innerHTML = `
+    <div class="fenetre__boite">
+      <h2>Clôturer M${m.match_no}</h2>
+      <p class="match__format" style="margin:0">${esc(nomEntree(m.entry_a))} – ${esc(nomEntree(m.entry_b))}. Pour terminer le tournoi quand le match ne peut pas aller au bout.${m.status === 'live' ? ' Les manches terminées comptent dans les statistiques ; la manche en cours est effacée.' : ''}</p>
+      <div class="t-choix-bull">
+        <button type="button" class="bouton bouton--large" data-issue="nul">Match nul<small>${m.phase === 'pool' ? '1 point pour chaque joueur' : 'les deux joueurs ex aequo'}</small></button>
+        <button type="button" class="bouton bouton--large" data-issue="sans_suite">Sans suite<small>aucun résultat, aucun point (contrainte logistique)</small></button>
+      </div>
+      <p class="t-erreur" role="alert"></p>
+      <button type="button" class="bouton" data-fermer>Annuler</button>
+    </div>`;
+  document.body.appendChild(f);
+  f.addEventListener('click', async (e) => {
+    if (e.target === f || e.target.closest('[data-fermer]')) { f.remove(); return; }
+    const b = e.target.closest('[data-issue]');
+    if (!b) return;
+    b.disabled = true;
+    const { error } = await supabase.rpc('cloturer_match', { p_match: m.id, p_issue: b.dataset.issue });
+    b.disabled = false;
+    if (error) { f.querySelector('.t-erreur').textContent = error.code === 'PGRST202' ? 'Exécutez d\'abord le script SQL 053 dans Supabase.' : erreurFr(error); return; }
+    f.remove();
+    message(zoneMsg, `M${m.match_no} : ${b.dataset.issue === 'nul' ? 'match nul enregistré' : 'arrêté sans suite'}.`, 'ok');
     await charger();
   });
 }
