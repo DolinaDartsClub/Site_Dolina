@@ -68,6 +68,7 @@ const FICHIERS = [
   'assets/js/retard.js',
   'assets/js/logos.js',
   'assets/js/admin-sans-email.js',
+  'assets/js/admin-invites.js',
   'assets/js/cap-stats.js',
   'assets/js/recadrage.js',
   'assets/js/pentadarts.js',

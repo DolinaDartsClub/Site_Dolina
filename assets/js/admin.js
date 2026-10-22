@@ -8,6 +8,7 @@
 
 import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur, avatar, DOSSIER_PHOTOS, formatPartie, identifiantDe } from './app.js?v=__VERSION__';
 import { initSansEmail } from './admin-sans-email.js?v=__VERSION__';
+import { initRattachementInvites } from './admin-invites.js?v=__VERSION__';
 import { initActus } from './admin-actus.js?v=__VERSION__';
 import { initDemandes } from './admin-demandes.js?v=__VERSION__';
 import { initMatchs } from './admin-matchs.js?v=__VERSION__';
@@ -237,6 +238,13 @@ function afficherMembres() {
             <h3>Parties</h3>
             <div class="fiche__liste-parties" data-liste-parties="${p.id}">
               <button type="button" class="bouton bouton--petit" data-partie-action="voir" data-id="${p.id}" style="align-self:flex-start">Voir ses parties</button>
+            </div>
+          </div>
+          <div class="fiche__parties" data-ri-bloc>
+            <h3>Matchs joués comme invité</h3>
+            <div data-ri-zone>
+              <p class="match__format" style="margin:0">Avant de créer son compte, ce membre a peut-être joué comme invité (tournois, parties). Rattachez ces matchs à son compte.</p>
+              <button type="button" class="bouton bouton--petit" data-ri-ouvrir="${p.id}" style="align-self:flex-start">Chercher ses matchs d'invité</button>
             </div>
           </div>
           ${estMoi || p.role === 'admin' ? '' : `
@@ -550,6 +558,7 @@ async function init() {
   await Promise.all([charger(), initActus(moi), initDemandes(document.getElementById('message')), initSauvegarde(document.getElementById('message')), initTournois(document.getElementById('message')), initMatchs(document.getElementById('message'))]);
   initExports(document.getElementById('message'));
   initSansEmail({ zoneMessage: document.getElementById('message'), equipes, recharger: charger });
+  initRattachementInvites(document.getElementById('message'));
 }
 
 init();
