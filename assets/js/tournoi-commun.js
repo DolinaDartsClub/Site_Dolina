@@ -138,16 +138,25 @@ export function choisirMembre({ titre = 'Choisir un membre', exclure = new Set()
 
 // ---------------------------------------------------------------------
 // Classement d'une poule (règles du club)
-//   3 points par victoire, 1 point par défaite.
+//   3 points par victoire, 1 point par défaite, 0 par forfait ;
+//   match nul (ligue interne) : 1 point chacun.
 //   Égalité de points : le plus de manches gagnées ;
 //   puis le résultat des matchs entre les joueurs à égalité.
 //   matchs : matchs de la poule (status 'done' comptés)
 // ---------------------------------------------------------------------
 export const POINTS_VICTOIRE = 3;
 export const POINTS_DEFAITE = 1;
+export const POINTS_NUL = 1;        // match nul de la ligue interne, pour chaque joueur
 
 export function classementPoule(idsInscrits, matchs) {
-  const lignes = new Map(idsInscrits.map((id) => [id, { id, joues: 0, victoires: 0, defaites: 0, pour: 0, contre: 0, points: 0, critere: '' }]));
+  const lignes = new Map(idsInscrits.map((id) => [id, { id, joues: 0, victoires: 0, defaites: 0, nuls: 0, pour: 0, contre: 0, points: 0, critere: '' }]));
+  for (const m of matchs.filter((x) => x.status === 'done' && x.nul)) {
+    const a = lignes.get(m.entry_a);
+    const b = lignes.get(m.entry_b);
+    if (!a || !b) continue;
+    a.joues += 1; b.joues += 1; a.nuls += 1; b.nuls += 1;
+    a.points += POINTS_NUL; b.points += POINTS_NUL;
+  }
   const joues = matchs.filter((m) => m.status === 'done' && m.winner_entry);
   for (const m of joues) {
     const a = lignes.get(m.entry_a);

@@ -4,6 +4,7 @@
 
 import { supabase, esc, dateFr, formatPartie, etatPartie, urlImage, profilConnecte } from './app.js?v=__VERSION__';
 import { chargerClubs, logoAdversaire, logoDolina, affiche, scoreOrdonne } from './logos.js?v=__VERSION__';
+import { blocRappelsLigue } from './rappels-ligue.js?v=__VERSION__';
 
 const CATEGORIES = {
   annonce: 'Annonce de match',
@@ -438,6 +439,13 @@ chargerResultats();
 
 chargerMatchs();
 chargerDerniers();
+// Ligue interne : rappel urgent pour le joueur connecté (fin de saison proche, proposition à confirmer)
+profilConnecte().then(async (p) => {
+  if (p?.status !== 'active') return;
+  const html = await blocRappelsLigue({ urgentSeulement: true }).catch(() => '');
+  const zone = document.getElementById('rappels-ligue');
+  if (html && zone) { zone.innerHTML = html; zone.hidden = false; }
+}).catch(() => {});
 chargerArticles();
 
 // ---------- Diaporama « Rejoindre le club » ----------

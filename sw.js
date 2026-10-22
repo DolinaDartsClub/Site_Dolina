@@ -62,6 +62,7 @@ const FICHIERS = [
   'assets/js/tournois.js',
   'assets/js/equipes.js',
   'assets/js/fil.js',
+  'assets/js/rappels-ligue.js',
   'assets/js/records.js',
   'assets/js/capitaine.js',
   'assets/js/retard.js',

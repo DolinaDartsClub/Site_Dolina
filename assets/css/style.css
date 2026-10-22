@@ -2453,3 +2453,16 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .t-carte__vainqueur { font-size: 14px; color: var(--gris-clair); }
 .t-carte__vainqueur b { color: var(--orange); }
 .t-derniers-plus { grid-column: 1 / -1; }
+
+/* Ligue : fin de saison, propositions (script 050) */
+.lg-fin { margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--bord-fort); background: var(--carte); }
+.lg-fin p { margin: 0; line-height: 1.45; color: var(--gris-clair); }
+.lg-fin strong { color: var(--blanc); margin-right: 4px; }
+.lg-fin b { color: var(--blanc); }
+.lg-fin--urgent { border-color: var(--orange); background: var(--orange-fond); }
+.lg-fin--urgent b { color: var(--orange); }
+.lg-traiter { margin: 0 0 14px; }
+.m-carte__note--proposition { color: var(--orange); font-weight: 600; }
+.lg-grille td.lg-n { color: var(--blanc); background: rgba(255, 255, 255, .1); }
+.alerte--ligue-urgent { border-color: var(--orange); }
+.rappels-ligue { display: grid; gap: 8px; }

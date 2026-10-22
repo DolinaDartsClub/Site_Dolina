@@ -5,6 +5,7 @@
 // =====================================================================
 
 import { supabase, esc, profilConnecte, message, erreurFr, nomCompletHtml, nomAffiche, avatar, dateFr, DOSSIER_PHOTOS, oublierLienPhoto, identifiantDe, estCapitaineDe, rencontresEnRetard } from './app.js?v=__VERSION__';
+import { blocRappelsLigue } from './rappels-ligue.js?v=__VERSION__';
 import { debutSaison, nomSaison, resumeSaison } from './profil-commun.js?v=__VERSION__';
 import { recadrerPhoto } from './recadrage.js?v=__VERSION__';
 
@@ -125,6 +126,9 @@ async function afficher() {
       <a class="bouton bouton--plein" href="capitaine.html">Espace capitaine</a>
     </div>` : '');
 
+  // ----- Ligue interne : matchs restants, propositions à confirmer (script 050) -----
+  const blocLigue = await blocRappelsLigue().catch(() => '');
+
   // ----- Mon équipe : seulement les équipes demandées ou rejointes -----
   const rattachements = mesRattachements || [];
   const mesEquipes = (equipes || []).filter((t) => rattachements.some((x) => x.team_id === t.id));
@@ -203,6 +207,7 @@ async function afficher() {
     </section>
     ${blocAdmin}
     ${blocCapitaine}
+    ${blocLigue}
     ${estActif ? `<section class="section s-section cp-saison" aria-labelledby="t-saison">
       <div class="cp-saison__titre"><h2 class="section__titre" id="t-saison">Ma ${nomSaison().toLowerCase()}</h2><a href="stats.html">Toutes mes stats →</a></div>
       ${resume}

@@ -10,7 +10,7 @@ import { chargerMembres } from './tournoi-commun.js?v=__VERSION__';
 import qrcode from './vendor/qrcode.js?v=__VERSION__';
 import {
   badgeStatut, resumeFormat, estMoi, choisirMembre, STATUTS,
-  classementPoule, nomTour, lettrePoule, POINTS_VICTOIRE, POINTS_DEFAITE,
+  classementPoule, nomTour, lettrePoule, POINTS_VICTOIRE, POINTS_DEFAITE, POINTS_NUL,
 } from './tournoi-commun.js?v=__VERSION__';
 
 const id = new URLSearchParams(location.search).get('id');
@@ -29,6 +29,7 @@ let onglet = null;
 let enCours = false;        // une action est en cours (anti double clic)
 
 let photosMembres = new Map();
+let propositions = [];       // ligue : forfaits / nuls proposés entre joueurs, en attente (script 050)
 
 async function init() {
   moi = await profilConnecte();
@@ -60,6 +61,11 @@ async function charger() {
   inscrits = data.inscrits || [];
   matchs = data.matchs || [];
   parId = new Map(inscrits.map((e) => [e.id, e]));
+  propositions = [];
+  if (t.est_ligue && t.status === 'running' && moi) {
+    const r = await supabase.rpc('propositions_ligue_en_cours', { p_tournoi: id });
+    if (!r.error) propositions = r.data || [];
+  }
   etiquettes = null;
   statsTournoi = null;
   document.title = `${t.name} – Dolina Darts Club`;
@@ -339,6 +345,7 @@ function ligneJoueur(m, cote) {
   const idE = cote === 'a' ? m.entry_a : m.entry_b;
   const score = cote === 'a' ? m.score_a : m.score_b;
   const gagnant = m.winner_entry && m.winner_entry === idE;
+  const nul = m.status === 'done' && m.nul;
   const mi = monInscription();
   const moiIci = mi && idE === mi.id;
   if (!idE) {
@@ -347,10 +354,10 @@ function ligneJoueur(m, cote) {
   }
   const seed = m.phase === 'final' && t.format === 'pools' ? etiquettePoule(idE) : parId.get(idE)?.seed;
   return `
-    <div class="m-joueur${gagnant ? ' m-joueur--gagnant' : ''}${m.status === 'done' && !gagnant ? ' m-joueur--perdant' : ''}${moiIci ? ' m-joueur--moi' : ''}">
+    <div class="m-joueur${gagnant ? ' m-joueur--gagnant' : ''}${m.status === 'done' && !gagnant && !nul ? ' m-joueur--perdant' : ''}${moiIci ? ' m-joueur--moi' : ''}">
       ${m.phase === 'final' && seed ? `<span class="m-joueur__seed">${seed}</span>` : ''}
       <span class="m-joueur__nom">${esc(nomEntree(idE))}</span>
-      <span class="m-joueur__score">${m.status === 'done' ? (m.forfeit ? (gagnant ? 'V' : 'F') : (score ?? '')) : (m.status === 'bye' && gagnant ? '✓' : '')}</span>
+      <span class="m-joueur__score">${m.status === 'done' ? (nul ? 'N' : m.forfeit ? (gagnant ? 'V' : 'F') : (score ?? '')) : (m.status === 'bye' && gagnant ? '✓' : '')}</span>
     </div>`;
 }
 
@@ -407,7 +414,9 @@ function boutonMatch(m) {
   const autorise = orga || role === 'participant';
   const jeTiensLeScore = moi && m.game_created_by === moi.id;
   const boutons = [];
-  if (m.status === 'ready' && autorise && m.phase === 'pool') {
+  if (m.status === 'ready' && autorise && m.phase === 'pool' && estLigue() && propositionDe(m)) {
+    // Ligue : forfait ou nul proposé, en attente de réponse : on ne lance pas le match
+  } else if (m.status === 'ready' && autorise && m.phase === 'pool') {
     const e = etatPoule(m.pool_no);
     const rang = e.proposes.findIndex((x) => x.id === m.id);
     if (!e.libres || joueurOccupe(m)) {
@@ -443,12 +452,35 @@ function boutonMatch(m) {
   if (m.status === 'done' && m.game_id) {
     boutons.push(`<a class="bouton bouton--petit" href="live.html?id=${encodeURIComponent(m.game_id)}">Récapitulatif</a>`);
   }
+  // Ligue : forfait ou nul proposé par un joueur, confirmé par l'adversaire (script 050)
+  const prop = propositionDe(m);
+  if (estLigue() && m.phase === 'pool' && m.status === 'ready' && t.status === 'running') {
+    if (prop?.pour_moi) {
+      boutons.push(`<button type="button" class="bouton bouton--petit bouton--plein" data-repondre="${prop.id}" data-reponse="accepter">Accepter</button>`);
+      boutons.push(`<button type="button" class="bouton bouton--petit" data-repondre="${prop.id}" data-reponse="refuser">Refuser</button>`);
+    } else if (prop?.de_moi) {
+      boutons.push(`<button type="button" class="bouton bouton--petit" data-repondre="${prop.id}" data-reponse="annuler">Annuler ma proposition</button>`);
+    } else if (!prop && estMonMatch(m) && !orga) {
+      boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-proposer-forfait="${m.id}">Forfait…</button>`);
+      boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-proposer-nul="${m.id}">Proposer un nul</button>`);
+    }
+  }
   if (orga) {
     if (m.status === 'ready' || m.status === 'live') boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-forfait="${m.id}">Forfait…</button>`);
+    if (estLigue() && m.phase === 'pool' && (m.status === 'ready' || m.status === 'live')) boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-nul="${m.id}">Match nul</button>`);
     if (m.status === 'done') boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-corriger="${m.id}">Corriger le score</button>`);
     if (m.status === 'done' || m.status === 'live') boutons.push(`<button type="button" class="bouton bouton--petit bouton--discret" data-reinit="${m.id}">Remettre à jouer</button>`);
   }
   return boutons.join('');
+}
+
+// Proposition en attente sur un match (ligue)
+const propositionDe = (m) => propositions.find((p) => p.match_id === m.id) || null;
+function texteProposition(p) {
+  const auteur = nomEntree(p.propose_par);
+  if (p.type === 'nul') return `${p.de_moi ? 'Vous proposez' : `${esc(auteur)} propose`} un match nul${p.de_moi ? ' : en attente de la réponse de votre adversaire' : ''}.`;
+  const perdant = p.perdant === p.propose_par ? (p.de_moi ? 'vous déclarez' : `${esc(auteur)} déclare`) : `${esc(nomEntree(p.perdant))} déclarerait`;
+  return `Forfait : ${perdant} forfait${p.de_moi ? ' — en attente de la réponse de votre adversaire' : ''}.`;
 }
 
 // Format du match : le sien (fixé par tour) ou celui de la phase
@@ -459,7 +491,12 @@ function formatMatch(m) {
 function etatPartieMatch(m) {
   const notes = [];
   if (m.status === 'live' && m.game_status === 'finished') notes.push('<p class="m-carte__note">Partie terminée : résultat à valider.</p>');
-  if (m.status === 'ready' && m.phase === 'pool' && estLigue()) {
+  const prop = estLigue() ? propositionDe(m) : null;
+  if (prop && m.status === 'ready') notes.push(`<p class="m-carte__note m-carte__note--proposition">${texteProposition(prop)}${prop.pour_moi ? ' Confirmez-vous ?' : ''}</p>`);
+  if (m.status === 'done' && m.nul) notes.push('<p class="m-carte__note m-carte__note--gris">Match nul : 1 point pour chaque joueur.</p>');
+  if (m.status === 'ready' && m.phase === 'pool' && estLigue() && prop) {
+    // la note de la proposition suffit
+  } else if (m.status === 'ready' && m.phase === 'pool' && estLigue()) {
     notes.push(joueurOccupe(m)
       ? '<p class="m-carte__note m-carte__note--gris">Un des joueurs a déjà un match en cours.</p>'
       : '<p class="m-carte__note m-carte__note--gris">À jouer dans la saison, quand les deux joueurs sont disponibles.</p>');
@@ -596,7 +633,7 @@ function vueLigue() {
         <tr class="${c.rang <= qualif ? 'p-qualif' : ''}${moiIci ? ' p-moi' : ''}">
           <td class="p-rang">${c.rang}</td>
           <th scope="row" class="p-nom">${esc(e?.nom || '—')}${moiIci ? ' <span class="t-moi">Vous</span>' : ''}${c.critere ? `<small>${esc(c.critere)}</small>` : ''}</th>
-          <td>${c.joues}</td><td>${c.victoires}</td><td>${c.defaites}</td>
+          <td>${c.joues}</td><td>${c.victoires}</td><td>${c.nuls}</td><td>${c.defaites}</td>
           <td>${c.pour}-${c.contre}</td>
           <td class="p-points">${c.points}</td>
         </tr>`;
@@ -614,7 +651,8 @@ function vueLigue() {
     const m = entre(x, y);
     if (!m) return '<td></td>';
     if (m.status === 'live') return '<td class="lg-live" title="En cours">●</td>';
-    if (m.status !== 'done') return '<td class="lg-a-jouer"></td>';
+    if (m.status !== 'done') return `<td class="lg-a-jouer">${propositions.some((p) => p.match_id === m.id) ? '?' : ''}</td>`;
+    if (m.nul) return '<td class="lg-n" title="Match nul">N</td>';
     const pour = m.entry_a === x ? m.score_a : m.score_b;
     const contre = m.entry_a === x ? m.score_b : m.score_a;
     const g = m.winner_entry === x;
@@ -623,26 +661,63 @@ function vueLigue() {
       </table>
     </div>`;
   const enCours = mPoule.filter((m) => m.status === 'live');
-  const mesAJouer = mPoule.filter((m) => m.status === 'ready' && estMonMatch(m));
+  const mesAJouer = mPoule.filter((m) => m.status === 'ready' && estMonMatch(m) && !propositionDe(m)?.pour_moi);
+  const aTraiter = mPoule.filter((m) => m.status === 'ready' && propositionDe(m)?.pour_moi);
   return `
-    <p class="t-legende">Chaque joueur affronte une fois chacun des autres pendant la saison. ${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite ; à égalité, le plus de manches gagnées, puis le match entre les joueurs à égalité.
-      ${qualif ? `Les ${qualif} premiers (surlignés) se qualifient pour le tournoi Master.` : ''}</p>
+    ${blocFinSaison(mPoule)}
+    ${aTraiter.length ? `<section class="lg-traiter"><h3 class="cs-sous-titre" style="margin-top:0">À confirmer <span class="t-compte t-compte--moi">${aTraiter.length}</span></h3><div class="m-liste">${aTraiter.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div></section>` : ''}
+    <p class="t-legende">Chaque joueur affronte une fois chacun des autres pendant la saison. ${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite d'un match joué, 0 par forfait ; un match nul (les deux joueurs d'accord) vaut ${POINTS_NUL} point chacun. À égalité, le plus de manches gagnées, puis le match entre les joueurs à égalité.
+      ${qualif ? `Les ${qualif} premiers (surlignés) se qualifient pour le tournoi Master.` : ''}
+      Un match qui ne peut pas être joué : l'un des joueurs déclare forfait ou propose un nul, l'autre confirme.</p>
     ${reglageQualifies()}
+    ${reglageFinSaison()}
     <section class="p-poule">
       <header class="p-poule__haut"><h3>Classement</h3><span class="p-poule__info">${membres.length} joueurs · ${joues}/${mPoule.length} matchs</span></header>
       <div class="p-tableau-cadre">
         <table class="p-tableau">
-          <thead><tr><th>#</th><th class="p-nom">Joueur</th><th title="Matchs joués">J</th><th title="Victoires">V</th><th title="Défaites">D</th><th title="Manches gagnées - perdues">Manches</th><th title="Points">Pts</th></tr></thead>
+          <thead><tr><th>#</th><th class="p-nom">Joueur</th><th title="Matchs joués">J</th><th title="Victoires">V</th><th title="Matchs nuls">N</th><th title="Défaites">D</th><th title="Manches gagnées - perdues">Manches</th><th title="Points">Pts</th></tr></thead>
           <tbody>${lignes}</tbody>
         </table>
       </div>
     </section>
     <h3 class="cs-sous-titre">Tableau des résultats</h3>
-    <p class="t-legende">Lisez une ligne : le score du joueur contre chaque adversaire (en colonne). Case vide : match à jouer ; ● : en cours. Faites défiler le tableau sur le côté.</p>
+    <p class="t-legende">Lisez une ligne : le score du joueur contre chaque adversaire (en colonne). Case vide : match à jouer ; ● : en cours ; ? : forfait ou nul proposé ; N : nul ; V / F : gagné / perdu par forfait. Faites défiler le tableau sur le côté.</p>
     ${grille}
     ${enCours.length ? `<h3 class="cs-sous-titre">En cours</h3><div class="m-liste">${enCours.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div>` : ''}
     ${mesAJouer.length ? `<h3 class="cs-sous-titre">Mes matchs à jouer <span class="t-compte">${mesAJouer.length}</span></h3><div class="m-liste">${mesAJouer.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div>` : ''}
     <p class="t-legende">Tous les matchs de la ligue sont dans l'onglet Matchs.</p>`;
+}
+
+// Fin de saison : date limite, matchs restants du joueur, rappel ; après la date, l'admin tranche
+const fmtFin = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const joursAvant = (d) => { const auj = new Date(); auj.setHours(12, 0, 0, 0); return Math.round((new Date(`${d}T12:00:00`) - auj) / 86400000); };
+function blocFinSaison(mPoule) {
+  if (!t.fin_saison || t.status !== 'running' || matchs.some((m) => m.phase === 'final')) return '';
+  const j = joursAvant(t.fin_saison);
+  const restantsTous = mPoule.filter((m) => m.status === 'ready' || m.status === 'live');
+  const mes = restantsTous.filter(estMonMatch);
+  const urgent = j <= 30;
+  const depasse = j < 0;
+  let texte;
+  if (depasse) texte = `La saison est terminée depuis le ${fmtFin.format(new Date(`${t.fin_saison}T12:00:00`))}. ${restantsTous.length ? `${restantsTous.length} match${restantsTous.length > 1 ? 's' : ''} sans résultat : l'admin tranche.` : 'Tous les matchs ont un résultat.'}`;
+  else texte = `Tous les matchs doivent être joués avant le <b>${fmtFin.format(new Date(`${t.fin_saison}T12:00:00`))}</b> (${j === 0 ? 'aujourd\'hui' : `dans ${j} jour${j > 1 ? 's' : ''}`}).`;
+  const perso = monInscription() && !depasse
+    ? (mes.length ? ` Il vous reste <b>${mes.length} match${mes.length > 1 ? 's' : ''}</b> à jouer.` : ' Vous avez joué tous vos matchs. Bravo !')
+    : '';
+  const sansResultat = depasse && role === 'organisateur' && restantsTous.length
+    ? `<div class="m-liste" style="margin-top:10px">${restantsTous.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div>` : '';
+  return `<section class="lg-fin${urgent ? ' lg-fin--urgent' : ''}"><p><strong>Fin de saison</strong> ${texte}${perso}</p>${sansResultat}</section>`;
+}
+
+function reglageFinSaison() {
+  if (role !== 'organisateur' || t.status === 'finished' || matchs.some((m) => m.phase === 'final')) return '';
+  return `
+    <div class="c-reglage">
+      <label class="champ c-reglage__champ">Fin de saison
+        <input type="date" data-fin-saison value="${esc(t.fin_saison || '')}">
+      </label>
+      <p class="c-reglage__aide">Date avant laquelle tous les matchs doivent avoir un résultat. Les joueurs voient leurs matchs restants ; rappel renforcé 30 jours avant. Après la date, vous tranchez les matchs restants (forfait ou nul).</p>
+    </div>`;
 }
 
 // Organisateur : nombre de qualifiés pour la phase finale (le Master), tant qu'elle n'est pas lancée
@@ -710,7 +785,7 @@ function vuePoules() {
   }
   return `
     <p class="t-legende">${t.pool_qualifiers > 1 ? `Les ${t.pool_qualifiers} premiers de chaque poule (surlignés) se qualifient` : 'Le premier de chaque poule (surligné) se qualifie'} pour la phase finale.
-      Classement : ${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite ; à égalité, le plus de manches gagnées, puis le match entre les joueurs à égalité.</p>
+      Classement : ${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite (0 en cas de forfait) ; à égalité, le plus de manches gagnées, puis le match entre les joueurs à égalité.</p>
     <div class="mp-filtre p-filtre" role="group" aria-label="Choisir la poule affichée">
       ${Array.from({ length: nbPoules }, (_, i) => i + 1).map((k) => `<button type="button" data-filtre-poule="${k}" aria-pressed="${filtrePoule === String(k)}">Poule ${lettrePoule(k)}${mi?.pool_no === k ? ' ★' : ''}</button>`).join('')}
       <button type="button" data-filtre-poule="tout" aria-pressed="${filtrePoule === 'tout'}">Toutes</button>
@@ -940,11 +1015,12 @@ function vueInfos() {
   ];
   if (estLigue()) {
     lignes.push(['Qualifiés pour le Master', `${t.pool_qualifiers} premiers du classement`]);
-    lignes.push(['Classement', `${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite. Égalité : le plus de manches gagnées, puis le vainqueur du match entre les joueurs à égalité.`]);
+    lignes.push(['Classement', `${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite d'un match joué, 0 par forfait, ${POINTS_NUL} point chacun pour un match nul. Égalité : le plus de manches gagnées, puis le vainqueur du match entre les joueurs à égalité.`]);
+    if (t.fin_saison) lignes.push(['Fin de saison', esc(fmtFin.format(new Date(`${t.fin_saison}T12:00:00`)))]);
     if (t.pool_format) lignes.push(['Matchs de la ligue', esc(formatPartie(t.pool_format))]);
   } else if (t.format === 'pools') {
     lignes.push(['Poules', `${t.pools_count ? `${t.pools_count} poules` : 'Nombre choisi au lancement'} · ${t.pool_qualifiers} qualifié${t.pool_qualifiers > 1 ? 's' : ''} par poule`]);
-    lignes.push(['Classement des poules', `${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite. Égalité : le plus de manches gagnées, puis le vainqueur du match entre les joueurs à égalité.`]);
+    lignes.push(['Classement des poules', `${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite, 0 par forfait. Égalité : le plus de manches gagnées, puis le vainqueur du match entre les joueurs à égalité.`]);
     if (t.pool_format) lignes.push(['Matchs de poule', esc(formatPartie(t.pool_format))]);
     lignes.push(['Cibles par poule', `${ciblesParPoule()} : jusqu'à ${ciblesParPoule()} match${ciblesParPoule() > 1 ? 's' : ''} d'une même poule en même temps`]);
   }
@@ -1024,6 +1100,11 @@ function brancher() {
   zone.querySelectorAll('[data-cibles-poule]').forEach((s) => s.addEventListener('change', () => changerCibles(s)));
   zone.querySelectorAll('[data-cibles-finale]').forEach((s) => s.addEventListener('change', () => changerCiblesFinale(s)));
   zone.querySelectorAll('[data-qualifies]').forEach((s) => s.addEventListener('change', () => changerQualifies(s)));
+  zone.querySelectorAll('[data-fin-saison]').forEach((s) => s.addEventListener('change', () => changerFinSaison(s)));
+  zone.querySelectorAll('[data-proposer-forfait]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirForfait(b.dataset.proposerForfait, 'proposer'); }));
+  zone.querySelectorAll('[data-proposer-nul]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); proposerNul(b.dataset.proposerNul); }));
+  zone.querySelectorAll('[data-repondre]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); repondreProposition(b.dataset.repondre, b.dataset.reponse); }));
+  zone.querySelectorAll('[data-nul]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); nulOrganisateur(b.dataset.nul); }));
   zone.querySelector('[data-ligue-visible]')?.addEventListener('click', (e) => changerVisibiliteLigue(e.currentTarget.dataset.ligueVisible === '1'));
 }
 
@@ -1053,6 +1134,51 @@ async function changerQualifies(select) {
   }
   message(zoneMsg, `${n} qualifiés pour le Master.`, 'ok');
   await charger();
+}
+
+async function changerFinSaison(champ) {
+  const { error } = await supabase.rpc('definir_fin_saison', { p_tournoi: id, p_date: champ.value || null });
+  if (error) { message(zoneMsg, error.code === 'PGRST202' ? 'Réglage indisponible : le script SQL 050 doit être exécuté dans Supabase.' : erreurFr(error)); return; }
+  message(zoneMsg, champ.value ? 'Date de fin de saison enregistrée.' : 'Date de fin de saison retirée.', 'ok');
+  await charger();
+}
+
+function proposerNul(idMatch) {
+  const m = matchs.find((x) => x.id === idMatch);
+  if (!m || !confirm(`Proposer un match nul pour M${m.match_no} ? Votre adversaire devra confirmer ; chacun aura alors 1 point.`)) return;
+  action(async () => {
+    const { error } = await supabase.rpc('proposer_resultat_ligue', { p_match: idMatch, p_type: 'nul' });
+    if (error) return message(zoneMsg, erreurFr(error));
+    message(zoneMsg, 'Proposition envoyée : votre adversaire doit la confirmer sur la page de la ligue.', 'ok');
+    await charger();
+  });
+}
+
+function repondreProposition(idProp, reponse) {
+  const p = propositions.find((x) => x.id === idProp);
+  const textes = {
+    accepter: p?.type === 'nul' ? 'Confirmer le match nul ? Chacun aura 1 point.' : `Confirmer le forfait ? ${nomEntree(p?.perdant)} perd le match (0 point).`,
+    refuser: 'Refuser cette proposition ? Le match restera à jouer.',
+    annuler: 'Annuler votre proposition ?',
+  };
+  if (!confirm(textes[reponse])) return;
+  action(async () => {
+    const { error } = await supabase.rpc('repondre_proposition_ligue', { p_proposition: idProp, p_reponse: reponse });
+    if (error) return message(zoneMsg, erreurFr(error));
+    message(zoneMsg, reponse === 'accepter' ? 'Résultat enregistré.' : (reponse === 'refuser' ? 'Proposition refusée : le match reste à jouer.' : 'Proposition annulée.'), 'ok');
+    await charger();
+  });
+}
+
+function nulOrganisateur(idMatch) {
+  const m = matchs.find((x) => x.id === idMatch);
+  if (!m || !confirm(`Déclarer M${m.match_no} match nul ? 1 point pour chaque joueur${m.status === 'live' ? ' ; la partie commencée sera effacée' : ''}.`)) return;
+  action(async () => {
+    const { error } = await supabase.rpc('match_nul_ligue', { p_match: idMatch });
+    if (error) return message(zoneMsg, error.code === 'PGRST202' ? 'Exécutez d\'abord le script SQL 050 dans Supabase.' : erreurFr(error));
+    message(zoneMsg, `M${m.match_no} : match nul enregistré.`, 'ok');
+    await charger();
+  });
 }
 
 async function changerVisibiliteLigue(visible) {
@@ -1361,12 +1487,18 @@ function valider(idPartie, bouton) {
   });
 }
 
-function ouvrirForfait(idMatch) {
+let modeForfait = 'organisateur';   // 'organisateur' (immédiat) ou 'proposer' (ligue : l'adversaire confirme)
+function ouvrirForfait(idMatch, mode = 'organisateur') {
   matchChoisi = matchs.find((m) => m.id === idMatch);
   if (!matchChoisi) return;
+  modeForfait = mode;
+  document.getElementById('t-forfait').textContent = mode === 'proposer' ? 'Proposer un forfait' : 'Déclarer un forfait';
+  document.getElementById('forfait-aide').textContent = mode === 'proposer'
+    ? 'Choisissez qui déclare forfait. Votre adversaire devra confirmer ; le forfait vaut 0 point pour celui qui le déclare et 3 points pour l\'autre.'
+    : (estLigue() ? 'Le joueur qui déclare forfait perd le match : 0 point pour lui, 3 points pour son adversaire.' : 'Le joueur qui déclare forfait perd le match (0 point en poule) ; son adversaire est qualifié.');
   document.getElementById('forfait-match').textContent = `M${matchChoisi.match_no} · ${libelleMatch(matchChoisi)}${matchChoisi.status === 'live' ? ' — la partie commencée sera effacée' : ''}`;
   document.getElementById('forfait-choix').innerHTML = [matchChoisi.entry_a, matchChoisi.entry_b]
-    .map((idE) => `<button type="button" class="bouton bouton--danger bouton--large" data-perdant="${idE}">${esc(nomEntree(idE))} déclare forfait</button>`).join('');
+    .map((idE) => `<button type="button" class="bouton bouton--danger bouton--large" data-perdant="${idE}">${mode === 'proposer' && monInscription()?.id === idE ? 'Je déclare forfait' : `${esc(nomEntree(idE))} déclare forfait`}</button>`).join('');
   document.getElementById('erreur-forfait').textContent = '';
   fenForfait.hidden = false;
 }
@@ -1375,10 +1507,14 @@ document.getElementById('forfait-choix').addEventListener('click', (e) => {
   const b = e.target.closest('[data-perdant]');
   if (!b || !matchChoisi) return;
   action(async () => {
-    const { error } = await supabase.rpc('forfait_match', { p_match: matchChoisi.id, p_forfait: b.dataset.perdant });
+    const { error } = modeForfait === 'proposer'
+      ? await supabase.rpc('proposer_resultat_ligue', { p_match: matchChoisi.id, p_type: 'forfait', p_perdant: b.dataset.perdant })
+      : await supabase.rpc('forfait_match', { p_match: matchChoisi.id, p_forfait: b.dataset.perdant });
     if (error) { document.getElementById('erreur-forfait').textContent = erreurFr(error); return; }
     fenForfait.hidden = true;
-    message(zoneMsg, `Forfait enregistré : ${nomEntree(b.dataset.perdant)} est éliminé de ce match.`, 'ok');
+    message(zoneMsg, modeForfait === 'proposer'
+      ? 'Proposition envoyée : votre adversaire doit la confirmer sur la page de la ligue.'
+      : `Forfait enregistré : ${nomEntree(b.dataset.perdant)} perd ce match.`, 'ok');
     await charger();
   });
 });
