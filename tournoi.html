@@ -37,6 +37,8 @@
   <form class="fenetre__boite" id="form-ajout" novalidate>
     <h2 id="t-ajout">Ajouter des participants</h2>
     <p class="match__format" id="ajout-places" style="margin:0"></p>
+    <p class="message message--ok" id="aj-encours" hidden style="margin:0">Tournoi en cours : chaque joueur ajouté rejoint une poule, et ses matchs contre tous les joueurs de cette poule sont créés.</p>
+    <label class="champ" id="aj-poule" hidden>Poule<select></select></label>
     <!-- Individuel : plusieurs membres et invités d'un coup -->
     <div data-simple class="aj-multi">
       <div class="champ"><span>Membres <small id="aj-nb-membres"></small></span>

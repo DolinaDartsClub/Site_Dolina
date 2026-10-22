@@ -222,6 +222,9 @@ function blocCode() {
     </section>`;
 }
 
+// Ajout pendant le tournoi (script 051) : tournoi en poules (ou ligue) avant la phase finale
+const ajoutEnCoursPossible = () => t.status === 'running' && t.format === 'pools' && !matchs.some((m) => m.phase === 'final');
+
 function panneauOrganisateur() {
   const nb = inscrits.length;
   if (t.status === 'finished') return '';
@@ -234,6 +237,11 @@ function panneauOrganisateur() {
         <div class="t-gestion__ligne t-gestion__ligne--alerte">
           <span><strong>${estLigue() ? 'Tous les matchs de la ligue sont joués' : 'Toutes les poules sont terminées'}</strong><small>${estLigue() ? `Vérifiez le classement, puis lancez le tournoi Master avec ${(t.pools_count || 1) > 1 ? `les ${t.pool_qualifiers} premiers de chaque poule` : `les ${t.pool_qualifiers} premiers`}.` : `Vérifiez les classements, puis lancez la phase finale avec les ${t.pool_qualifiers * t.pools_count} qualifiés.`}</small></span>
           <button type="button" class="bouton bouton--petit bouton--plein" data-action="phase-finale">${estLigue() ? 'Lancer le Master' : 'Lancer la phase finale'}</button>
+        </div>` : ''}
+        ${ajoutEnCoursPossible() ? `
+        <div class="t-gestion__ligne">
+          <span><strong>Un joueur arrive en retard ?</strong><small>Ajoutez-le dans une poule : ses matchs contre chaque joueur de la poule sont créés automatiquement.</small></span>
+          <button type="button" class="bouton bouton--petit" data-action="ajouter"${inscrits.length >= t.max_participants ? ' disabled title="Tournoi complet"' : ''}>+ Ajouter ${t.team_mode === 'double' ? 'une doublette' : 'un joueur'}</button>
         </div>` : ''}
         <div class="t-gestion__ligne">
           <span><strong>Tournoi lancé</strong><small>${commence ? 'Des matchs ont été joués : le tirage est définitif.' : 'Aucun match joué : vous pouvez encore annuler le lancement pour corriger les inscriptions.'}</small></span>
@@ -1814,6 +1822,16 @@ async function ouvrirAjout() {
   document.getElementById('erreur-ajout').textContent = '';
   document.getElementById('aj-bilan').hidden = true;
   document.getElementById('t-ajout').textContent = double ? 'Ajouter des doublettes' : 'Ajouter des participants';
+  // Tournoi lancé : choix de la poule (la moins remplie par défaut)
+  const enCoursT = t.status === 'running';
+  const nbP = t.pools_count || 1;
+  const blocPoule = document.getElementById('aj-poule');
+  blocPoule.hidden = !enCoursT || nbP < 2;
+  document.getElementById('aj-encours').hidden = !enCoursT;
+  if (enCoursT) {
+    blocPoule.querySelector('select').innerHTML = `<option value="">La moins remplie</option>${Array.from({ length: nbP }, (_, i) => i + 1)
+      .map((k) => `<option value="${k}">Poule ${lettrePoule(k)} (${inscrits.filter((x) => x.pool_no === k).length} joueurs)</option>`).join('')}`;
+  }
   document.getElementById('aj-valider').textContent = double ? 'Ajouter la doublette' : 'Ajouter';
   document.getElementById('aj-valider').disabled = false;
   ajoutsFaits = 0;
@@ -1848,7 +1866,7 @@ function fermerAjout() {
   if (ajoutsFaits) {
     const mot = t.team_mode === 'double' ? 'doublette' : 'participant';
     message(zoneMsg, `${ajoutsFaits} ${mot}${ajoutsFaits > 1 ? 's' : ''} ajouté${t.team_mode === 'double' ? 'e' : ''}${ajoutsFaits > 1 ? 's' : ''}.`, 'ok');
-    onglet = 'participants';
+    onglet = t.status === 'running' ? (t.format === 'pools' ? 'poules' : onglet) : 'participants';
     charger();
   }
 }
@@ -1904,7 +1922,7 @@ document.getElementById('form-ajout').addEventListener('submit', (e) => {
   const bouton = e.target.querySelector('[type=submit]');
   action(async () => {
     bouton.disabled = true;
-    const { error } = await supabase.from('tournament_entries').insert(ligne).select('id').single();
+    const { error } = await insererInscrit(ligne);
     bouton.disabled = false;
     if (error) { erreur.textContent = erreurFr(error); return; }
     // Doublette ajoutée : la fenêtre reste ouverte pour la suivante
@@ -1923,6 +1941,18 @@ document.getElementById('form-ajout').addEventListener('submit', (e) => {
     e.target.elements.team_name.focus();
   });
 });
+
+// Ajoute un inscrit : directement avant le lancement, par ajouter_joueur_en_cours ensuite
+async function insererInscrit(ligne) {
+  if (t.status !== 'running') return supabase.from('tournament_entries').insert(ligne).select('id').single();
+  const poule = Number(document.getElementById('aj-poule').querySelector('select').value) || null;
+  const r = await supabase.rpc('ajouter_joueur_en_cours', {
+    p_tournoi: t.id, p_profile: ligne.profile_id || null, p_invite: ligne.guest_name || null, p_poule: poule,
+    p_team_name: ligne.team_name || null, p_partner_profile: ligne.partner_profile_id || null, p_partner_guest: ligne.partner_guest_name || null,
+  });
+  if (r.error?.code === 'PGRST202') r.error = { message: 'Exécutez d\'abord le script SQL 051 dans Supabase.' };
+  return r;
+}
 
 // Relit la liste des inscrits (sans redessiner la page) pendant l'ajout
 async function rechargerInscrits() {
@@ -1949,7 +1979,7 @@ function ajouterPlusieurs() {
     const ok = [];
     const refus = [];
     for (const x of aAjouter) {
-      const { error } = await supabase.from('tournament_entries').insert(x.ligne).select('id').single();
+      const { error } = await insererInscrit(x.ligne);
       if (error) refus.push(`${x.nom} : ${erreurFr(error)}`); else ok.push(x.nom);
     }
     ajoutsFaits += ok.length;
