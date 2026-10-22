@@ -53,7 +53,7 @@ function carte(a) {
       ${avatar(a.joueur, 'fil-avatar')}
       <span class="fil-carte__corps">
         <strong class="fil-carte__titre">${titre(a)}</strong>
-        <span class="fil-carte__match">${a.gagne ? 'Victoire' : 'Défaite'} ${score} contre ${esc(a.adversaire || '—')} · ${esc(a.variant === 'libre' ? String(a.start_score) : a.variant)}${contexte ? ` · ${contexte}` : ''} · moy. ${virgule(a.moyenne)}</span>
+        <span class="fil-carte__match">${a.gagne ? 'Victoire' : 'Défaite'} ${score}${a.double && a.partenaire ? ` avec ${esc(a.partenaire)}` : ''} contre ${esc(a.adversaire || '—')}${a.double ? ' · double' : ''} · ${esc(a.variant === 'libre' ? String(a.start_score) : a.variant)}${contexte ? ` · ${contexte}` : ''} · moy. ${virgule(a.moyenne)}</span>
         <span class="fil-badges">${badges(a)}</span>
         <small class="fil-carte__quand">${esc(quand(a.fin))}</small>
       </span>
@@ -62,7 +62,7 @@ function carte(a) {
 
 export async function afficherFil(conteneur) {
   conteneur.innerHTML = `
-    <p class="intro fil-intro">Les exploits des membres, ajoutés automatiquement à chaque match terminé : finish de 100 ou plus, 180, volées de 120 ou plus, moyenne de 60 ou plus, et records. Hors dartbot et matchs amicaux.</p>
+    <p class="intro fil-intro">Les exploits des membres, ajoutés automatiquement à chaque match terminé : finish de 100 ou plus, 180, volées de 120 ou plus, moyenne de 60 ou plus, et records. En double, chaque joueur est jugé sur ses propres volées. Hors dartbot et matchs amicaux.</p>
     <div class="fil" id="fil-liste"><p class="vide">Chargement…</p></div>`;
   const liste = conteneur.querySelector('#fil-liste');
   let decalage = 0;
