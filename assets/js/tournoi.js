@@ -5,7 +5,7 @@
 //  organisateur, participant, ou spectateur (tournoi lancé à matchs publics).
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie, avatar } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie, avatar, etatPartie } from './app.js?v=__VERSION__';
 import { chargerMembres } from './tournoi-commun.js?v=__VERSION__';
 import qrcode from './vendor/qrcode.js?v=__VERSION__';
 import {
@@ -29,6 +29,7 @@ let onglet = null;
 let enCours = false;        // une action est en cours (anti double clic)
 
 let photosMembres = new Map();
+let scoresLive = new Map();  // match en cours -> { a: { manches, sets, reste }, b: {…}, lance: 'a' | 'b' | null, sets }
 let propositions = [];       // ligue : forfaits / nuls proposés entre joueurs, en attente (script 050)
 
 async function init() {
@@ -68,6 +69,7 @@ async function charger() {
   }
   etiquettes = null;
   statsTournoi = null;
+  await chargerScoresLive();
   document.title = `${t.name} – Dolina Darts Club`;
   // Onglet d'arrivée : la phase en cours (phase finale dès qu'elle est lancée)
   if (!onglet) {
@@ -77,6 +79,52 @@ async function charger() {
       : 'participants';
   }
   afficher();
+}
+
+// ---------- Score en direct des matchs en cours ----------
+// Côté 1 de la partie = joueur A du match (comme à la validation)
+async function chargerScoresLive() {
+  const live = matchs.filter((m) => m.status === 'live' && m.game_id);
+  scoresLive = new Map();
+  if (!live.length) return;
+  const ids = live.map((m) => m.game_id);
+  const [rg, rv] = await Promise.all([
+    supabase.from('games').select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, game_sides(side)').in('id', ids),
+    supabase.from('visits').select('id, game_id, set_no, leg_no, visit_no, side, score, remaining_before, is_bust, is_checkout, darts_used, darts_at_double').in('game_id', ids),
+  ]);
+  if (rg.error) return;
+  for (const g of rg.data || []) {
+    const m = live.find((x) => x.game_id === g.id);
+    const sides = [...(g.game_sides || [])].sort((x, y) => x.side - y.side);
+    if (!m || sides.length !== 2) continue;
+    const e = etatPartie(g, sides, (rv.data || []).filter((v) => v.game_id === g.id));
+    const camp = (s) => ({ manches: e.manches[s] ?? 0, sets: e.sets?.[s] ?? 0, reste: e.reste[s] });
+    scoresLive.set(m.id, { a: camp(1), b: camp(2), lance: e.auLancer === 1 ? 'a' : (e.auLancer === 2 ? 'b' : null), sets: !!g.sets_n });
+  }
+}
+
+// Met à jour les scores affichés sans redessiner la page (à chaque volée)
+let attenteLive = null;
+function rafraichirScoresLive() {
+  clearTimeout(attenteLive);
+  attenteLive = setTimeout(async () => {
+    await chargerScoresLive();
+    document.querySelectorAll('[data-live]').forEach((el) => {
+      const [idM, cote] = el.dataset.live.split(':');
+      const m = matchs.find((x) => x.id === idM);
+      if (m) el.outerHTML = scoreLive(m, cote);
+    });
+  }, 300);
+}
+
+function scoreLive(m, cote) {
+  const s = scoresLive.get(m.id);
+  if (!s) return `<span class="m-joueur__score" data-live="${m.id}:${cote}"></span>`;
+  const c = s[cote];
+  return `<span class="m-joueur__score m-joueur__score--live" data-live="${m.id}:${cote}">
+      <small class="m-live__reste">${s.lance === cote ? '<i class="m-live__lance" aria-label="au lancer"></i>' : ''}${c.reste}</small>
+      <b>${s.sets ? `${c.sets}<small> (${c.manches})</small>` : c.manches}</b>
+    </span>`;
 }
 
 const estOrganisateur = () => role === 'organisateur';
@@ -468,7 +516,7 @@ function ligneJoueur(m, cote) {
     <div class="m-joueur${gagnant ? ' m-joueur--gagnant' : ''}${m.status === 'done' && !gagnant && !nul ? ' m-joueur--perdant' : ''}${moiIci ? ' m-joueur--moi' : ''}">
       ${m.phase === 'final' && seed ? `<span class="m-joueur__seed">${seed}</span>` : ''}
       <span class="m-joueur__nom">${esc(nomEntree(idE))}</span>
-      <span class="m-joueur__score">${m.status === 'done' ? (m.sans_suite ? (score ?? '–') : nul ? 'N' : m.forfeit ? (gagnant ? 'V' : 'F') : (score ?? '')) : (m.status === 'bye' && gagnant ? '✓' : '')}</span>
+      ${m.status === 'live' ? scoreLive(m, cote) : `<span class="m-joueur__score">${m.status === 'done' ? (m.sans_suite ? (score ?? '–') : nul ? 'N' : m.forfeit ? (gagnant ? 'V' : 'F') : (score ?? '')) : (m.status === 'bye' && gagnant ? '✓' : '')}</span>`}
     </div>`;
 }
 
@@ -751,7 +799,12 @@ function ligneMonMatch(m, mi) {
       : `<span class="lm-res ${g ? 'lm-res--v' : 'lm-res--d'}">${g ? 'Gagné' : 'Perdu'} ${pour ?? ''}–${contre ?? ''}</span>`;
     if (m.game_id) actions = `<a class="lm-lien" href="live.html?id=${encodeURIComponent(m.game_id)}">Récap</a>`;
   } else if (m.status === 'live') {
-    etat = '<span class="lm-res lm-res--live">● En cours</span>';
+    const sl = scoresLive.get(m.id);
+    const moiCote = m.entry_a === mi.id ? 'a' : 'b';
+    const autreCote = moiCote === 'a' ? 'b' : 'a';
+    etat = sl
+      ? `<span class="lm-res lm-res--live">● ${sl[moiCote].manches}–${sl[autreCote].manches} · reste ${sl[moiCote].reste} / ${sl[autreCote].reste}</span>`
+      : '<span class="lm-res lm-res--live">● En cours</span>';
     const jeTiens = moi && m.game_created_by === moi.id;
     actions = m.game_status === 'finished' && jeTiens
       ? `<button type="button" class="bouton bouton--petit bouton--plein" data-valider="${m.game_id}">Valider</button>`
@@ -2144,6 +2197,11 @@ function ajouterPlusieurs() {
 supabase
   .channel(`tournoi-${id}`)
   .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_matches', filter: `tournament_id=eq.${id}` }, () => { if (!enCours) charger(); })
+  // Score en direct : une volée d'un match en cours de ce tournoi
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, (p) => {
+    const g = p.new?.game_id || p.old?.game_id;
+    if (matchs.some((m) => m.status === 'live' && m.game_id === g)) rafraichirScoresLive();
+  })
   .subscribe();
 
 init();

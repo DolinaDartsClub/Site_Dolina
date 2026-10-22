@@ -2500,3 +2500,10 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .t-lien-b { margin: 4px 0 0; font-size: 14px; color: var(--gris-clair); }
 .t-lien-b a { color: var(--orange); font-weight: 700; }
 .pastille-choix[aria-pressed="true"] small { color: inherit; opacity: .85; }
+
+/* Tournoi : score en direct des matchs en cours */
+.m-joueur__score--live { display: inline-flex; align-items: baseline; gap: 8px; }
+.m-joueur__score--live b { color: var(--orange); }
+.m-joueur__score--live b small { font-size: 11px; color: var(--gris-clair); }
+.m-live__reste { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--gris-clair); font-family: var(--police); }
+.m-live__lance { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); }
