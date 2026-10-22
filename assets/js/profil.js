@@ -4,7 +4,7 @@
 //  Réservée aux membres validés.
 // =====================================================================
 
-import { supabase, esc, profilConnecte, nomAffiche, nomCompletHtml, avatar, dateFr } from './app.js?v=__VERSION__';
+import { supabase, esc, profilConnecte, nomAffiche, nomCompletHtml, avatar, dateFr, lienJoueur } from './app.js?v=__VERSION__';
 import { debutSaison, nomSaison, resumeSaison } from './profil-commun.js?v=__VERSION__';
 
 const zone = document.getElementById('profil');
@@ -58,8 +58,8 @@ async function init() {
   }
   const nomCamp = (g, side) => {
     const camp = g.game_sides.find((x) => x.side === side);
-    const noms = g.game_players.filter((x) => x.side === side).sort((a, b) => a.throw_order - b.throw_order).map((x) => x.display_name).join(' / ');
-    return g.mode === 'double' && camp?.name ? camp.name : noms;
+    const noms = g.game_players.filter((x) => x.side === side).sort((a, b) => a.throw_order - b.throw_order).map((x) => lienJoueur(x.profile_id, esc(x.display_name))).join(' / ');
+    return g.mode === 'double' && camp?.name ? esc(camp.name) : noms;
   };
   const lignesParties = parties.map((g) => {
     const monCamp = g.moi?.[0]?.side;
@@ -73,7 +73,7 @@ async function init() {
         <span class="ff-partie__score">${gagne === null
     ? `<span class="s-perdu">${manches(monCamp)} manche${manches(monCamp) > 1 ? 's' : ''}</span>`
     : `<span class="${gagne ? 's-gagne' : 's-perdu'}">${manches(monCamp)}</span> – ${camps.filter((c) => c !== monCamp).map((c) => `<span class="${gagne === false && g.winner_side === c ? 's-gagne' : 's-perdu'}">${manches(c)}</span>`).join(' – ')}`}</span>
-        <span class="ff-partie__moy">${adversaires ? `contre ${esc(adversaires)}` : 'Seul'}</span>
+        <span class="ff-partie__moy">${adversaires ? `contre ${adversaires}` : 'Seul'}</span>
         <span class="ff-partie__gagnant">${gagne === null ? '' : (gagne ? 'Victoire' : 'Défaite')}</span>
       </a>`;
   }).join('');

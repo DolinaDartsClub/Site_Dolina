@@ -2,7 +2,7 @@
 //  Score en direct d'une partie publique (accessible sans compte)
 // =====================================================================
 
-import { supabase, esc, formatPartie, etatPartie } from './app.js?v=__VERSION__';
+import { supabase, esc, formatPartie, etatPartie, lienJoueur } from './app.js?v=__VERSION__';
 
 const id = new URLSearchParams(location.search).get('id');
 const zone = document.getElementById('live');
@@ -19,7 +19,7 @@ async function charger() {
   }
   const { data, error } = await supabase
     .from('games')
-    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, game_sides(side, name, is_bot), game_players(id, side, display_name, throw_order)')
+    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, game_sides(side, name, is_bot), game_players(id, side, profile_id, display_name, throw_order)')
     .eq('id', id)
     .maybeSingle();
 
@@ -45,6 +45,17 @@ function nomCamp(side) {
     .sort((a, b) => a.throw_order - b.throw_order)
     .map((p) => p.display_name);
   if (game.mode === 'double' && s?.name) return `${s.name} (${joueurs.join(' / ')})`;
+  return joueurs.join(' / ') || (s?.is_bot ? 'Dartbot' : '—');
+}
+
+// Même chose, avec chaque nom de membre cliquable vers son profil
+function nomCampHtml(side) {
+  const s = game.game_sides.find((x) => x.side === side);
+  const joueurs = game.game_players
+    .filter((p) => p.side === side)
+    .sort((a, b) => a.throw_order - b.throw_order)
+    .map((p) => lienJoueur(p.profile_id, esc(p.display_name)));
+  if (game.mode === 'double' && s?.name) return `${esc(s.name)} (${joueurs.join(' / ')})`;
   return joueurs.join(' / ') || (s?.is_bot ? 'Dartbot' : '—');
 }
 
@@ -179,7 +190,7 @@ function afficher() {
     return `
     <div class="recap-cadre stats-manche">
       <table class="recap recap--${cols.length}">
-        <thead><tr><th>${esc(libelle(vue))}</th>${cols.map((c) => `<th class="${gagnantVue === c ? 'recap--vainqueur' : ''}">${esc(nomCamp(c))}${gagnantVue === c ? '<small>Gagne la manche</small>' : ''}</th>`).join('')}</tr></thead>
+        <thead><tr><th>${esc(libelle(vue))}</th>${cols.map((c) => `<th class="${gagnantVue === c ? 'recap--vainqueur' : ''}">${nomCampHtml(c)}${gagnantVue === c ? '<small>Gagne la manche</small>' : ''}</th>`).join('')}</tr></thead>
         <tbody>
           ${l('Moy. 9 premières', moy9)}
           ${l('Moyenne (3 fl.)', moy3)}
@@ -198,7 +209,7 @@ function afficher() {
         ${duel ? plaque(sides[0]) + centre + plaque(sides[1]) : sides.map(plaque).join('')}
       </div>
       <div class="tableau-score-cadre">
-        ${duel ? '' : `<div class="tablette__detail"><span>Volées de <b>${esc(nomCamp(vu))}</b></span><small>Touchez un joueur pour voir ses volées</small></div>`}
+        ${duel ? '' : `<div class="tablette__detail"><span>Volées de <b>${nomCampHtml(vu)}</b></span><small>Touchez un joueur pour voir ses volées</small></div>`}
         <table class="tableau-score${duel ? ' tableau-score--duel' : ' tableau-score--solo'}">
           <thead>${tete}</thead>
           <tbody>${lignes}</tbody>
@@ -272,7 +283,7 @@ function recapitulatif(sides, ordre, manches, etat, libelle) {
     const max = meilleur ? Math.max(...cols.map((c) => meilleur(global[c]))) : null;
     return `<tr><th>${titre}</th>${cols.map((c, i) => `<td${meilleur && max > 0 && meilleur(global[c]) === max ? ' class="recap--top"' : ''}>${vals[i]}</td>`).join('')}</tr>`;
   };
-  const entete = `<tr><th></th>${cols.map((c) => `<th class="${game.winner_side === c ? 'recap--vainqueur' : ''}">${esc(nomCamp(c))}${game.winner_side === c ? '<small>Vainqueur</small>' : ''}</th>`).join('')}</tr>`;
+  const entete = `<tr><th></th>${cols.map((c) => `<th class="${game.winner_side === c ? 'recap--vainqueur' : ''}">${nomCampHtml(c)}${game.winner_side === c ? '<small>Vainqueur</small>' : ''}</th>`).join('')}</tr>`;
 
   const tableGlobal = `
     <div class="recap-cadre"><table class="recap recap--${cols.length}">
@@ -299,13 +310,13 @@ function recapitulatif(sides, ordre, manches, etat, libelle) {
       const st = statsVolees(liste, c);
       const der = [...liste].reverse().find((v) => v.side === c);
       const reste = !der ? game.start_score : der.is_checkout ? 0 : (der.is_bust ? der.remaining_before : der.remaining_before - der.score);
-      return `<tr class="${fin?.side === c ? 'recap--vainqueur' : ''}"><th>${esc(nomCamp(c))}</th><td>${moy9(st)}</td><td>${moy3(st)}</td><td>${pctDouble(st)}</td><td>${fin?.side === c ? `✓ ${fin.remaining_before}` : reste}</td></tr>`;
+      return `<tr class="${fin?.side === c ? 'recap--vainqueur' : ''}"><th>${nomCampHtml(c)}</th><td>${moy9(st)}</td><td>${moy3(st)}</td><td>${pctDouble(st)}</td><td>${fin?.side === c ? `✓ ${fin.remaining_before}` : reste}</td></tr>`;
     }).join('');
     return `
       <article class="recap-manche">
         <header>
           <strong>${libelle(m)}</strong>
-          <span>${fin ? `${esc(nomCamp(fin.side))} · ${statsVolees(liste, fin.side).flechettes} fléchettes · finish ${fin.remaining_before}` : 'Non terminée'}</span>
+          <span>${fin ? `${nomCampHtml(fin.side)} · ${statsVolees(liste, fin.side).flechettes} fléchettes · finish ${fin.remaining_before}` : 'Non terminée'}</span>
         </header>
         <table class="recap recap--manche">
           <thead><tr><th></th><th title="Moyenne des 9 premières fléchettes">9 prem.</th><th title="Moyenne 3 fléchettes">Moy.</th><th title="Réussite au double">Double</th><th>Reste</th></tr></thead>
@@ -332,9 +343,10 @@ function nomPlaque(side) {
   const s = game.game_sides.find((x) => x.side === side);
   const joueurs = game.game_players.filter((p) => p.side === side).sort((a, b) => a.throw_order - b.throw_order).map((p) => p.display_name);
   if (game.mode === 'double') {
-    return `<span>${esc(s?.name || joueurs.join(' / '))}</span><small>${esc(joueurs.join(' · '))}</small>`;
+    const liens = game.game_players.filter((p) => p.side === side).sort((a, b) => a.throw_order - b.throw_order).map((p) => lienJoueur(p.profile_id, esc(p.display_name)));
+    return `<span>${esc(s?.name || joueurs.join(' / '))}</span><small>${liens.join(' · ')}</small>`;
   }
-  return `<span>${esc(nomCamp(side))}</span>`;
+  return `<span>${nomCampHtml(side)}</span>`;
 }
 
 // Temps réel : nouvelles volées, corrections, fin de partie

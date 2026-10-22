@@ -5,7 +5,7 @@
 //  Affiché dans Équipes, onglet « Fil du club ».
 // =====================================================================
 
-import { supabase, esc, nomAffiche, avatar, erreurFr, dateFr } from './app.js?v=__VERSION__';
+import { supabase, esc, nomAffiche, avatar, erreurFr, dateFr, lienJoueur } from './app.js?v=__VERSION__';
 
 const PAR_PAGE = 15;
 const virgule = (n) => (n === null || n === undefined ? '–' : Number(n).toFixed(1).replace('.', ','));
@@ -22,7 +22,7 @@ function quand(date) {
 
 // Titre de l'annonce : l'exploit le plus marquant
 function titre(a) {
-  const nom = esc(nomAffiche(a.joueur));
+  const nom = lienJoueur(a.joueur?.id, esc(nomAffiche(a.joueur)));
   if (a.record_club_moyenne) return `${nom} bat le record du club : ${virgule(a.moyenne)} de moyenne !`;
   if (a.record_club_finish) return `${nom} bat le record de finish du club : ${a.meilleur_finish} !`;
   if (a.nb_180 > 1) return `${nom} a tapé ${a.nb_180} fois 180 !`;

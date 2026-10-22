@@ -5,7 +5,7 @@
 //  organisateur, participant, ou spectateur (tournoi lancé à matchs publics).
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie, avatar, etatPartie } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie, avatar, etatPartie, lienJoueur } from './app.js?v=__VERSION__';
 import { chargerMembres } from './tournoi-commun.js?v=__VERSION__';
 import qrcode from './vendor/qrcode.js?v=__VERSION__';
 import {
@@ -215,7 +215,7 @@ function podium() {
         <div class="t-podium__place t-podium__place--${i + 1}${mi0 && c.id === mi0.id ? ' t-podium__place--moi' : ''}">
           <span class="t-podium__rang">${i + 1}</span>
           <span class="t-podium__titre">${['Vainqueur', '2e', '3e'][i]}</span>
-          <strong>${esc(nomEntree(c.id))}</strong>
+          <strong>${nomLien(c.id)}</strong>
         </div>`).join('')}
     </section>`;
   }
@@ -239,7 +239,7 @@ function podium() {
         <div class="t-podium__place t-podium__place--${rang}${mi && idE === mi.id ? ' t-podium__place--moi' : ''}">
           <span class="t-podium__rang">${rang}</span>
           <span class="t-podium__titre">${titre}</span>
-          <strong>${esc(nomEntree(idE))}</strong>
+          <strong>${nomLien(idE)}</strong>
         </div>`).join('')}
     </section>`;
 }
@@ -475,6 +475,11 @@ function etiquettePoule(idE) {
 function nomEntree(idInscrit) {
   return parId.get(idInscrit)?.nom || 'Ancien joueur';
 }
+// Nom cliquable vers le profil (membre en individuel ; une doublette ou un invité reste du texte)
+function nomLien(idInscrit) {
+  const e = parId.get(idInscrit);
+  return lienJoueur(e && !e.partner_profile_id && t?.team_mode !== 'double' ? e.profile_id : null, esc(nomEntree(idInscrit)));
+}
 
 // Libellé d'une place encore inconnue : « Vainqueur M3 », « Perdant M7 »
 function placeVide(m, cote) {
@@ -515,7 +520,7 @@ function ligneJoueur(m, cote) {
   return `
     <div class="m-joueur${gagnant ? ' m-joueur--gagnant' : ''}${m.status === 'done' && !gagnant && !nul ? ' m-joueur--perdant' : ''}${moiIci ? ' m-joueur--moi' : ''}">
       ${m.phase === 'final' && seed ? `<span class="m-joueur__seed">${seed}</span>` : ''}
-      <span class="m-joueur__nom">${esc(nomEntree(idE))}</span>
+      <span class="m-joueur__nom">${nomLien(idE)}</span>
       ${m.status === 'live' ? scoreLive(m, cote) : `<span class="m-joueur__score">${m.status === 'done' ? (m.sans_suite ? (score ?? '–') : nul ? 'N' : m.forfeit ? (gagnant ? 'V' : 'F') : (score ?? '')) : (m.status === 'bye' && gagnant ? '✓' : '')}</span>`}
     </div>`;
 }
@@ -771,7 +776,7 @@ function blocCiblesFinale({ compacte = false } = {}) {
       <div class="c-cible${compacte ? ' c-cible--finale' : ''}">
         <h4 class="c-cible__titre">${e.n > 1 ? `${e.n} cibles` : 'Cible'} phase finale <span>${etat.charAt(0).toUpperCase()}${etat.slice(1)}</span></h4>
         ${tetes.map((x) => carteMatch(x)).join('')}
-        ${ensuite.length ? `<p class="c-cible__suite">Ensuite : ${ensuite.slice(0, 6).map((x) => `M${x.match_no} (${esc(nomEntree(x.entry_a))} – ${esc(nomEntree(x.entry_b))})`).join(' · ')}${ensuite.length > 6 ? ` · et ${ensuite.length - 6} autre${ensuite.length - 6 > 1 ? 's' : ''}` : ''}</p>` : ''}
+        ${ensuite.length ? `<p class="c-cible__suite">Ensuite : ${ensuite.slice(0, 6).map((x) => `M${x.match_no} (${nomLien(x.entry_a)} – ${nomLien(x.entry_b)})`).join(' · ')}${ensuite.length > 6 ? ` · et ${ensuite.length - 6} autre${ensuite.length - 6 > 1 ? 's' : ''}` : ''}</p>` : ''}
       </div>`;
 }
 
@@ -825,7 +830,7 @@ function ligneMonMatch(m, mi) {
   return `
     <li class="lm-ligne lm-ligne--${m.status}${prop?.pour_moi ? ' lm-ligne--urgent' : ''}">
       ${avatarInscrit(adv)}
-      <span class="lm-adv"><strong>${esc(nomEntree(adv))}</strong>${etat}</span>
+      <span class="lm-adv"><strong>${nomLien(adv)}</strong>${etat}</span>
       <span class="lm-actions">${actions}</span>
     </li>`;
 }
@@ -915,7 +920,7 @@ function vueLigue() {
       return `
         <tr class="${c.rang <= qualif ? 'p-qualif' : ''}${moiIci ? ' p-moi' : ''}">
           <td class="p-rang">${c.rang}</td>
-          <th scope="row" class="p-nom">${esc(e?.nom || '—')}${moiIci ? ' <span class="t-moi">Vous</span>' : ''}${c.critere ? `<small>${esc(c.critere)}</small>` : ''}</th>
+          <th scope="row" class="p-nom">${e ? nomLien(c.id) : '—'}${moiIci ? ' <span class="t-moi">Vous</span>' : ''}${c.critere ? `<small>${esc(c.critere)}</small>` : ''}</th>
           <td>${c.joues}</td><td>${c.victoires}</td><td>${c.nuls}</td><td>${c.defaites}</td>
           <td>${c.pour}-${c.contre}</td>
           <td class="p-points">${c.points}</td>
@@ -939,7 +944,7 @@ function vueLigue() {
       <div class="p-tableau-cadre lg-cadre">
         <table class="lg-grille">
           <thead><tr><th></th>${ordre.map((id) => `<th scope="col" title="${esc(parId.get(id)?.nom || '')}">${initiales(id)}</th>`).join('')}</tr></thead>
-          <tbody>${ordre.map((x) => `<tr><th scope="row">${esc(parId.get(x)?.nom || '—')}</th>${ordre.map((y) => {
+          <tbody>${ordre.map((x) => `<tr><th scope="row">${parId.get(x) ? nomLien(x) : '—'}</th>${ordre.map((y) => {
       if (x === y) return '<td class="lg-moi"></td>';
       const m = entre(x, y);
       if (!m) return '<td></td>';
@@ -1043,7 +1048,7 @@ function vuePoules() {
       return `
         <tr class="${(sansFinale() ? c.rang === 1 : c.rang <= qualif) ? 'p-qualif' : ''}${moiIci ? ' p-moi' : ''}">
           <td class="p-rang">${c.rang}</td>
-          <th scope="row" class="p-nom">${esc(e?.nom || '—')}${moiIci ? ' <span class="t-moi">Vous</span>' : ''}${c.critere ? `<small>${esc(c.critere)}</small>` : ''}</th>
+          <th scope="row" class="p-nom">${e ? nomLien(c.id) : '—'}${moiIci ? ' <span class="t-moi">Vous</span>' : ''}${c.critere ? `<small>${esc(c.critere)}</small>` : ''}</th>
           <td>${c.joues}</td><td>${c.victoires}</td><td>${c.defaites}</td>
           <td>${c.pour}-${c.contre}</td>
           <td class="p-points">${c.points}</td>
@@ -1159,7 +1164,7 @@ function vueMatchs() {
       <div class="c-cible">
         <h4 class="c-cible__titre">${nC > 1 ? 'Cibles' : 'Cible'} poule ${lettrePoule(k)} <span>${etat.charAt(0).toUpperCase()}${etat.slice(1)}</span></h4>
         ${tetes.map((x) => carteMatch(x)).join('')}
-        ${ensuite.length ? `<p class="c-cible__suite">Ensuite : ${ensuite.slice(0, 6).map((x) => `M${x.match_no} (${esc(nomEntree(x.entry_a))} – ${esc(nomEntree(x.entry_b))})`).join(' · ')}${ensuite.length > 6 ? ` · et ${ensuite.length - 6} autre${ensuite.length - 6 > 1 ? 's' : ''}` : ''}</p>` : `<p class="c-cible__suite">${e.file.length > 1 ? 'Derniers matchs de la poule.' : (e.file.length ? 'Dernier match de la poule.' : 'Plus de match à lancer dans cette poule.')}</p>`}
+        ${ensuite.length ? `<p class="c-cible__suite">Ensuite : ${ensuite.slice(0, 6).map((x) => `M${x.match_no} (${nomLien(x.entry_a)} – ${nomLien(x.entry_b)})`).join(' · ')}${ensuite.length > 6 ? ` · et ${ensuite.length - 6} autre${ensuite.length - 6 > 1 ? 's' : ''}` : ''}</p>` : `<p class="c-cible__suite">${e.file.length > 1 ? 'Derniers matchs de la poule.' : (e.file.length ? 'Dernier match de la poule.' : 'Plus de match à lancer dans cette poule.')}</p>`}
       </div>`);
   }
   if (cibles.length) {
@@ -1269,7 +1274,7 @@ function vueStats() {
     const moiIci = mi && l.entry_id === mi.id;
     return `
       <tr class="${moiIci ? 'p-moi' : ''}">
-        <th scope="row" class="ts-nom">${esc(l.nom)}${moiIci ? ' <span class="t-moi">Vous</span>' : ''}${l.forfaits ? `<small>${l.forfaits} forfait${l.forfaits > 1 ? 's' : ''}</small>` : ''}</th>
+        <th scope="row" class="ts-nom">${nomLien(l.entry_id)}${moiIci ? ' <span class="t-moi">Vous</span>' : ''}${l.forfaits ? `<small>${l.forfaits} forfait${l.forfaits > 1 ? 's' : ''}</small>` : ''}</th>
         <td>${l.matchs}</td>
         <td class="s-gagne">${l.victoires}</td>
         <td class="s-perdu">${l.defaites}</td>

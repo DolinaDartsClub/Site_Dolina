@@ -162,6 +162,26 @@ export async function chargerPhotos(racine = document) {
 }
 
 // Pastille de profil : les initiales, remplacées par la photo dès qu'elle est chargée
+// Nom d'un joueur cliquable vers sa page profil, partout sur le site.
+// Un <span> (et non un lien) pour pouvoir être placé dans une carte déjà cliquable :
+// le clic est intercepté ci-dessous et ouvre le profil au lieu de la carte.
+export function lienJoueur(profileId, html) {
+  if (!profileId) return html;
+  return `<span class="lien-joueur" data-profil="${esc(profileId)}" role="link" tabindex="0" title="Voir le profil">${html}</span>`;
+}
+if (typeof document !== 'undefined') {
+  const ouvrirProfil = (e) => {
+    const el = e.target.closest?.('[data-profil]');
+    if (!el) return false;
+    e.preventDefault();
+    e.stopPropagation();
+    location.href = `profil.html?id=${encodeURIComponent(el.dataset.profil)}`;
+    return true;
+  };
+  document.addEventListener('click', ouvrirProfil, true);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches?.('[data-profil]')) ouvrirProfil(e); }, true);
+}
+
 export function avatar(profil, classe = '') {
   const nom = profil ? nomAffiche(profil) : '?';
   const initiales = (profil?.first_name && profil?.last_name && !profil.use_nickname

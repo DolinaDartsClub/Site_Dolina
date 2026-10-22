@@ -6,7 +6,7 @@
 //  (aujourd'hui toujours « match »), affiché sur la carte et filtrable.
 // =====================================================================
 
-import { supabase, esc, formatPartie, etatPartie, profilConnecte, etiquetteType } from './app.js?v=__VERSION__';
+import { supabase, esc, formatPartie, etatPartie, profilConnecte, etiquetteType, lienJoueur } from './app.js?v=__VERSION__';
 import { JEUX, ORDRE_PENTADARTS } from './pentadarts-regles.js?v=__VERSION__';
 
 const JEUX_CLUB = ['pentadarts', 'capital', 'cricket'];
@@ -162,6 +162,13 @@ function nomCamp(g, side) {
   return joueurs.join(' / ') || (s?.is_bot ? 'Dartbot' : '—');
 }
 
+function nomCampHtml(g, side) {
+  const s = g.game_sides.find((x) => x.side === side);
+  const joueurs = g.game_players.filter((p) => p.side === side).sort((a, b) => a.throw_order - b.throw_order).map((p) => lienJoueur(p.profile_id, esc(p.display_name)));
+  if (g.mode === 'double' && s?.name) return `${esc(s.name)} (${joueurs.join(' / ')})`;
+  return joueurs.join(' / ') || (s?.is_bot ? 'Dartbot' : '—');
+}
+
 const fmtJour = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
 const fmtHeure = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
@@ -185,7 +192,7 @@ function carte(g) {
   const ordre = monCamp ? [monCamp, ...sides.map((s) => s.side).filter((s) => s !== monCamp)] : sides.map((s) => s.side);
   const lignes = ordre.map((s) => `
     <li class="${s === monCamp ? 'mp-camp--moi' : ''}${g.status === 'finished' && g.winner_side === s ? ' mp-camp--gagnant' : ''}">
-      <span class="mp-camp__nom">${esc(nomCamp(g, s))}</span>
+      <span class="mp-camp__nom">${nomCampHtml(g, s)}</span>
       <b class="mp-camp__score">${score(s)}</b>
     </li>`).join('');
 

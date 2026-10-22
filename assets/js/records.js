@@ -5,7 +5,7 @@
 //  sept–nov, déc–fév, mars–mai, juin–août.
 // =====================================================================
 
-import { supabase, esc, profilConnecte, avatar, erreurFr } from './app.js?v=__VERSION__';
+import { supabase, esc, profilConnecte, avatar, erreurFr, lienJoueur } from './app.js?v=__VERSION__';
 import { debutSaison, nomSaison } from './profil-commun.js?v=__VERSION__';
 
 const acces = document.getElementById('acces');
@@ -68,7 +68,7 @@ function carte(titre, icone, lignes, valeur, unite, vide) {
           <a href="live.html?id=${encodeURIComponent(x.game_id)}" class="rc-podium__lien" title="Voir la partie">
             <span class="rc-rang">${i + 1}</span>
             ${avatar(x, i === 0 ? 'avatar--grand' : 'avatar--liste')}
-            <span class="rc-podium__nom">${esc(x.nom)}</span>
+            <span class="rc-podium__nom">${lienJoueur(x.profile_id, esc(x.nom))}</span>
             <span class="rc-valeur">${valeur(x)}<small>${unite}</small></span>
             <span class="rc-detail">${esc(x.adversaires ? `contre ${x.adversaires}` : '')}<br>${esc(fmtJour.format(new Date(x.quand)))} · ${esc(x.variant)}</span>
           </a>
@@ -77,7 +77,7 @@ function carte(titre, icone, lignes, valeur, unite, vide) {
       ${reste.length ? `<ol class="rc-liste" start="4">${reste.map((x, i) => `
         <li><a href="live.html?id=${encodeURIComponent(x.game_id)}">
           <span class="rc-rang">${i + 4}</span>${avatar(x, 'avatar--liste')}
-          <span class="rc-liste__nom">${esc(x.nom)}<small>${esc(fmtJour.format(new Date(x.quand)))}${x.adversaires ? ` · contre ${esc(x.adversaires)}` : ''}</small></span>
+          <span class="rc-liste__nom">${lienJoueur(x.profile_id, esc(x.nom))}<small>${esc(fmtJour.format(new Date(x.quand)))}${x.adversaires ? ` · contre ${esc(x.adversaires)}` : ''}</small></span>
           <span class="rc-valeur">${valeur(x)}</span>
         </a></li>`).join('')}</ol>` : ''}`
     : `<p class="vide">${vide}</p>`}

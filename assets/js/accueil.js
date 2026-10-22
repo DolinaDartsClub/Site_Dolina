@@ -2,7 +2,7 @@
 //  Page d'accueil : matchs en cours (temps réel) + actualités
 // =====================================================================
 
-import { supabase, esc, dateFr, formatPartie, etatPartie, urlImage, profilConnecte } from './app.js?v=__VERSION__';
+import { supabase, esc, dateFr, formatPartie, etatPartie, urlImage, profilConnecte, lienJoueur } from './app.js?v=__VERSION__';
 import { chargerClubs, logoAdversaire, logoDolina, affiche, scoreOrdonne } from './logos.js?v=__VERSION__';
 import { blocRappelsLigue } from './rappels-ligue.js?v=__VERSION__';
 
@@ -19,7 +19,7 @@ async function chargerMatchs() {
   const zone = document.getElementById('matchs');
   const { data: games, error } = await supabase
     .from('games')
-    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, game_sides(side, name, is_bot), game_players(side, display_name, throw_order)')
+    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, game_sides(side, name, is_bot), game_players(side, profile_id, display_name, throw_order)')
     .eq('status', 'live')
     .eq('visibility', 'public')
     .neq('mode', 'bot')
@@ -54,6 +54,15 @@ function nomCamp(g, side) {
   return joueurs.join(' / ') || (s?.is_bot ? 'Dartbot' : '—');
 }
 
+// Noms des joueurs d'un camp, cliquables vers leur profil
+function nomCampHtml(g, side) {
+  const s = g.game_sides.find((x) => x.side === side);
+  const joueurs = g.game_players.filter((p) => p.side === side).sort((a, b) => a.throw_order - b.throw_order)
+    .map((p) => lienJoueur(p.profile_id, esc(p.display_name)));
+  if (g.mode === 'double' && s?.name) return `${esc(s.name)} (${joueurs.join(' / ')})`;
+  return joueurs.join(' / ') || (s?.is_bot ? 'Dartbot' : '—');
+}
+
 function carteMatch(g, visits) {
   const sides = [...g.game_sides].sort((a, b) => a.side - b.side);
   const etat = etatPartie(g, sides, visits);
@@ -69,12 +78,12 @@ function carteMatch(g, visits) {
         <span class="match__format">${esc(formatPartie(g))}</span>
         <span class="match__ligne">
           <span class="match__camp">
-            <span class="match__nom">${esc(nomCamp(g, a))}</span>
+            <span class="match__nom">${nomCampHtml(g, a)}</span>
             <span class="match__reste">reste ${etat.reste[a]}</span>
           </span>
           <span class="match__score">${score}</span>
           <span class="match__camp match__camp--droite">
-            <span class="match__nom">${esc(nomCamp(g, b))}</span>
+            <span class="match__nom">${nomCampHtml(g, b)}</span>
             <span class="match__reste">reste ${etat.reste[b]}</span>
           </span>
         </span>
@@ -85,7 +94,7 @@ function carteMatch(g, visits) {
   // 3 ou 4 joueurs
   const lignes = sides.map((s) => `
     <span class="match__ligne" style="grid-template-columns: minmax(0,1fr) auto">
-      <span class="match__nom">${esc(nomCamp(g, s.side))}</span>
+      <span class="match__nom">${nomCampHtml(g, s.side)}</span>
       <span class="match__reste">${etat.manches[s.side]} manche(s) · reste ${etat.reste[s.side]}</span>
     </span>`).join('');
   return `
@@ -106,7 +115,7 @@ async function chargerDerniers() {
   const zone = document.getElementById('derniers');
   const { data: games, error } = await supabase
     .from('games')
-    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, finished_at, updated_at, game_sides(side, name, is_bot), game_players(side, display_name, throw_order)')
+    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, finished_at, updated_at, game_sides(side, name, is_bot), game_players(side, profile_id, display_name, throw_order)')
     .eq('status', 'finished')
     .eq('visibility', 'public')
     .neq('mode', 'bot')
@@ -155,7 +164,7 @@ function carteTerminee(g, visits, cache = false) {
     const [a, b] = sides.map((s) => s.side);
     const camp = (side, droite) => `
           <span class="match__camp${droite ? ' match__camp--droite' : ''}${g.winner_side === side ? ' match__camp--gagnant' : ''}">
-            <span class="match__nom">${esc(nomCamp(g, side))}</span>
+            <span class="match__nom">${nomCampHtml(g, side)}</span>
             <span class="match__reste">moy. ${moy(side)}${g.winner_side === side ? ' · <b>Vainqueur</b>' : ''}</span>
           </span>`;
     return `
@@ -171,7 +180,7 @@ function carteTerminee(g, visits, cache = false) {
   }
   const lignes = sides.map((s) => `
     <span class="match__ligne match__ligne--multi${g.winner_side === s.side ? ' match__camp--gagnant' : ''}">
-      <span class="match__nom">${esc(nomCamp(g, s.side))}</span>
+      <span class="match__nom">${nomCampHtml(g, s.side)}</span>
       <span class="match__reste">${score(s.side)} manche${score(s.side) > 1 ? 's' : ''} · moy. ${moy(s.side)}</span>
     </span>`).join('');
   return `
