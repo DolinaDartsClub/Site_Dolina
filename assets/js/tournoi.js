@@ -69,7 +69,13 @@ async function charger() {
   etiquettes = null;
   statsTournoi = null;
   document.title = `${t.name} – Dolina Darts Club`;
-  if (!onglet) onglet = t.status === 'running' || t.status === 'finished' ? (t.format === 'pools' ? 'poules' : 'arbre') : 'participants';
+  // Onglet d'arrivée : la phase en cours (phase finale dès qu'elle est lancée)
+  if (!onglet) {
+    const finaleLancee = matchs.some((m) => m.phase === 'final');
+    onglet = t.status === 'running' || t.status === 'finished'
+      ? (t.format === 'pools' && !finaleLancee ? 'poules' : 'arbre')
+      : 'participants';
+  }
   afficher();
 }
 

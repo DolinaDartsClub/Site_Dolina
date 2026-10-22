@@ -108,7 +108,7 @@ function brancherLigue() {
       max_participants: Number(f.places.value) || 40,
       pool_qualifiers: Number(f.qualifies.value) || 8,
       pools_count: 1, cibles_par_poule: 8, status: 'open',
-      public_matches: false, third_place: false,
+      public_matches: false, third_place: false, show_checkout: false,
     }).select('id').single();
     bouton.disabled = false;
     if (error) {

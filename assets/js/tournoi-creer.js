@@ -62,7 +62,7 @@ function remplir(t) {
   f.pool_qualifiers.value = t.pool_qualifiers || 2;
   f.third_place.checked = t.third_place;
   f.public_matches.checked = t.public_matches;
-  f.show_checkout.checked = t.show_checkout !== false;
+  f.show_checkout.checked = t.show_checkout === true;
   choix.team_mode = t.team_mode;
   choix.format = t.format;
   majOptionsPoules();
