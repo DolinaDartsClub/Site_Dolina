@@ -61,6 +61,7 @@ function remplir(t) {
   f.max_participants.value = t.max_participants;
   f.pool_qualifiers.value = t.pool_qualifiers || 2;
   f.third_place.checked = t.third_place;
+  f.tournoi_b.checked = !!t.tournoi_b;
   f.public_matches.checked = t.public_matches;
   f.show_checkout.checked = t.show_checkout === true;
   choix.team_mode = t.team_mode;
@@ -99,6 +100,7 @@ function majAffichage() {
       : 'Chaque joueur s\'inscrit avec son compte. L\'organisateur peut aussi ajouter des membres ou des invités sans compte.';
   }
   document.getElementById('bloc-poules').hidden = choix.format !== 'pools';
+  document.getElementById('case-tableau-b').hidden = choix.format !== 'pools';
   majOptionsPoules();
 }
 
@@ -150,6 +152,7 @@ function lire() {
     pool_qualifiers: choix.format === 'pools' ? Number(f.pool_qualifiers.value) : null,
     pools_count: choix.format === 'pools' && f.pools_count.value ? Number(f.pools_count.value) : null,
     third_place: f.third_place.checked,
+    tournoi_b: choix.format === 'pools' && f.tournoi_b.checked,
     public_matches: f.public_matches.checked,
     show_checkout: f.show_checkout.checked,
   };
@@ -183,6 +186,7 @@ form.addEventListener('submit', (e) => {
     lignes.push(['Poules', `${v.pools_count ? `${v.pools_count} poules` : 'Nombre proposé au lancement'} · ${v.pool_qualifiers} qualifié${v.pool_qualifiers > 1 ? 's' : ''} par poule`]);
     lignes.push(['Classement des poules', '3 pts par victoire, 1 pt par défaite · égalité : manches gagnées, puis confrontation directe']);
   }
+  if (v.format === 'pools') lignes.push(['Tableau B (non-qualifiés)', v.tournoi_b ? 'Oui, créé à la fin des poules' : 'Non']);
   lignes.push(['Match pour la 3e place', v.third_place ? 'Oui' : 'Non']);
   lignes.push(['Matchs', v.public_matches ? 'Publics (visibles dans « Matchs en cours »)' : 'Privés']);
   lignes.push(['Guide de finish', v.show_checkout ? 'Affiché dans le scorer' : 'Masqué']);
@@ -212,6 +216,13 @@ document.getElementById('btn-confirmer').addEventListener('click', async () => {
     res = await supabase.from('tournaments')
       .insert({ ...v, status: form.elements.ouvrir.checked ? 'open' : 'draft' })
       .select('id').single();
+  }
+  // Base pas encore à jour (script 052 non exécuté) : enregistrement sans l'option « tableau B »
+  if (res.error && /tournoi_b/.test(res.error.message || '')) {
+    delete v.tournoi_b;
+    res = existant
+      ? await supabase.from('tournaments').update(v).eq('id', existant.id).select('id').single()
+      : await supabase.from('tournaments').insert({ ...v, status: form.elements.ouvrir.checked ? 'open' : 'draft' }).select('id').single();
   }
   // Base pas encore à jour (script 015 non exécuté) : enregistrement sans l'option « guide de finish »
   if (res.error && /show_checkout/.test(res.error.message || '')) {

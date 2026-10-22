@@ -2495,3 +2495,8 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .lg-tous summary { cursor: pointer; font-weight: 700; color: var(--orange); padding: 6px 0; }
 .t-choix-bull .bouton:has(small) { flex-direction: column; gap: 2px; height: auto; padding-top: 10px; padding-bottom: 10px; }
 .t-choix-bull .bouton small { display: block; font-size: 12px; font-weight: 500; opacity: .8; }
+
+/* Tableau B (script 052) */
+.t-lien-b { margin: 4px 0 0; font-size: 14px; color: var(--gris-clair); }
+.t-lien-b a { color: var(--orange); font-weight: 700; }
+.pastille-choix[aria-pressed="true"] small { color: inherit; opacity: .85; }
