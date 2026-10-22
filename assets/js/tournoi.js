@@ -618,6 +618,114 @@ function blocCiblesFinale({ compacte = false } = {}) {
 // Filtre des poules sur téléphone (une poule à la fois) ; null = pas encore choisi
 let filtrePoule = null;
 
+// Ligue : « Mes matchs » du joueur connecté, une ligne par adversaire
+function avatarInscrit(idE) {
+  const e = parId.get(idE);
+  const p = e?.profile_id ? photosMembres.get(e.profile_id) : null;
+  return avatar(p || { nickname: e?.nom || '?', use_nickname: true }, 'lm-avatar');
+}
+
+function ligneMonMatch(m, mi) {
+  const adv = m.entry_a === mi.id ? m.entry_b : m.entry_a;
+  const prop = propositionDe(m);
+  const pour = m.entry_a === mi.id ? m.score_a : m.score_b;
+  const contre = m.entry_a === mi.id ? m.score_b : m.score_a;
+  let etat = '';
+  let actions = '';
+  if (m.status === 'done') {
+    const g = m.winner_entry === mi.id;
+    etat = m.nul ? '<span class="lm-res lm-res--nul">Nul</span>'
+      : m.forfeit ? `<span class="lm-res ${g ? 'lm-res--v' : 'lm-res--d'}">${g ? 'Gagné par forfait' : 'Forfait'}</span>`
+      : `<span class="lm-res ${g ? 'lm-res--v' : 'lm-res--d'}">${g ? 'Gagné' : 'Perdu'} ${pour ?? ''}–${contre ?? ''}</span>`;
+    if (m.game_id) actions = `<a class="lm-lien" href="live.html?id=${encodeURIComponent(m.game_id)}">Récap</a>`;
+  } else if (m.status === 'live') {
+    etat = '<span class="lm-res lm-res--live">● En cours</span>';
+    const jeTiens = moi && m.game_created_by === moi.id;
+    actions = m.game_status === 'finished' && jeTiens
+      ? `<button type="button" class="bouton bouton--petit bouton--plein" data-valider="${m.game_id}">Valider</button>`
+      : `<a class="bouton bouton--petit${jeTiens ? ' bouton--plein' : ''}" href="${jeTiens ? 'scorer' : 'live'}.html?id=${encodeURIComponent(m.game_id)}">${jeTiens ? 'Reprendre' : 'Suivre'}</a>`;
+  } else if (prop?.pour_moi) {
+    etat = `<span class="lm-res lm-res--prop">${prop.type === 'nul' ? 'Propose un nul' : (prop.perdant === mi.id ? 'Vous demande de déclarer forfait' : 'Déclare forfait')}</span>`;
+    actions = `<button type="button" class="bouton bouton--petit bouton--plein" data-repondre="${prop.id}" data-reponse="accepter">Accepter</button>
+      <button type="button" class="bouton bouton--petit" data-repondre="${prop.id}" data-reponse="refuser">Refuser</button>`;
+  } else if (prop?.de_moi) {
+    etat = `<span class="lm-res lm-res--attente">${prop.type === 'nul' ? 'Nul proposé' : 'Forfait proposé'} · en attente</span>`;
+    actions = `<button type="button" class="bouton bouton--petit bouton--discret" data-repondre="${prop.id}" data-reponse="annuler">Annuler</button>`;
+  } else {
+    const occupe = joueurOccupe(m);
+    etat = occupe ? '<span class="lm-res lm-res--attente">Un joueur est en match</span>' : '<span class="lm-res">À jouer</span>';
+    actions = `<button type="button" class="bouton bouton--petit bouton--plein" data-lancer="${m.id}"${occupe ? ' disabled' : ''}>Jouer</button>
+      <button type="button" class="bouton bouton--petit bouton--discret lm-plus" data-options-ligue="${m.id}" aria-label="Forfait ou match nul" title="Forfait ou match nul">⋯</button>`;
+  }
+  return `
+    <li class="lm-ligne lm-ligne--${m.status}${prop?.pour_moi ? ' lm-ligne--urgent' : ''}">
+      ${avatarInscrit(adv)}
+      <span class="lm-adv"><strong>${esc(nomEntree(adv))}</strong>${etat}</span>
+      <span class="lm-actions">${actions}</span>
+    </li>`;
+}
+
+function blocMesMatchsLigue() {
+  const mi = monInscription();
+  if (!mi || t.status === 'draft' || t.status === 'open') return '';
+  const miens = matchs.filter((m) => m.phase === 'pool' && estMonMatch(m));
+  const ordre = (m) => (propositionDe(m)?.pour_moi ? 0 : m.status === 'live' ? 1 : m.status === 'ready' ? 2 : 3);
+  const tries = [...miens].sort((a, b) => ordre(a) - ordre(b)
+    || nomEntree(a.entry_a === mi.id ? a.entry_b : a.entry_a).localeCompare(nomEntree(b.entry_a === mi.id ? b.entry_b : b.entry_a), 'fr'));
+  const aJouer = miens.filter((m) => m.status === 'ready' || m.status === 'live').length;
+  const joues = miens.length - aJouer;
+  return `
+    <section class="lm">
+      <header class="lm__haut">
+        <h3>Mes matchs</h3>
+        <span><b>${aJouer}</b> à jouer · ${joues} joué${joues > 1 ? 's' : ''}</span>
+      </header>
+      <p class="lm__aide">Choisissez votre adversaire et touchez « Jouer » quand vous êtes tous les deux à la cible. ⋯ : forfait ou match nul (votre adversaire devra confirmer).</p>
+      <ul class="lm__liste">${tries.map((m) => ligneMonMatch(m, mi)).join('')}</ul>
+    </section>`;
+}
+
+// Petite fenêtre « Forfait ou match nul » d'un match de ligue (joueur)
+function ouvrirOptionsLigue(idMatch) {
+  const m = matchs.find((x) => x.id === idMatch);
+  const mi = monInscription();
+  if (!m || !mi) return;
+  const adv = m.entry_a === mi.id ? m.entry_b : m.entry_a;
+  const f = document.createElement('div');
+  f.className = 'fenetre';
+  f.setAttribute('role', 'dialog');
+  f.setAttribute('aria-modal', 'true');
+  f.innerHTML = `
+    <div class="fenetre__boite">
+      <h2>Match contre ${esc(nomEntree(adv))}</h2>
+      <p class="match__format" style="margin:0">Si le match ne peut pas être joué : votre adversaire devra confirmer votre choix.</p>
+      <div class="t-choix-bull">
+        <button type="button" class="bouton bouton--large" data-choix="nul">Proposer un match nul<small>1 point chacun</small></button>
+        <button type="button" class="bouton bouton--large bouton--danger" data-choix="moi">Je déclare forfait<small>0 point pour moi, 3 pour ${esc(nomEntree(adv))}</small></button>
+        <button type="button" class="bouton bouton--large" data-choix="lui">${esc(nomEntree(adv))} déclare forfait<small>3 points pour moi, 0 pour lui</small></button>
+      </div>
+      <button type="button" class="bouton" data-fermer>Annuler</button>
+    </div>`;
+  document.body.appendChild(f);
+  const fermer = () => f.remove();
+  f.addEventListener('click', (e) => {
+    if (e.target === f || e.target.closest('[data-fermer]')) { fermer(); return; }
+    const b = e.target.closest('[data-choix]');
+    if (!b) return;
+    const choix = b.dataset.choix;
+    fermer();
+    action(async () => {
+      const params = choix === 'nul'
+        ? { p_match: m.id, p_type: 'nul' }
+        : { p_match: m.id, p_type: 'forfait', p_perdant: choix === 'moi' ? mi.id : adv };
+      const { error } = await supabase.rpc('proposer_resultat_ligue', params);
+      if (error) return message(zoneMsg, erreurFr(error));
+      message(zoneMsg, `Proposition envoyée à ${nomEntree(adv)} : elle compte dès qu'il la confirme.`, 'ok');
+      await charger();
+    });
+  });
+}
+
 // Ligue : classement, tableau croisé des résultats, matchs en cours
 function vueLigue() {
   const membres = inscrits.filter((e) => e.pool_no === 1);
@@ -663,12 +771,12 @@ function vueLigue() {
   const enCours = mPoule.filter((m) => m.status === 'live');
   const mesAJouer = mPoule.filter((m) => m.status === 'ready' && estMonMatch(m) && !propositionDe(m)?.pour_moi);
   const aTraiter = mPoule.filter((m) => m.status === 'ready' && propositionDe(m)?.pour_moi);
+  const joueur = !!mi;
   return `
     ${blocFinSaison(mPoule)}
-    ${aTraiter.length ? `<section class="lg-traiter"><h3 class="cs-sous-titre" style="margin-top:0">À confirmer <span class="t-compte t-compte--moi">${aTraiter.length}</span></h3><div class="m-liste">${aTraiter.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div></section>` : ''}
-    <p class="t-legende">Chaque joueur affronte une fois chacun des autres pendant la saison. ${POINTS_VICTOIRE} points par victoire, ${POINTS_DEFAITE} point par défaite d'un match joué, 0 par forfait ; un match nul (les deux joueurs d'accord) vaut ${POINTS_NUL} point chacun. À égalité, le plus de manches gagnées, puis le match entre les joueurs à égalité.
-      ${qualif ? `Les ${qualif} premiers (surlignés) se qualifient pour le tournoi Master.` : ''}
-      Un match qui ne peut pas être joué : l'un des joueurs déclare forfait ou propose un nul, l'autre confirme.</p>
+    ${joueur ? blocMesMatchsLigue() : ''}
+    ${!joueur && aTraiter.length ? `<section class="lg-traiter"><h3 class="cs-sous-titre" style="margin-top:0">À confirmer <span class="t-compte t-compte--moi">${aTraiter.length}</span></h3><div class="m-liste">${aTraiter.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div></section>` : ''}
+    <p class="t-legende">Victoire ${POINTS_VICTOIRE} pts · défaite ${POINTS_DEFAITE} pt · forfait 0 · nul ${POINTS_NUL} pt chacun.${qualif ? ` Les ${qualif} premiers (surlignés) jouent le Master.` : ''} À égalité : manches gagnées, puis match entre eux.</p>
     ${reglageQualifies()}
     ${reglageFinSaison()}
     <section class="p-poule">
@@ -680,12 +788,13 @@ function vueLigue() {
         </table>
       </div>
     </section>
-    <h3 class="cs-sous-titre">Tableau des résultats</h3>
-    <p class="t-legende">Lisez une ligne : le score du joueur contre chaque adversaire (en colonne). Case vide : match à jouer ; ● : en cours ; ? : forfait ou nul proposé ; N : nul ; V / F : gagné / perdu par forfait. Faites défiler le tableau sur le côté.</p>
-    ${grille}
-    ${enCours.length ? `<h3 class="cs-sous-titre">En cours</h3><div class="m-liste">${enCours.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div>` : ''}
-    ${mesAJouer.length ? `<h3 class="cs-sous-titre">Mes matchs à jouer <span class="t-compte">${mesAJouer.length}</span></h3><div class="m-liste">${mesAJouer.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div>` : ''}
-    <p class="t-legende">Tous les matchs de la ligue sont dans l'onglet Matchs.</p>`;
+    <details class="lg-tous"${joueur ? '' : ' open'}>
+      <summary>Tableau de tous les résultats</summary>
+      <p class="t-legende">Lisez une ligne : le score du joueur contre chaque adversaire (en colonne). Case vide : match à jouer ; ● : en cours ; ? : forfait ou nul proposé ; N : nul ; V / F : gagné / perdu par forfait. Faites défiler le tableau sur le côté.</p>
+      ${grille}
+    </details>
+    ${!joueur && enCours.length ? `<h3 class="cs-sous-titre">En cours</h3><div class="m-liste">${enCours.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div>` : ''}
+    ${!joueur && mesAJouer.length ? '' : ''}`;
 }
 
 // Fin de saison : date limite, matchs restants du joueur, rappel ; après la date, l'admin tranche
@@ -843,6 +952,9 @@ function vueArbre() {
 // ---------- Liste des matchs ----------
 
 function vueMatchs() {
+  if (estLigue() && role !== 'organisateur' && monInscription() && !matchs.some((m) => m.phase === 'final')) {
+    return `${blocMesMatchsLigue()}<p class="t-legende">En tant que joueur, vous ne voyez ici que vos matchs. Le classement et tous les résultats sont dans l'onglet Classement.</p>`;
+  }
   const vrais = matchs.filter((m) => m.status !== 'bye');
   const groupes = [
     ['live', 'En cours'],
@@ -1105,6 +1217,7 @@ function brancher() {
   zone.querySelectorAll('[data-proposer-nul]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); proposerNul(b.dataset.proposerNul); }));
   zone.querySelectorAll('[data-repondre]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); repondreProposition(b.dataset.repondre, b.dataset.reponse); }));
   zone.querySelectorAll('[data-nul]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); nulOrganisateur(b.dataset.nul); }));
+  zone.querySelectorAll('[data-options-ligue]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirOptionsLigue(b.dataset.optionsLigue); }));
   zone.querySelector('[data-ligue-visible]')?.addEventListener('click', (e) => changerVisibiliteLigue(e.currentTarget.dataset.ligueVisible === '1'));
 }
 
