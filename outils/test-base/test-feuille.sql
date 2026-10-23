@@ -34,8 +34,21 @@ select _t(:'W', 'compo E (membres + invités)', format($$select enregistrer_comp
 select _v('nom figé : prénom nom, espaces nettoyés', $$select compo_e -> 'E' ->> 'n' || ' / ' || (compo_e -> 'G' ->> 'n') from feuilles_match$$, 'Will Martin / Invité G');
 select _t(:'W', 'même joueur deux fois refusé', format($$select enregistrer_compo(%L, 'E', '{"E":{"p":"%s"},"F":{"p":"%s"}}')::text$$, current_setting('t.f'), :'W', :'W'), 'deux fois');
 select case when _anon(format($q$select enregistrer_compo(null, 'E', '{"E":{"n":"Pirate"}}', %L)$q$, current_setting('t.c'))) like 'ERREUR%votre équipe%' then 'PASS  adverse : ne touche pas notre compo' else 'FAIL  adverse compo E' end;
-select _t(:'W', 'match avant compo adverse : refusé', $$select lancer_match_feuille(current_setting('t.f')::uuid, 1)::text$$, 'Composition incomplète (équipe A');
+select _t(:'W', 'lancement avant compo adverse : refusé', $$select lancer_rencontre(current_setting('t.f')::uuid)::text$$, 'complètes avant le lancement (équipe A');
+select _t(:'W', 'capitaine : ne saisit pas la compo adverse avant le lancement', $$select enregistrer_compo(current_setting('t.f')::uuid, 'A', '{"A":{"n":"X"}}')::text$$, 'saisie par son capitaine');
 select case when _anon(format($q$select enregistrer_compo(null, 'A', '{"A":{"n":"Adrien"},"B":{"n":"Alexandre"},"C":{"n":"Romain"},"D":{"n":"Alan"},"Y":{"n":"Loïc"},"A1":["A","B"],"A2":["D","C"]}', %L)::text$q$, current_setting('t.c'))) is not distinct from '' then 'PASS  adverse : saisit sa compo' else 'FAIL  adverse compo A : ' || _anon(format($q$select enregistrer_compo(null, 'A', '{}', %L)::text$q$, current_setting('t.c'))) end;
+select _t(:'W', 'avant lancement : compo adverse masquée, prête', $$select (feuille_detail(current_setting('t.f')::uuid) -> 'feuille' ->> 'compo_a') || ' ' || (feuille_detail(current_setting('t.f')::uuid) -> 'feuille' ->> 'pret_a')$$);
+select _t(:'W', 'avant lancement : noms adverses masqués dans les matchs', $$select coalesce(feuille_detail(current_setting('t.f')::uuid) -> 'matchs' -> 0 -> 'joueurs' ->> 'a', 'masqué') || ' / ' || (feuille_detail(current_setting('t.f')::uuid) -> 'matchs' -> 0 -> 'joueurs' -> 'e' -> 0 ->> 'n')$$);
+select case when _anon(format('select feuille_detail(null, %L) -> ''feuille'' ->> ''compo_e''', current_setting('t.c'))) = '{}' then 'PASS  adverse : notre compo masquée' else 'FAIL  adverse voit notre compo' end;
+select case when _anon(format('select feuille_detail(null, %L) -> ''feuille'' -> ''compo_a'' -> ''A'' ->> ''n''', current_setting('t.c'))) = 'Adrien' then 'PASS  adverse : voit sa compo' else 'FAIL  adverse sa compo' end;
+select _t(:'F', 'match avant lancement : refusé', $$select lancer_match_feuille(current_setting('t.f')::uuid, 1)::text$$, 'pas encore lancée');
+select _t(:'W', 'remplacement avant lancement : refusé', $$select definir_remplacement(current_setting('t.f')::uuid, 'E', null, null)::text$$, 'Lancez d''abord');
+select _t(:'F', 'joueur : ne lance pas la rencontre', $$select lancer_rencontre(current_setting('t.f')::uuid)::text$$, 'Seul le capitaine');
+select _t(:'W', 'lancer la rencontre', $$select lancer_rencontre(current_setting('t.f')::uuid)::text$$);
+select _t(:'W', 'annuler le lancement (rien joué)', $$select annuler_lancement_feuille(current_setting('t.f')::uuid)::text$$);
+select _t(:'W', 'relancer', $$select lancer_rencontre(current_setting('t.f')::uuid)::text$$);
+select _t(:'W', 'après lancement : compo adverse visible', $$select feuille_detail(current_setting('t.f')::uuid) -> 'feuille' -> 'compo_a' -> 'A' ->> 'n'$$);
+select case when _anon(format($q$select enregistrer_compo(null, 'A', '{"A":{"n":"Autre"}}', %L)$q$, current_setting('t.c'))) like 'ERREUR%lancée%' then 'PASS  adverse : compo figée après lancement' else 'FAIL  adverse modifie après lancement' end;
 select _t(:'W', 'compo complète', $$select coalesce(feuille_detail(current_setting('t.f')::uuid) -> 'feuille' ->> 'manque_a', 'complète')$$);
 
 -- Matchs
@@ -69,6 +82,7 @@ select _t(:'F', 'match 3 : 2-1', $$select saisir_resultat_feuille(current_settin
 select _t(:'F', 'match scoré : saisie refusée', $$select saisir_resultat_feuille(current_setting('t.f')::uuid, 1, 2, 0)::text$$, 'remettez-le à jouer');
 
 -- Remplacement
+select _t(:'W', 'annuler le lancement après un match : refusé', $$select annuler_lancement_feuille(current_setting('t.f')::uuid)::text$$, 'ne peut plus');
 select _t(:'W', 'remplacement sur un match joué refusé', $$select definir_remplacement(current_setting('t.f')::uuid, 'A', 'A', 0)::text$$, 'déjà commencé');
 select _t(:'W', 'Y remplace D après le match 10', $$select definir_remplacement(current_setting('t.f')::uuid, 'A', 'D', 10)::text$$);
 select _v('match 14 : Loïc à la place d''Alan', $$select feuille_joueurs_match(f, 14) -> 'a' -> 0 ->> 'n' from feuilles_match f$$, 'Loïc');

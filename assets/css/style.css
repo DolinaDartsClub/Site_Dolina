@@ -2672,3 +2672,10 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .fm-choix label > span { display: flex; flex-direction: column; font-weight: 600; }
 .fm-choix label input { width: 20px; height: 20px; accent-color: var(--orange); flex: none; }
 .fm-onglets { margin-top: 14px; }
+.fm-etats { display: grid; gap: 6px; }
+.fm-etat { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; background: var(--noir-2); border: 1px solid var(--bord); font-size: 14px; color: var(--gris-clair); }
+.fm-etat b { color: var(--orange); }
+.fm-etat--ok { color: var(--blanc); border-color: rgba(123, 216, 143, .4); }
+.fm-compo--masquee { justify-content: center; text-align: center; align-items: center; min-height: 160px; border-style: dashed; }
+.fm-masque { margin: 0; font-weight: 600; font-size: 16px; }
+.fm-ligne-groupe { margin: 14px 0 -6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }

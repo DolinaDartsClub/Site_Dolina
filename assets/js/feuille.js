@@ -43,10 +43,14 @@ const nomEquipe = (camp) => (camp === f().notre_camp ? d.equipe.name : d.rencont
 const peutGerer = () => d.role === 'gerer';
 const peutJouer = () => ['gerer', 'joueur'].includes(d.role) && f().statut !== 'validee';
 const commence = () => d.matchs.some((m) => m.statut !== 'a_jouer');
+const lancee = () => !!f().lancee_le;
+const visible = (camp) => f()[`voir_${camp.toLowerCase()}`] !== false;
+const pret = (camp) => f()[`pret_${camp.toLowerCase()}`];
+// Avant le lancement, chaque capitaine ne saisit (et ne voit) que son équipe (script 057)
 function peutComposer(camp) {
   if (f().statut === 'validee') return false;
-  if (peutGerer()) return true;
-  return d.role === 'adverse' && camp !== f().notre_camp && !commence();
+  if (peutGerer()) return camp === f().notre_camp || lancee();
+  return d.role === 'adverse' && camp !== f().notre_camp && !lancee();
 }
 const compo = (camp) => (camp === 'A' ? f().compo_a : f().compo_e) || {};
 const rempl = (camp) => (camp === 'A' ? f().rempl_a : f().rempl_e);
@@ -107,8 +111,8 @@ async function actualiser() {
   if (document.hidden || occupe || !fenScore.hidden) return;
   const { data } = await supabase.rpc('feuille_detail', code ? { p_code: code } : { p_feuille: f().id });
   if (!data || JSON.stringify(data) === JSON.stringify(d)) return;
-  const compoChangee = JSON.stringify([data.feuille.compo_a, data.feuille.compo_e, data.feuille.statut, data.feuille.rempl_a, data.feuille.rempl_e])
-    !== JSON.stringify([d.feuille.compo_a, d.feuille.compo_e, d.feuille.statut, d.feuille.rempl_a, d.feuille.rempl_e]);
+  const cle = (x) => JSON.stringify([x.compo_a, x.compo_e, x.statut, x.rempl_a, x.rempl_e, x.lancee_le, x.pret_a, x.pret_e]);
+  const compoChangee = cle(data.feuille) !== cle(d.feuille);
   const saisieEnCours = sale.A || sale.E || zone.querySelector('.fm-compo :focus, .fm-signature canvas.fm-signe');
   d = data;
   if (compoChangee && !saisieEnCours) afficher();
@@ -176,7 +180,10 @@ async function listeRencontres() {
     return `
     <section class="section fm-equipe" data-equipe="${t.id}"${t.id === active ? '' : ' hidden'}>
       <h2 class="section__titre">${esc(t.name)}${nb ? ` <span class="section__aide">${nb} feuille${nb > 1 ? 's' : ''}</span>` : ''}</h2>
-      <div class="fm-liste">${liste.map((r) => ligne(r, t)).join('') || '<p class="vide">Aucune rencontre récente ou à venir : ajoutez-la dans le calendrier de l\'équipe (page Équipes).</p>'}</div>
+      ${liste.length ? [[true, 'Domicile'], [false, 'Extérieur']].map(([dom, titre]) => {
+    const groupe = liste.filter((r) => r.domicile === dom);
+    return groupe.length ? `<p class="fm-ligne-groupe">${titre} · ${groupe.length}</p><div class="fm-liste">${groupe.map((r) => ligne(r, t)).join('')}</div>` : '';
+  }).join('') : '<p class="vide">Aucune rencontre récente ou à venir : ajoutez-la dans le calendrier de l\'équipe (page Équipes).</p>'}
     </section>`;
   }).join('')}
     <p class="match__format"><a href="equipes.html">Calendrier des équipes →</a></p>`;
@@ -238,18 +245,18 @@ function afficher() {
 
     ${peutGerer() && f().code ? blocLien() : ''}
 
-    <details class="carte-info fm-section" id="fm-compos"${commence() ? '' : ' open'}>
+    <details class="carte-info fm-section" id="fm-compos"${lancee() && commence() ? '' : ' open'}>
       <summary><h2>Compositions</h2></summary>
       <div class="fm-compos">${['A', 'E'].map((c) => blocCompo(c)).join('')}</div>
     </details>
 
     ${peutGerer() && f().statut !== 'validee' ? `
     <details class="carte-info fm-section">
-      <summary><h2>Cibles et remplacements</h2></summary>
+      <summary><h2>${lancee() ? 'Cibles et remplacements' : 'Cibles'}</h2></summary>
       <label class="champ">Cibles disponibles
         <select id="fm-cibles">${[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `<option value="${n}"${n === f().cibles ? ' selected' : ''}>${n} cible${n > 1 ? 's' : ''}</option>`).join('')}</select>
       </label>
-      ${['A', 'E'].map((c) => blocRemplacement(c)).join('')}
+      ${lancee() ? ['A', 'E'].map((c) => blocRemplacement(c)).join('') : '<p class="match__format" style="margin:0">Les remplacements se font une fois la rencontre lancée.</p>'}
     </details>` : ''}
 
     <section class="section">
@@ -269,11 +276,31 @@ function afficherBandeau() {
   const t = totaux();
   document.getElementById('fm-score').innerHTML = `<b>${t.pa}</b><i>–</i><b>${t.pe}</b><small>${t.ma} – ${t.me} manches</small>`;
   const ban = document.getElementById('fm-bandeau');
-  const manque = [f().manque_a && `équipe A : ${f().manque_a}`, f().manque_e && `équipe E : ${f().manque_e}`].filter(Boolean);
-  ban.innerHTML = f().statut === 'validee'
-    ? `<p class="message message--ok">Feuille validée le ${esc(dateFr(f().validee_le))}.</p>`
-    : (manque.length ? `<p class="fm-alerte">Composition à compléter (${esc(manque.join(' ; '))}).</p>`
-      : `<p class="match__format" style="text-align:center;margin:0">${t.faits} match${t.faits > 1 ? 's' : ''} joué${t.faits > 1 ? 's' : ''} sur 20</p>`);
+  if (f().statut === 'validee') {
+    ban.innerHTML = `<p class="message message--ok">Feuille validée le ${esc(dateFr(f().validee_le))}.</p>`;
+  } else if (!lancee()) {
+    // Avant le lancement : où en est chaque équipe, sans rien dévoiler de la composition adverse
+    const etat = (c) => `<span class="fm-etat${pret(c) ? ' fm-etat--ok' : ''}"><b>${c}</b> ${esc(nomEquipe(c))} : ${pret(c) ? 'équipe envoyée ✓' : 'en attente'}</span>`;
+    const lui = d.role === 'adverse' ? (f().notre_camp === 'A' ? 'E' : 'A') : f().notre_camp;
+    ban.innerHTML = `
+      <div class="fm-etats">${etat('A')}${etat('E')}</div>
+      <p class="match__format" style="margin:0;text-align:center">Les compositions restent masquées l'une de l'autre jusqu'au lancement de la rencontre.</p>
+      ${peutGerer() ? (pret('A') && pret('E')
+    ? '<div class="actions" style="justify-content:center"><button type="button" class="bouton bouton--plein" id="fm-lancer">Lancer la rencontre</button></div>'
+    : '<p class="fm-alerte">Le lancement sera possible quand les deux équipes seront complètes.</p>')
+    : (pret(lui) ? '<p class="fm-alerte">Votre équipe est envoyée. Le capitaine qui reçoit lancera la rencontre.</p>' : '')}`;
+  } else {
+    ban.innerHTML = `<p class="match__format" style="text-align:center;margin:0">${t.faits} match${t.faits > 1 ? 's' : ''} joué${t.faits > 1 ? 's' : ''} sur 20</p>
+      ${peutGerer() && !commence() ? '<p class="match__format" style="text-align:center;margin:0"><button type="button" class="lien-bouton" id="fm-annuler-lancement">Annuler le lancement</button></p>' : ''}`;
+  }
+  document.getElementById('fm-lancer')?.addEventListener('click', async () => {
+    if (!confirm('Lancer la rencontre ? Les deux compositions deviennent visibles et les matchs peuvent commencer. Seul le capitaine qui reçoit pourra encore les corriger.')) return;
+    if (await appel('lancer_rencontre', { p_feuille: f().id }, 'Rencontre lancée : bons matchs !')) await charger();
+  });
+  document.getElementById('fm-annuler-lancement')?.addEventListener('click', async () => {
+    if (!confirm('Annuler le lancement ? Les compositions sont de nouveau masquées et modifiables par chaque capitaine.')) return;
+    if (await appel('annuler_lancement_feuille', { p_feuille: f().id }, 'Lancement annulé.')) await charger();
+  });
   afficherFin();
 }
 
@@ -281,7 +308,7 @@ function blocLien() {
   const url = `${BASE_URL}feuille.html?code=${f().code}`;
   const texte = `Feuille de match ${nomEquipe('A')} – ${nomEquipe('E')} : saisissez la composition de votre équipe ici`;
   return `
-    <details class="carte-info fm-section"${f().manque_a || f().manque_e ? ' open' : ''}>
+    <details class="carte-info fm-section"${lancee() ? '' : ' open'}>
       <summary><h2>Lien pour le capitaine adverse</h2></summary>
       <p class="intro" style="margin:0">Il saisit sa composition sans créer de compte, puis suit les résultats.</p>
       <input type="text" readonly value="${esc(url)}" id="fm-lien" aria-label="Lien de la feuille">
@@ -296,6 +323,14 @@ function blocLien() {
 // ----- Composition d'une équipe -----
 
 function blocCompo(camp) {
+  if (!visible(camp)) {
+    return `
+    <div class="fm-compo fm-compo--masquee">
+      <h3><span class="fm-lettre">${camp}</span>${esc(nomEquipe(camp))}</h3>
+      <p class="fm-masque">${pret(camp) ? '✓ Équipe envoyée' : 'En attente de la composition'}</p>
+      <p class="match__format" style="margin:0">Visible au lancement de la rencontre.</p>
+    </div>`;
+  }
   const c = compo(camp);
   const edit = peutComposer(camp);
   const nous = camp === f().notre_camp;
@@ -457,11 +492,11 @@ async function enregistrerRemplacement(camp, retirer) {
 function afficherMatchs() {
   const el = document.getElementById('fm-matchs');
   if (!el) return;
-  const pret = !f().manque_a && !f().manque_e;
+  const jouable = lancee() && !f().manque_a && !f().manque_e;
   el.innerHTML = VAGUES.map((v, i) => `
     <div class="fm-vague">
       <p class="fm-vague__titre">${v.length === 2 ? 'Doubles' : `Simples · série ${[1, 2, null, 3, 4][i]}`}</p>
-      <div class="fm-grille">${v.map((n) => carteMatch(n, pret)).join('')}</div>
+      <div class="fm-grille">${v.map((n) => carteMatch(n, jouable)).join('')}</div>
     </div>`).join('');
 }
 
