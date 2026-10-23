@@ -283,6 +283,7 @@ function afficherEquipes() {
     return `
       <article class="carte-info">
         <div class="cap-bloc-tete"><h2 class="eq-tete__nom">${logoEquipe(t, 'logo-adv--m')}${esc(t.name)}</h2><a class="lien-equipe" href="capitaine.html?equipe=${encodeURIComponent(t.name)}">Espace capitaine →</a></div>
+        ${'accueil' in t ? `<label class="fm-case"><input type="checkbox" data-action="accueil-equipe" data-team="${t.id}"${t.accueil === false ? ' checked' : ''}> Équipe de test : ne pas l'afficher sur la page d'accueil</label>` : ''}
         ${'logo' in t ? `<div class="adm-logo-equipe">
           <label class="bouton bouton--petit">${t.logo ? 'Changer le logo' : 'Ajouter un logo'}<input type="file" accept="image/png,image/jpeg,image/webp" data-logo-equipe="${t.id}" hidden></label>
           ${t.logo ? `<button type="button" class="bouton bouton--petit" data-action="retirer-logo-equipe" data-team="${t.id}">Reprendre le logo Dolina</button>` : ''}
@@ -416,6 +417,10 @@ async function executer(action, el) {
       if (!res.error) message(zoneMessage, `Équipe « ${t?.name} » supprimée.`, 'ok');
       break;
     }
+    case 'accueil-equipe':
+      res = await supabase.from('teams').update({ accueil: !el.checked }).eq('id', team);
+      if (!res.error) message(zoneMessage, el.checked ? 'Équipe masquée de la page d\'accueil.' : 'Équipe de nouveau affichée sur la page d\'accueil.', 'ok');
+      break;
     case 'retirer-logo-equipe': {
       const t = equipes.find((x) => x.id === team);
       if (!confirm(`Retirer le logo de « ${t?.name} » ? L'équipe reprendra celui du Dolina.`)) return;
@@ -438,7 +443,7 @@ async function executer(action, el) {
     // Code P0001 = message écrit en français dans la base (ex. « garder au moins un administrateur »)
     const doublon = res.error.code === '23505' && /team/.test(res.error.message || '');
     message(zoneMessage, doublon ? 'Une équipe porte déjà ce nom.' : (res.error.code === 'P0001' ? res.error.message : erreurFr(res.error)));
-  } else if (!['creer-equipe', 'supprimer-equipe'].includes(action)) {
+  } else if (!['creer-equipe', 'supprimer-equipe', 'accueil-equipe'].includes(action)) {
     message(zoneMessage, '');
     if (/equipe/.test(action)) document.dispatchEvent(new CustomEvent('dolina:equipes-maj', { detail: { source: 'admin' } }));
   }
@@ -557,7 +562,7 @@ document.addEventListener('click', (e) => {
   if (el) executer(el.dataset.action, el);
 });
 document.addEventListener('change', (e) => {
-  const el = e.target.closest('select[data-action]');
+  const el = e.target.closest('select[data-action], input[type="checkbox"][data-action]');
   if (el) executer(el.dataset.action, el);
 });
 // Logo d'une équipe (script 055)

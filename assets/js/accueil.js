@@ -202,7 +202,7 @@ async function chargerProchaines() {
   const depuis = new Date(Date.now() - 25 * 86400000).toLocaleDateString('fr-CA');
   const [rr, rt, rm] = await Promise.all([
     supabase.from('rencontres').select('id, team_id, date_match, date_fin, heure_match, heure_rdv, journee, adversaire, domicile, salles(nom, adresse, lien_carte)')
-      .is('score_nous', null).gte('date_match', depuis).order('date_match').order('heure_match', { nullsFirst: false }).limit(40),
+      .is('score_nous', null).gte('date_match', depuis).order('date_match').order('heure_match', { nullsFirst: false }).limit(150),
     supabase.from('teams').select('*').order('sort_order'),
     moi?.status === 'active' ? supabase.from('team_members').select('team_id').eq('profile_id', moi.id).eq('status', 'accepted') : Promise.resolve({ data: [] }),
     chargerClubs(),
@@ -212,6 +212,7 @@ async function chargerProchaines() {
   const ORDRE = ['dolina 1', 'dolina 2', 'dolinos'];
   const rang = (nom) => { const i = ORDRE.indexOf(nom.trim().toLowerCase()); return i < 0 ? 99 : i; };
   const prochaines = rt.data
+    .filter((t) => t.accueil !== false)   // équipes de test (script 058) : pas sur l'accueil
     .map((t) => ({ t, r: rr.data.find((r) => r.team_id === t.id && (r.date_fin || r.date_match) >= auj) }))
     .filter((x) => x.r)
     // Ordre fixe : Dolina 1, Dolina 2, puis Dolinos (l'équipe du joueur est seulement mise en valeur)
@@ -254,11 +255,15 @@ async function chargerResultats() {
   if (!bloc) return;
   const [rr, rt] = await Promise.all([
     supabase.from('rencontres').select('id, team_id, date_match, date_fin, journee, adversaire, domicile, score_nous, score_eux')
-      .not('score_nous', 'is', null).order('date_match', { ascending: false }).limit(4),
-    supabase.from('teams').select('id, name'),
+      .not('score_nous', 'is', null).order('date_match', { ascending: false }).limit(20),
+    supabase.from('teams').select('*'),
     chargerClubs(),
   ]);
-  if (rr.error || rt.error || !rr.data?.length) { bloc.hidden = true; return; }
+  if (rr.error || rt.error) { bloc.hidden = true; return; }
+  // Équipes de test (script 058) : absentes de l'accueil
+  const masquees = new Set(rt.data.filter((t) => t.accueil === false).map((t) => t.id));
+  rr.data = rr.data.filter((r) => !masquees.has(r.team_id)).slice(0, 4);
+  if (!rr.data.length) { bloc.hidden = true; return; }
   const nom = (id) => rt.data.find((t) => t.id === id)?.name || 'Dolina';
   const fmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
   document.getElementById('resultats-equipes').innerHTML = rr.data.map((r) => {
@@ -325,8 +330,9 @@ async function chargerArticles() {
   const lire = (champs) => supabase.from('articles').select(champs)
     .eq('published', true).order('published_at', { ascending: false }).limit(20);
   // Avec le logo de l'équipe liée (script 055) ; sans, si la base n'est pas à jour
-  let { data, error } = await lire('id, title, body, category, image_path, published_at, teams(name, logo)');
+  let { data, error } = await lire('id, title, body, category, image_path, published_at, teams(*)');
   if (error) ({ data, error } = await lire('id, title, body, category, image_path, published_at'));
+  if (data) data = data.filter((a) => a.teams?.accueil !== false);   // annonces d'une équipe de test (script 058)
 
   if (error) {
     zone.innerHTML = '<p class="vide">Impossible de charger les actualités pour le moment.</p>';
