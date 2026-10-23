@@ -133,34 +133,58 @@ async function listeRencontres() {
     zone.innerHTML = '<p class="vide">Vous n\'êtes dans aucune équipe : les feuilles de match concernent les joueurs des équipes du championnat.</p>';
     return;
   }
+  // Saison en cours (depuis le 1er août) : feuilles déjà ouvertes + rencontres des 3 dernières semaines et à venir
+  const auj = new Date();
+  const debutSaison = `${auj.getMonth() >= 7 ? auj.getFullYear() : auj.getFullYear() - 1}-08-01`;
   const depuis = new Date(Date.now() - 21 * 86400000).toLocaleDateString('fr-CA');
-  const { data: rencontres } = await supabase.from('rencontres').select('*').in('team_id', equipes.map((t) => t.id))
-    .gte('date_match', depuis).order('date_match').limit(30);
-  const { data: feuilles } = rencontres?.length
-    ? await supabase.rpc('feuilles_rencontres', { p_rencontres: rencontres.map((r) => r.id) })
+  const { data: toutes } = await supabase.from('rencontres').select('*').in('team_id', equipes.map((t) => t.id))
+    .gte('date_match', debutSaison).order('date_match').limit(500);
+  const { data: feuilles } = toutes?.length
+    ? await supabase.rpc('feuilles_rencontres', { p_rencontres: toutes.map((r) => r.id) })
     : { data: [] };
   const parRencontre = new Map((feuilles || []).map((x) => [x.rencontre_id, x]));
+  const rencontres = (toutes || []).filter((r) => parRencontre.has(r.id) || (r.date_fin || r.date_match) >= depuis);
   const STATUT = { composition: 'Composition', en_cours: 'En cours', validee: 'Validée' };
   const court = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+  const ligne = (r, t) => {
+    const fe = parRencontre.get(r.id);
+    const gerer = admin || estCapitaineDe(t, moi.id);
+    const action = fe ? `<a class="bouton bouton--petit${fe.statut === 'validee' ? '' : ' bouton--plein'}" href="feuille.html?id=${fe.feuille_id}">Ouvrir</a>`
+      : (gerer ? `<a class="bouton bouton--petit" href="feuille.html?rencontre=${r.id}">Ouvrir la feuille</a>` : '<span class="match__format">Pas encore ouverte</span>');
+    return `
+      <article class="fm-ligne">
+        <div><strong>${r.domicile ? 'Reçoit' : 'Chez'} ${esc(r.adversaire)}</strong>
+        <small>${esc(court.format(new Date(`${r.date_match}T12:00:00`)))}${r.journee ? ` · ${esc(r.journee)}` : ''}${fe ? ` · <b class="fm-statut fm-statut--${fe.statut}">${STATUT[fe.statut]}</b>` : ''}${r.score_nous !== null ? ` · ${r.score_nous}-${r.score_eux}` : ''}</small></div>
+        ${action}
+      </article>`;
+  };
+  // Onglet ouvert : l'équipe demandée (#nom), sinon celle du joueur, sinon celle avec une feuille en cours
+  const demandee = decodeURIComponent(location.hash.slice(1));
+  const enCours = (feuilles || []).find((x) => x.statut !== 'validee');
+  const active = (equipes.find((t) => t.name === demandee || t.id === demandee)
+    || equipes.find((t) => estCapitaineDe(t, moi.id)) || equipes.find((t) => miennes.has(t.id))
+    || equipes.find((t) => enCours && rencontres.some((r) => r.id === enCours.rencontre_id && r.team_id === t.id)) || equipes[0]).id;
   zone.innerHTML = `
     <section class="carte-info">
       <h2>Feuilles de match</h2>
       <p class="intro" style="margin:0">Le capitaine ouvre la feuille d'une rencontre, saisit son équipe et envoie un lien au capitaine adverse. Les 20 matchs sont créés dans l'ordre officiel FFD, puis joués au scorer ou saisis directement.</p>
     </section>
-    <div class="fm-liste">${(rencontres || []).map((r) => {
-    const t = equipes.find((x) => x.id === r.team_id);
-    const fe = parRencontre.get(r.id);
-    const gerer = admin || estCapitaineDe(t, moi.id);
-    const action = fe ? `<a class="bouton bouton--petit bouton--plein" href="feuille.html?id=${fe.feuille_id}">Ouvrir</a>`
-      : (gerer ? `<a class="bouton bouton--petit" href="feuille.html?rencontre=${r.id}">Ouvrir la feuille</a>` : '<span class="match__format">Pas encore ouverte</span>');
+    <nav class="onglets eq-onglets fm-onglets" aria-label="Choisir une équipe">${equipes.map((t) => `<button type="button" class="onglet" data-onglet="${t.id}" aria-selected="${t.id === active}">${esc(t.name)}</button>`).join('')}</nav>
+    ${equipes.map((t) => {
+    const liste = rencontres.filter((r) => r.team_id === t.id);
+    const nb = liste.filter((r) => parRencontre.has(r.id)).length;
     return `
-      <article class="fm-ligne">
-        <div><strong>${esc(t.name)} ${r.domicile ? 'reçoit' : 'chez'} ${esc(r.adversaire)}</strong>
-        <small>${esc(court.format(new Date(`${r.date_match}T12:00:00`)))}${r.journee ? ` · ${esc(r.journee)}` : ''}${fe ? ` · <b class="fm-statut fm-statut--${fe.statut}">${STATUT[fe.statut]}</b>` : ''}${r.score_nous !== null ? ` · ${r.score_nous}-${r.score_eux}` : ''}</small></div>
-        ${action}
-      </article>`;
-  }).join('') || '<p class="vide">Aucune rencontre récente ou à venir. Ajoutez-la d\'abord dans le calendrier de l\'équipe (page Équipes).</p>'}</div>
+    <section class="section fm-equipe" data-equipe="${t.id}"${t.id === active ? '' : ' hidden'}>
+      <h2 class="section__titre">${esc(t.name)}${nb ? ` <span class="section__aide">${nb} feuille${nb > 1 ? 's' : ''}</span>` : ''}</h2>
+      <div class="fm-liste">${liste.map((r) => ligne(r, t)).join('') || '<p class="vide">Aucune rencontre récente ou à venir : ajoutez-la dans le calendrier de l\'équipe (page Équipes).</p>'}</div>
+    </section>`;
+  }).join('')}
     <p class="match__format"><a href="equipes.html">Calendrier des équipes →</a></p>`;
+  zone.querySelectorAll('[data-onglet]').forEach((bt) => bt.addEventListener('click', () => {
+    zone.querySelectorAll('[data-onglet]').forEach((x) => x.setAttribute('aria-selected', x === bt));
+    zone.querySelectorAll('.fm-equipe').forEach((x) => { x.hidden = x.dataset.equipe !== bt.dataset.onglet; });
+    history.replaceState(null, '', `#${encodeURIComponent(equipes.find((t) => t.id === bt.dataset.onglet).name)}`);
+  }));
 }
 
 // ---------- Ouvrir la feuille d'une rencontre ----------

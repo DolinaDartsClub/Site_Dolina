@@ -2671,3 +2671,4 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .fm-paire select { font-size: 14px; padding: 0 6px; }
 .fm-choix label > span { display: flex; flex-direction: column; font-weight: 600; }
 .fm-choix label input { width: 20px; height: 20px; accent-color: var(--orange); flex: none; }
+.fm-onglets { margin-top: 14px; }
