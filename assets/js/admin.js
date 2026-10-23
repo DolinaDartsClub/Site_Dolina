@@ -16,6 +16,7 @@ import { blocRencontresRetard } from './retard.js?v=__VERSION__';
 import { initExports } from './admin-exports.js?v=__VERSION__';
 import { initSauvegarde } from './admin-sauvegarde.js?v=__VERSION__';
 import { initTournois } from './admin-tournois.js?v=__VERSION__';
+import { logoEquipe, enregistrerLogoEquipe } from './logos.js?v=__VERSION__';
 
 const zoneMessage = document.getElementById('message');
 const vues = {
@@ -281,7 +282,12 @@ function afficherEquipes() {
     const autresCapitaines = new Set(equipes.filter((x) => x.id !== t.id && x.captain_id).map((x) => x.captain_id));
     return `
       <article class="carte-info">
-        <div class="cap-bloc-tete"><h2>${esc(t.name)}</h2><a class="lien-equipe" href="capitaine.html?equipe=${encodeURIComponent(t.name)}">Espace capitaine →</a></div>
+        <div class="cap-bloc-tete"><h2 class="eq-tete__nom">${logoEquipe(t, 'logo-adv--m')}${esc(t.name)}</h2><a class="lien-equipe" href="capitaine.html?equipe=${encodeURIComponent(t.name)}">Espace capitaine →</a></div>
+        ${'logo' in t ? `<div class="adm-logo-equipe">
+          <label class="bouton bouton--petit">${t.logo ? 'Changer le logo' : 'Ajouter un logo'}<input type="file" accept="image/png,image/jpeg,image/webp" data-logo-equipe="${t.id}" hidden></label>
+          ${t.logo ? `<button type="button" class="bouton bouton--petit" data-action="retirer-logo-equipe" data-team="${t.id}">Reprendre le logo Dolina</button>` : ''}
+          <small class="match__format">Affiché sur sa page Équipes, ses rencontres et ses annonces. Sans logo : celui du Dolina.</small>
+        </div>` : ''}
         <label class="champ">Capitaine
           <select data-action="capitaine" data-team="${t.id}">
             <option value="">— Aucun capitaine —</option>
@@ -408,6 +414,12 @@ async function executer(action, el) {
       if (count && !confirm(`Dernière vérification : effacer aussi les ${count} rencontre${count > 1 ? 's' : ''} et leurs scores ?`)) return;
       res = await supabase.from('teams').delete().eq('id', team);
       if (!res.error) message(zoneMessage, `Équipe « ${t?.name} » supprimée.`, 'ok');
+      break;
+    }
+    case 'retirer-logo-equipe': {
+      const t = equipes.find((x) => x.id === team);
+      if (!confirm(`Retirer le logo de « ${t?.name} » ? L'équipe reprendra celui du Dolina.`)) return;
+      try { await enregistrerLogoEquipe(t, null); res = {}; } catch (err) { res = { error: err }; }
       break;
     }
     case 'vice':
@@ -547,6 +559,20 @@ document.addEventListener('click', (e) => {
 document.addEventListener('change', (e) => {
   const el = e.target.closest('select[data-action]');
   if (el) executer(el.dataset.action, el);
+});
+// Logo d'une équipe (script 055)
+document.addEventListener('change', async (e) => {
+  const champ = e.target.closest('input[data-logo-equipe]');
+  if (!champ?.files?.[0]) return;
+  const t = equipes.find((x) => x.id === champ.dataset.logoEquipe);
+  message(zoneMessage, 'Envoi du logo…', 'ok');
+  try {
+    await enregistrerLogoEquipe(t, champ.files[0]);
+    message(zoneMessage, `Logo de « ${t.name} » enregistré.`, 'ok');
+    charger();
+  } catch (err) {
+    message(zoneMessage, err.message && !err.code ? err.message : erreurFr(err));
+  }
 });
 document.addEventListener('toggle', (e) => {
   const id = e.target.dataset?.fiche;

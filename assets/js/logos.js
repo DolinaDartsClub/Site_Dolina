@@ -57,6 +57,31 @@ export function logoDolina(classe = '') {
   return `<span class="logo-adv logo-adv--dolina ${classe}"><img src="${LOGO_DOLINA}" alt="" decoding="async"></span>`;
 }
 
+// Logo d'une équipe du site (script 055) : le sien s'il en a un, sinon celui du Dolina
+export function logoEquipe(equipe, classe = '') {
+  const url = urlLogo(equipe?.logo);
+  if (!url) return logoDolina(classe);
+  return `<span class="logo-adv ${classe}"><img src="${esc(url)}" alt="" decoding="async"></span>`;
+}
+export const imageEquipe = (equipe) => urlLogo(equipe?.logo) || LOGO_DOLINA;
+
+// Envoie le logo d'une équipe du site ; null retire le logo (retour à celui du Dolina)
+export async function enregistrerLogoEquipe(equipe, fichier) {
+  let chemin = null;
+  if (fichier) {
+    const blob = await preparerLogo(fichier);
+    chemin = `logos/${crypto.randomUUID()}.${blob.type === 'image/webp' ? 'webp' : 'png'}`;
+    const { error } = await supabase.storage.from('public-images').upload(chemin, blob, { contentType: blob.type, cacheControl: '31536000' });
+    if (error) throw error;
+  }
+  const { error } = await supabase.from('teams').update({ logo: chemin }).eq('id', equipe.id);
+  if (error) {
+    if (chemin) await supabase.storage.from('public-images').remove([chemin]);
+    throw error;
+  }
+  if (equipe.logo?.startsWith('logos/')) supabase.storage.from('public-images').remove([equipe.logo]).catch(() => {});
+}
+
 // Image choisie dans le téléphone → carré de 320 px en WebP (léger), fond transparent conservé
 export async function preparerLogo(fichier) {
   if (!/^image\/(png|jpeg|webp)$/.test(fichier.type)) throw new Error('Choisissez une image PNG, JPEG ou WebP.');

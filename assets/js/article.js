@@ -6,6 +6,7 @@
 // =====================================================================
 
 import { supabase, esc, dateFr, urlImage, BASE_URL } from './app.js?v=__VERSION__';
+import { urlLogo } from './logos.js?v=__VERSION__';
 
 const CATEGORIES = { annonce: 'Annonce de match', resultat: 'Résultat', vie_club: 'Vie du club', evenement: 'Événement' };
 const zone = document.getElementById('article');
@@ -34,11 +35,9 @@ async function charger() {
     zone.innerHTML = '<p class="vide">Aucun article indiqué.</p>';
     return;
   }
-  const { data: a, error } = await supabase
-    .from('articles')
-    .select('id, title, body, category, image_path, published, published_at')
-    .eq('id', id)
-    .maybeSingle();
+  const lire = (champs) => supabase.from('articles').select(champs).eq('id', id).maybeSingle();
+  let { data: a, error } = await lire('id, title, body, category, image_path, published, published_at, teams(name, logo)');
+  if (error) ({ data: a, error } = await lire('id, title, body, category, image_path, published, published_at'));
 
   if (error || !a) {
     zone.innerHTML = '<p class="vide">Cet article n\'existe pas ou n\'est plus publié.</p>';
@@ -47,10 +46,13 @@ async function charger() {
 
   document.title = `${a.title} – Dolina Darts Club`;
   const image = a.image_path ? urlImage(a.image_path) : '';
+  // Annonce d'une équipe qui a son propre logo (script 055) : il remplace la photo absente
+  const logoEq = !image && a.teams?.logo ? urlLogo(a.teams.logo) : '';
 
   zone.innerHTML = `
     ${a.published ? '' : '<p class="message message--ok">Brouillon : cet article n\'est visible que des admins.</p>'}
     ${image ? `<img class="article__image article-complet__image" src="${esc(image)}" alt="">` : ''}
+    ${logoEq ? `<img class="article-complet__logo" src="${esc(logoEq)}" alt="${esc(a.teams.name || '')}">` : ''}
     <span class="etiquette etiquette--${esc(a.category)}">${esc(CATEGORIES[a.category] || a.category)}</span>
     <h1 class="article-complet__titre">${esc(a.title)}</h1>
     <span class="article__meta">${esc(dateFr(a.published_at))}</span>

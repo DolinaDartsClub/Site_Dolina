@@ -3,7 +3,7 @@
 // =====================================================================
 
 import { supabase, esc, dateFr, formatPartie, etatPartie, urlImage, profilConnecte, lienJoueur } from './app.js?v=__VERSION__';
-import { chargerClubs, logoAdversaire, logoDolina, affiche, scoreOrdonne } from './logos.js?v=__VERSION__';
+import { chargerClubs, logoAdversaire, logoEquipe, imageEquipe, affiche, scoreOrdonne } from './logos.js?v=__VERSION__';
 import { blocRappelsLigue } from './rappels-ligue.js?v=__VERSION__';
 
 const CATEGORIES = {
@@ -203,7 +203,7 @@ async function chargerProchaines() {
   const [rr, rt, rm] = await Promise.all([
     supabase.from('rencontres').select('id, team_id, date_match, date_fin, heure_match, heure_rdv, journee, adversaire, domicile, salles(nom, adresse, lien_carte)')
       .is('score_nous', null).gte('date_match', depuis).order('date_match').order('heure_match', { nullsFirst: false }).limit(40),
-    supabase.from('teams').select('id, name, sort_order').order('sort_order'),
+    supabase.from('teams').select('*').order('sort_order'),
     moi?.status === 'active' ? supabase.from('team_members').select('team_id').eq('profile_id', moi.id).eq('status', 'accepted') : Promise.resolve({ data: [] }),
     chargerClubs(),
   ]);
@@ -236,9 +236,9 @@ async function chargerProchaines() {
           <span class="eq-badge${r.domicile ? ' eq-badge--dom' : ''}">${r.domicile ? 'Domicile' : 'Extérieur'}</span>
         </div>
         <a class="pr-duel" href="equipes.html#${encodeURIComponent(t.name)}" aria-hidden="true" tabindex="-1">
-          ${r.domicile ? logoDolina('logo-adv--l') : logoAdversaire(r.adversaire, 'logo-adv--l')}
+          ${r.domicile ? logoEquipe(t, 'logo-adv--l') : logoAdversaire(r.adversaire, 'logo-adv--l')}
           <span class="pr-duel__vs">VS</span>
-          ${r.domicile ? logoAdversaire(r.adversaire, 'logo-adv--l') : logoDolina('logo-adv--l')}
+          ${r.domicile ? logoAdversaire(r.adversaire, 'logo-adv--l') : logoEquipe(t, 'logo-adv--l')}
         </a>
         <a class="pr-affiche" href="equipes.html#${encodeURIComponent(t.name)}">${r.domicile ? 'reçoit' : 'chez'} <strong>${esc(r.adversaire)}</strong></a>
         <span class="pr-quand">${esc(quand)}${heures ? ` · ${esc(heures)}` : ''}${periode ? ' <small>date à confirmer</small>' : ''}${r.journee ? ` <small>${esc(r.journee)}</small>` : ''}</span>
@@ -322,12 +322,11 @@ async function chargerTournois() {
 
 async function chargerArticles() {
   const zone = document.getElementById('articles');
-  const { data, error } = await supabase
-    .from('articles')
-    .select('id, title, body, category, image_path, published_at')
-    .eq('published', true)
-    .order('published_at', { ascending: false })
-    .limit(20);
+  const lire = (champs) => supabase.from('articles').select(champs)
+    .eq('published', true).order('published_at', { ascending: false }).limit(20);
+  // Avec le logo de l'équipe liée (script 055) ; sans, si la base n'est pas à jour
+  let { data, error } = await lire('id, title, body, category, image_path, published_at, teams(name, logo)');
+  if (error) ({ data, error } = await lire('id, title, body, category, image_path, published_at'));
 
   if (error) {
     zone.innerHTML = '<p class="vide">Impossible de charger les actualités pour le moment.</p>';
@@ -349,7 +348,7 @@ async function chargerArticles() {
     return `
         <article class="actu" aria-roledescription="annonce" aria-label="${i + 1} sur ${annonces.length}">
           <a class="actu__visuel${a.image_path ? '' : ' actu__visuel--vide'}" href="${lien}" tabindex="-1" aria-hidden="true">
-            ${a.image_path ? `<img src="${esc(urlImage(a.image_path))}" alt="" loading="${i ? 'lazy' : 'eager'}">` : '<img src="assets/img/logo.png" alt="">'}
+            ${a.image_path ? `<img src="${esc(urlImage(a.image_path))}" alt="" loading="${i ? 'lazy' : 'eager'}">` : `<img src="${esc(imageEquipe(a.teams))}" alt="">`}
             <span class="etiquette etiquette--${esc(a.category)}">${esc(CATEGORIES[a.category] || a.category)}</span>
           </a>
           <div class="actu__corps">

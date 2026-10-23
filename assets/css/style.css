@@ -2531,3 +2531,10 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .eq-gerer { margin-top: 4px; }
 .eq-gerer summary { cursor: pointer; font-weight: 700; color: var(--gris-clair); font-size: 14px; padding: 4px 0; }
 .eq-gerer[open] { display: grid; gap: 8px; }
+
+/* Logo propre à une équipe (script 055) */
+.eq-tete__nom { display: flex; align-items: center; gap: 10px; }
+.eq-tete__nom .logo-adv { flex: none; }
+.adm-logo-equipe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.adm-logo-equipe small { flex-basis: 100%; }
+.article-complet__logo { display: block; width: min(220px, 60%); height: auto; margin: 0 auto 16px; }

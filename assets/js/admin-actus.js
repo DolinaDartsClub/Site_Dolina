@@ -28,7 +28,7 @@ const champPhoto = document.getElementById('actu-photo');
 async function charger() {
   const { data, error } = await supabase
     .from('articles')
-    .select('id, title, body, category, image_path, published, published_at, created_at, updated_at')
+    .select('*')
     .order('created_at', { ascending: false });
   if (error) {
     zoneArticles.innerHTML = `<p class="vide">${esc(erreurFr(error))}</p>`;
@@ -60,8 +60,11 @@ function afficherListe() {
 
 // ---------- Formulaire ----------
 
+let equipeLiee = null;   // équipe de la rencontre d'où vient l'article (script 055)
+
 function ouvrir(article) {
   enCours = article || null;
+  equipeLiee = article?.team_id || null;
   nouvellePhoto = null;
   retirerPhoto = false;
   form.reset();
@@ -179,6 +182,7 @@ async function enregistrer(publier) {
     body: form.body.value.trim(),
     image_path: image,
     published: publier,
+    ...(equipeLiee ? { team_id: equipeLiee } : {}),
   };
   let res;
   if (enCours) {
@@ -254,6 +258,7 @@ async function brouillonRencontre(id) {
       : n < e ? `${equipe} s'incline ${n} à ${e} ${lieu}.`
         : `${equipe} et ${r.adversaire} se quittent sur un nul, ${n} partout, ${r.domicile ? 'à domicile' : 'à l\'extérieur'}.`;
     return {
+      team_id: r.team_id,
       category: 'resultat',
       title: titre,
       body: `${contexte} : ${phrase}\n\n[Les temps forts du match, les joueurs à féliciter…]\n\nBravo à toute l'équipe !`,
@@ -266,9 +271,10 @@ async function brouillonRencontre(id) {
     `${contexte} : ${equipe} ${r.domicile ? 'reçoit' : 'se déplace chez'} ${r.adversaire} ${quand}.`,
     r.salles ? `Lieu : ${r.salles.nom}, ${r.salles.adresse}.` : '',
     r.heure_rdv ? `Rendez-vous à ${hm(r.heure_rdv)}.` : '',
-    r.domicile ? 'Venez nombreux encourager l\'équipe !' : 'Allez Dolina !',
+    r.domicile ? 'Venez nombreux encourager l\'équipe !' : `Allez ${/^dolin/i.test(equipe) ? 'Dolina' : equipe} !`,
   ].filter(Boolean);
   return {
+    team_id: r.team_id,
     category: 'annonce',
     title: `${equipe} ${r.domicile ? 'reçoit' : 'chez'} ${r.adversaire} · ${journee}`,
     body: lignes.join('\n\n'),
@@ -287,5 +293,6 @@ export async function initActus(profil) {
   form.title.value = brouillon.title;
   form.category.value = brouillon.category;
   form.body.value = brouillon.body;
+  equipeLiee = brouillon.team_id || null;
   message(zoneMsg, 'Article pré-rempli à partir de la rencontre : complétez le texte, ajoutez une photo, puis publiez.', 'ok');
 }

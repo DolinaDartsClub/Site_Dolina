@@ -9,7 +9,7 @@ import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, avatar, e
 import { debutSaison, nomSaison } from './profil-commun.js?v=__VERSION__';
 import { telechargerIcs } from './ics.js?v=__VERSION__';
 import { afficherFil } from './fil.js?v=__VERSION__';
-import { chargerClubs, clubDe, logoAdversaire, logoDolina, enregistrerLogo, affiche, scoreOrdonne } from './logos.js?v=__VERSION__';
+import { chargerClubs, clubDe, logoAdversaire, logoEquipe, enregistrerLogo, affiche, scoreOrdonne } from './logos.js?v=__VERSION__';
 
 const zone = document.getElementById('eq-contenu');
 const zoneMsg = document.getElementById('message');
@@ -152,7 +152,7 @@ function carteRencontre(r, gerer) {
           ${meta ? `<span class="eq-meta">${esc(meta)}</span>` : ''}
         </div>
         <div class="eq-affiche-ligne">
-          <span class="eq-logos">${r.domicile ? logoDolina('logo-adv--m') + logoAdversaire(r.adversaire, 'logo-adv--m') : logoAdversaire(r.adversaire, 'logo-adv--m') + logoDolina('logo-adv--m')}</span>
+          <span class="eq-logos">${r.domicile ? logoEquipe(equipe, 'logo-adv--m') + logoAdversaire(r.adversaire, 'logo-adv--m') : logoAdversaire(r.adversaire, 'logo-adv--m') + logoEquipe(equipe, 'logo-adv--m')}</span>
           <h3 class="eq-affiche">${affiche(equipe?.name || 'Dolina', r, '<span>vs</span>')}</h3>
         </div>
         ${aConfirmer(r) ? `<p class="eq-periode">${esc(periode(r))}${res ? '' : ' · date à confirmer'}</p>` : ''}
@@ -195,7 +195,7 @@ function afficher() {
   zone.innerHTML = `
     <section class="carte-info eq-tete">
       <div class="eq-tete__haut">
-        <h2>${esc(t.name)}</h2>
+        <h2 class="eq-tete__nom">${logoEquipe(t, 'logo-adv--m')}${esc(t.name)}</h2>
         ${saisons.length > 1 ? `<label class="eq-saison"><span class="visuellement-cache">Saison</span><select id="eq-saison">${saisons.map((s) => `<option value="${s}"${s === saison ? ' selected' : ''}>${esc(nomSaison(dateLocale(s)))}</option>`).join('')}</select></label>`
     : `<span class="match__format">${esc(nomSaison(dateLocale(saison)))}</span>`}
       </div>
