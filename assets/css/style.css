@@ -2524,3 +2524,10 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .ri-ligne small, .ri-fait small { display: block; color: var(--gris-clair); font-size: 12px; }
 .ri-ligne--impossible { opacity: .6; cursor: not-allowed; }
 .ri-fait { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; border: 1px dashed var(--bord-fort); }
+
+/* Admin : créer et gérer les équipes */
+.eq-creer__ligne { display: flex; gap: 8px; flex-wrap: wrap; }
+.eq-creer__ligne input { flex: 1 1 180px; min-width: 0; min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--bord-fort); background: var(--noir-2); color: var(--blanc); font: inherit; }
+.eq-gerer { margin-top: 4px; }
+.eq-gerer summary { cursor: pointer; font-weight: 700; color: var(--gris-clair); font-size: 14px; padding: 4px 0; }
+.eq-gerer[open] { display: grid; gap: 8px; }

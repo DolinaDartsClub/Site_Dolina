@@ -266,7 +266,16 @@ async function afficherRetards() {
 
 function afficherEquipes() {
   const actifs = profils.filter((p) => p.status === 'active');
-  listeEquipes.innerHTML = equipes.map((t) => {
+  const creer = `
+      <article class="carte-info eq-creer">
+        <h2>Nouvelle équipe</h2>
+        <div class="eq-creer__ligne">
+          <input type="text" id="nouvelle-equipe" maxlength="40" placeholder="Nom de l'équipe (ex. Dolina 3)" aria-label="Nom de la nouvelle équipe">
+          <button type="button" class="bouton bouton--plein" data-action="creer-equipe">Créer l'équipe</button>
+        </div>
+        <small class="match__format">Elle apparaît tout de suite dans Équipes, l'inscription des membres, le classement et le calendrier. Choisissez ensuite son capitaine ci-dessous.</small>
+      </article>`;
+  listeEquipes.innerHTML = creer + equipes.map((t, i) => {
     const membres = profils.filter((p) => (p.team_members || []).some((m) => m.team_id === t.id && m.status === 'accepted'));
     const attente = profils.filter((p) => (p.team_members || []).some((m) => m.team_id === t.id && m.status === 'pending'));
     const autresCapitaines = new Set(equipes.filter((x) => x.id !== t.id && x.captain_id).map((x) => x.captain_id));
@@ -292,6 +301,19 @@ function afficherEquipes() {
           ${membres.length ? `<p class="intro" style="margin:4px 0 0">${membres.map((p) => esc(nomComplet(p))).join(', ')}</p>` : ''}
         </div>
         ${attente.length ? `<p class="statut statut--attente">${attente.length} demande${attente.length > 1 ? 's' : ''} en attente</p>` : ''}
+        <details class="eq-gerer">
+          <summary>Renommer, ordre, suppression</summary>
+          <div class="eq-creer__ligne">
+            <input type="text" maxlength="40" value="${esc(t.name)}" data-nom-equipe="${t.id}" aria-label="Nouveau nom de l'équipe">
+            <button type="button" class="bouton bouton--petit" data-action="renommer-equipe" data-team="${t.id}">Renommer</button>
+          </div>
+          <div class="actions">
+            <button type="button" class="bouton bouton--petit" data-action="monter-equipe" data-team="${t.id}"${i === 0 ? ' disabled' : ''}>↑ Monter</button>
+            <button type="button" class="bouton bouton--petit" data-action="descendre-equipe" data-team="${t.id}"${i === equipes.length - 1 ? ' disabled' : ''}>↓ Descendre</button>
+            <button type="button" class="bouton bouton--petit bouton--danger" data-action="supprimer-equipe" data-team="${t.id}">Supprimer l'équipe</button>
+          </div>
+          <small class="match__format">L'ordre est celui des onglets de la page Équipes et des listes du site.</small>
+        </details>
       </article>`;
   }).join('');
 }
@@ -350,6 +372,44 @@ async function executer(action, el) {
     case 'capitaine':
       res = await supabase.from('teams').update({ captain_id: el.value || null }).eq('id', team);
       break;
+    case 'creer-equipe': {
+      const nom = document.getElementById('nouvelle-equipe').value.trim();
+      if (nom.length < 2) { message(zoneMessage, 'Donnez un nom à l\'équipe (2 caractères minimum).'); return; }
+      const ordre = Math.max(0, ...equipes.map((x) => x.sort_order || 0)) + 1;
+      res = await supabase.from('teams').insert({ name: nom, sort_order: ordre });
+      if (!res.error) message(zoneMessage, `Équipe « ${nom} » créée.`, 'ok');
+      break;
+    }
+    case 'renommer-equipe': {
+      const nom = document.querySelector(`[data-nom-equipe="${team}"]`).value.trim();
+      if (nom.length < 2) { message(zoneMessage, 'Le nom doit compter au moins 2 caractères.'); return; }
+      res = await supabase.from('teams').update({ name: nom }).eq('id', team);
+      break;
+    }
+    case 'monter-equipe':
+    case 'descendre-equipe': {
+      const i = equipes.findIndex((x) => x.id === team);
+      const j = action === 'monter-equipe' ? i - 1 : i + 1;
+      if (i < 0 || j < 0 || j >= equipes.length) return;
+      // Réécrit l'ordre de toutes les équipes (1, 2, 3…) avec les deux échangées
+      const liste = [...equipes];
+      [liste[i], liste[j]] = [liste[j], liste[i]];
+      for (const [k, x] of liste.entries()) {
+        res = await supabase.from('teams').update({ sort_order: k + 1 }).eq('id', x.id);
+        if (res.error) break;
+      }
+      break;
+    }
+    case 'supprimer-equipe': {
+      const t = equipes.find((x) => x.id === team);
+      const { count } = await supabase.from('rencontres').select('id', { count: 'exact', head: true }).eq('team_id', team);
+      const nbMembres = profils.filter((x) => (x.team_members || []).some((m) => m.team_id === team)).length;
+      if (!confirm(`Supprimer l'équipe « ${t?.name} » ?\n\n${nbMembres} membre${nbMembres > 1 ? 's' : ''} seront retirés de l'équipe (leurs comptes et leurs parties restent).${count ? `\nSes ${count} rencontre${count > 1 ? 's' : ''} du calendrier seront effacées.` : ''}\n\nCette action est définitive.`)) return;
+      if (count && !confirm(`Dernière vérification : effacer aussi les ${count} rencontre${count > 1 ? 's' : ''} et leurs scores ?`)) return;
+      res = await supabase.from('teams').delete().eq('id', team);
+      if (!res.error) message(zoneMessage, `Équipe « ${t?.name} » supprimée.`, 'ok');
+      break;
+    }
     case 'vice':
       res = await supabase.rpc('definir_vice_capitaine', { p_team: team, p_profile: el.value || null });
       break;
@@ -364,8 +424,9 @@ async function executer(action, el) {
 
   if (res.error) {
     // Code P0001 = message écrit en français dans la base (ex. « garder au moins un administrateur »)
-    message(zoneMessage, res.error.code === 'P0001' ? res.error.message : erreurFr(res.error));
-  } else {
+    const doublon = res.error.code === '23505' && /team/.test(res.error.message || '');
+    message(zoneMessage, doublon ? 'Une équipe porte déjà ce nom.' : (res.error.code === 'P0001' ? res.error.message : erreurFr(res.error)));
+  } else if (!['creer-equipe', 'supprimer-equipe'].includes(action)) {
     message(zoneMessage, '');
     if (/equipe/.test(action)) document.dispatchEvent(new CustomEvent('dolina:equipes-maj', { detail: { source: 'admin' } }));
   }
