@@ -25,6 +25,7 @@ let moi = null;
 let equipes = [];
 let rencontres = [];
 let salles = [];
+let feuilles = new Map();   // rencontre_id -> { feuille_id, statut }
 let effectifs = {};     // team_id -> [profils]
 let equipeActive = null;
 let saison = null;      // date de début de la saison affichée (AAAA-MM-JJ)
@@ -83,6 +84,12 @@ async function charger() {
   }
   equipes = rt.data || [];
   rencontres = rr.data || [];
+  // Feuilles de match déjà ouvertes (script 056) : membres seulement
+  feuilles = new Map();
+  if (moi?.status === 'active' && rencontres.length) {
+    const { data } = await supabase.rpc('feuilles_rencontres', { p_rencontres: rencontres.map((r) => r.id) });
+    (data || []).forEach((x) => feuilles.set(x.rencontre_id, x));
+  }
   salles = rs.data || [];
 
   // Effectif : membres connectés seulement
@@ -161,6 +168,8 @@ function carteRencontre(r, gerer) {
         ${r.note ? `<p class="eq-note">${esc(r.note)}</p>` : ''}
         <div class="eq-rencontre__actions">
           ${!res && !aConfirmer(r) ? `<button type="button" class="bouton bouton--petit" data-agenda="${r.id}">Ajouter à mon agenda</button>` : ''}
+          ${feuilles.get(r.id) ? `<a class="bouton bouton--petit${feuilles.get(r.id).statut === 'en_cours' ? ' bouton--plein' : ''}" href="feuille.html?id=${feuilles.get(r.id).feuille_id}">Feuille de match</a>`
+    : (gerer && !res ? `<a class="bouton bouton--petit" href="feuille.html?rencontre=${r.id}">Feuille de match</a>` : '')}
           ${gerer ? `<button type="button" class="bouton bouton--petit" data-modifier="${r.id}">${res ? 'Modifier' : 'Modifier / score'}</button>` : ''}
           ${moi?.role === 'admin' && moi.status === 'active' ? `<a class="bouton bouton--petit" href="admin.html?rencontre=${encodeURIComponent(r.id)}#actus">Nouvel article</a>` : ''}
         </div>

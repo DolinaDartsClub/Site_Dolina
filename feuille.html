@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Feuille de match – Dolina Darts Club</title>
+  <meta name="theme-color" content="#141414">
+  <meta name="robots" content="noindex">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script type="module" src="assets/js/feuille.js?v=__VERSION__"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete__marque">
+    <a class="entete__logo-lien" href="./" aria-label="Accueil du Dolina Darts Club"><img class="entete__logo" src="assets/img/logo.png" alt=""></a>
+    <span class="entete__titres">
+      <span class="entete__nom">Feuille de match</span>
+      <span class="entete__sous">Championnat par équipes CPARD</span>
+    </span>
+  </div>
+  <a class="bouton" id="lien-compte" href="connexion.html">Connexion</a>
+</header>
+
+<main class="page">
+  <div class="message" id="message" role="alert" hidden></div>
+  <div id="feuille" aria-live="polite"><p class="vide">Chargement…</p></div>
+</main>
+
+<!-- Saisie rapide du score d'un match -->
+<div class="fenetre" id="fen-score" role="dialog" aria-modal="true" aria-labelledby="t-score" hidden>
+  <div class="fenetre__boite">
+    <h2 id="t-score">Score du match</h2>
+    <p class="match__format" id="score-joueurs" style="margin:0"></p>
+    <div class="fm-scores" id="score-choix"></div>
+    <p class="match__format" style="margin:0">Seules les manches sont enregistrées : pas de statistiques pour ce match.</p>
+    <p class="t-erreur" id="erreur-score" role="alert"></p>
+    <div class="actions"><button type="button" class="bouton" data-fermer>Annuler</button></div>
+  </div>
+</div>
+
+<!-- Version imprimable (PDF) au format de la feuille FFD -->
+<div id="impression" class="fm-pdf" aria-hidden="true"></div>
+
+</body>
+</html>

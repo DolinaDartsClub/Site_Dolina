@@ -78,6 +78,7 @@ async function init() {
   document.querySelector('.scorer__finish').hidden = game.show_checkout === false;
   $('fin-live').href = `live.html?id=${encodeURIComponent(id)}`;
   if (game.tournament_match_id) await chargerTournoi();
+  else if (game.feuille_match_id) await chargerFeuille();
   document.body.classList.toggle('scorer--nombreux', camps.length > 2);
   construirePave();
   rafraichir();
@@ -205,6 +206,21 @@ async function chargerTournoi() {
   if (tournoi.status === 'done') resultatValide();
 }
 
+// ---------- Match d'une feuille de match CPARD (script 056) ----------
+// Même déroulé qu'un match de tournoi : validation puis retour à la feuille
+async function chargerFeuille() {
+  const { data } = await supabase.rpc('feuille_de_partie', { p_game: id });
+  if (!data) return;
+  tournoi = { feuille: true, match_no: data.numero, status: data.statut === 'termine' ? 'done' : 'live', feuille_id: data.feuille_id, nom: 'Feuille de match' };
+  const lien = `feuille.html?id=${encodeURIComponent(data.feuille_id)}`;
+  $('btn-quitter').href = lien;
+  $('btn-quitter').setAttribute('aria-label', 'Retour à la feuille de match (le match reste en cours)');
+  $('fin-tournoi').href = lien;
+  $('fin-tournoi').textContent = 'Retour à la feuille de match';
+  $('titre-format').textContent = `CPARD · Match #${data.numero} · 501, 3 manches`;
+  if (tournoi.status === 'done') resultatValide();
+}
+
 function resultatValide() {
   tournoi.status = 'done';
   $('scorer').classList.add('scorer--fige');
@@ -213,7 +229,9 @@ function resultatValide() {
   $('fin-valider').hidden = true;
   $('fin-annuler').hidden = true;
   $('fin-tournoi').hidden = false;
-  $('fin-texte').textContent = 'Résultat validé : le tournoi est à jour. En cas d\'erreur, contactez l\'organisateur.';
+  $('fin-texte').textContent = tournoi.feuille
+    ? 'Résultat reporté sur la feuille de match. En cas d\'erreur, le capitaine peut remettre le match à jouer.'
+    : 'Résultat validé : le tournoi est à jour. En cas d\'erreur, contactez l\'organisateur.';
 }
 
 $('fin-valider').addEventListener('click', async () => {
@@ -221,7 +239,7 @@ $('fin-valider').addEventListener('click', async () => {
   if (bouton.disabled) return;
   bouton.disabled = true;                    // pas de double validation
   await file;                                // dernières volées bien enregistrées
-  const { error } = await supabase.rpc('valider_match_tournoi', { p_game: id });
+  const { error } = await supabase.rpc(tournoi?.feuille ? 'valider_match_feuille' : 'valider_match_tournoi', { p_game: id });
   bouton.disabled = false;
   if (error) return message(zoneMsg, `Le résultat n'a pas été validé : ${erreurFr(error)}`);
   resultatValide();
@@ -234,7 +252,7 @@ function afficherFin() {
     $('fin-valider').hidden = valide;
     $('fin-tournoi').hidden = !valide;
     $('fin-annuler').hidden = valide;
-    if (!valide) $('fin-texte').textContent = 'Vérifiez le score puis validez : le résultat sera enregistré dans le tournoi.';
+    if (!valide) $('fin-texte').textContent = `Vérifiez le score puis validez : le résultat sera enregistré ${tournoi.feuille ? 'sur la feuille de match' : 'dans le tournoi'}.`;
   }
   // Score du gagnant en premier (« Dartbot gagne 2 – 0 »)
   const ordre = camps.length === 2 ? [etat.gagnant, ...camps.filter((c) => c !== etat.gagnant)] : camps;
@@ -539,12 +557,13 @@ $('fin-annuler').addEventListener('click', annuler);
 
 $('btn-abandon').addEventListener('click', async () => {
   const texte = tournoi
-    ? 'Abandonner ce match de tournoi ? La partie sera effacée et le match redeviendra « à jouer ».'
+    ? `Abandonner ce match ${tournoi.feuille ? 'de la feuille de match' : 'de tournoi'} ? La partie sera effacée et le match redeviendra « à jouer ».`
     : 'Abandonner la partie ? Elle sera supprimée définitivement, avec tous ses scores.';
   if (!confirm(texte)) return;
   await file;
   await supprimerPartie(id);
-  location.href = tournoi ? `tournoi.html?id=${encodeURIComponent(tournoi.tournament_id)}` : 'jouer.html';
+  location.href = tournoi?.feuille ? `feuille.html?id=${encodeURIComponent(tournoi.feuille_id)}`
+    : (tournoi ? `tournoi.html?id=${encodeURIComponent(tournoi.tournament_id)}` : 'jouer.html');
 });
 
 // ---------- Écran toujours allumé (tablette posée près de la cible) ----------

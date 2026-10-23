@@ -2538,3 +2538,136 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .adm-logo-equipe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .adm-logo-equipe small { flex-basis: 100%; }
 .article-complet__logo { display: block; width: min(220px, 60%); height: auto; margin: 0 auto 16px; }
+
+/* =====================================================================
+   Feuille de match CPARD (script 056)
+   ===================================================================== */
+.lien-bouton { background: none; border: 0; padding: 0; color: var(--orange); font: inherit; text-decoration: underline; cursor: pointer; }
+.fm-liste { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+.fm-ligne { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); }
+.fm-ligne > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fm-ligne small { color: var(--gris); }
+.fm-statut { font-weight: 600; color: var(--gris-clair); }
+.fm-statut--en_cours { color: var(--orange); }
+.fm-statut--validee { color: #7bd88f; }
+.fm-choix { display: flex; flex-wrap: wrap; gap: 8px; }
+.fm-choix label { flex: 1 1 140px; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--bord-fort); border-radius: 10px; }
+.fm-choix small { color: var(--gris); }
+.fm-creer fieldset { border: 0; padding: 0; margin: 0; }
+.fm-tete { gap: 10px; }
+.fm-tete__meta { margin: 0; text-align: center; color: var(--orange); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 13px; }
+.fm-affiche { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
+.fm-affiche__eq { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; min-width: 0; }
+.fm-affiche__eq strong { font-family: var(--police-titre); font-size: 18px; text-transform: uppercase; line-height: 1.1; overflow-wrap: break-word; hyphens: auto; }
+.fm-affiche__score { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 6px; font-family: var(--police-titre); font-size: 40px; line-height: 1; }
+.fm-affiche__score i { font-style: normal; color: var(--gris); }
+.fm-affiche__score small { flex-basis: 100%; text-align: center; font-family: var(--police); font-size: 12px; color: var(--gris); }
+.fm-lettre { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--orange-fond); color: var(--orange); font-weight: 700; font-size: 15px; flex: none; }
+.fm-alerte { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--orange-fond); color: var(--orange-clair); text-align: center; font-size: 14px; }
+.fm-section > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+.fm-section > summary::-webkit-details-marker { display: none; }
+.fm-section > summary::after { content: '▾'; color: var(--gris); transition: transform .2s; }
+.fm-section:not([open]) > summary::after { transform: rotate(-90deg); }
+.fm-section > summary h2 { margin: 0; font-size: 18px; }
+.fm-section[open] { gap: 12px; }
+#fm-lien { width: 100%; font-size: 13px; }
+.fm-compos { display: grid; gap: 14px; }
+@media (min-width: 720px) { .fm-compos { grid-template-columns: 1fr 1fr; } }
+.fm-compo { display: flex; flex-direction: column; gap: 6px; padding: 12px; border: 1px solid var(--bord); border-radius: var(--rayon); background: var(--noir-2); min-width: 0; }
+.fm-compo h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 17px; }
+.fm-compo h3 small { color: var(--gris); font-weight: 400; font-size: 13px; }
+.fm-sous { margin: 6px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+.fm-poste { display: grid; grid-template-columns: 28px 1fr; align-items: center; gap: 4px 8px; }
+.fm-poste > b { color: var(--orange); text-align: center; }
+.fm-poste select, .fm-poste input { width: 100%; min-width: 0; }
+.fm-poste input[data-libre] { grid-column: 2; }
+.fm-paire { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; min-width: 0; }
+.fm-nom { padding: 6px 0; overflow-wrap: anywhere; }
+.fm-rempl { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--bord); }
+.fm-rempl h3 { margin: 0; font-size: 15px; }
+.fm-rempl__ligne { display: flex; flex-wrap: wrap; gap: 8px; }
+.fm-rempl__ligne label { flex: 1 1 140px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--gris-clair); }
+.fm-info { margin: 0; font-size: 13px; color: var(--gris-clair); }
+.fm-vague { margin-bottom: 14px; }
+.fm-vague__titre { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+.fm-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 8px; }
+.fm-match { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: var(--rayon); background: var(--carte); border: 1px solid var(--bord); }
+.fm-match--double { border-style: dashed; border-color: var(--bord-fort); }
+.fm-match--en_cours { border-color: var(--orange); }
+.fm-match__haut { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--gris); }
+.fm-match__haut b { color: var(--blanc); }
+.fm-direct { font-style: normal; color: var(--orange); font-weight: 600; }
+.fm-direct::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: var(--orange); animation: ce-soir 1.4s infinite; }
+.fm-camp { display: grid; grid-template-columns: 14px 24px 1fr auto; align-items: center; gap: 6px; padding: 3px 0; }
+.fm-premier { color: var(--orange); font-size: 13px; }
+.fm-poste-l { color: var(--gris); font-size: 13px; font-weight: 600; }
+.fm-joueur { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-manches { font-family: var(--police-titre); font-size: 20px; min-width: 16px; text-align: right; }
+.fm-camp--gagne .fm-joueur { font-weight: 700; }
+.fm-camp--gagne .fm-manches { color: var(--orange); }
+.fm-match__actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; align-items: center; }
+.fm-scores { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fm-scores .bouton { display: flex; flex-direction: column; gap: 2px; padding: 12px 8px; height: auto; }
+.fm-scores .bouton b { font-family: var(--police-titre); font-size: 24px; }
+.fm-scores .bouton small { font-size: 12px; color: var(--gris-clair); font-weight: 400; overflow: hidden; text-overflow: ellipsis; max-width: 100%; white-space: nowrap; }
+.fm-totaux { width: 100%; border-collapse: collapse; }
+.fm-totaux th, .fm-totaux td { padding: 8px 6px; border-bottom: 1px solid var(--bord); text-align: center; }
+.fm-totaux thead th { font-size: 13px; color: var(--gris-clair); font-weight: 500; }
+.fm-totaux tbody th { text-align: left; color: var(--gris-clair); font-weight: 500; }
+.fm-totaux td { font-family: var(--police-titre); font-size: 22px; }
+.fm-resultat { margin: 0; text-align: center; font-family: var(--police-titre); font-size: 22px; text-transform: uppercase; color: var(--orange); }
+.fm-signatures { display: grid; gap: 12px; }
+@media (min-width: 720px) { .fm-signatures { grid-template-columns: 1fr 1fr; } }
+.fm-signature { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.fm-signature small { color: var(--gris); }
+.fm-signature canvas { user-select: none; -webkit-user-select: none; width: 100%; aspect-ratio: 3 / 1; background: #fff; border-radius: 10px; touch-action: none; cursor: crosshair; }
+.fm-signature .lien-bouton { align-self: flex-end; font-size: 13px; }
+.fm-case { display: flex; gap: 8px; align-items: center; }
+
+/* Version imprimable (PDF) : mise en page de la feuille FFD */
+.fm-pdf { display: none; }
+@media print {
+  @page { size: A4 portrait; margin: 8mm; }
+  html, body { background: #fff !important; color: #000 !important; padding: 0 !important; }
+  html::before, html::after, body::before, body::after { display: none !important; }
+  .fm-pdf { background: #fff; }
+  body > *:not(#impression) { display: none !important; }
+  .fm-pdf { display: block !important; }
+  .pdf { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #000; }
+  .pdf h1 { margin: 0 0 6px; text-align: center; font-size: 17px; line-height: 1.25; }
+  .pdf b { font-weight: 700; }
+  .pdf-info { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-bottom: 6px; font-size: 11px; }
+  .pdf-equipes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pdf-eq { margin: 0 0 3px; font-size: 12px; }
+  .pdf-sous { margin: 4px 0 1px; font-size: 9px; }
+  .pdf-t { width: 100%; border-collapse: collapse; }
+  .pdf-t th, .pdf-t td { border: 1px solid #999; padding: 2px 5px; text-align: left; height: 15px; }
+  .pdf-t th { width: 26px; }
+  .pdf-rempl { margin: 2px 0 0; font-size: 9px; }
+  .pdf-regle { margin: 6px 0; font-size: 9px; }
+  .pdf-corps { display: grid; grid-template-columns: 1fr 120px; gap: 8px; }
+  .pdf-grille { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; align-content: start; }
+  .pdf-m { border: 1px solid #777; padding: 3px 4px; break-inside: avoid; }
+  .pdf-m--d { border: 2px solid #000; }
+  .pdf-m__t { text-align: center; font-size: 9px; margin-bottom: 2px; }
+  .pdf-m__l { display: grid; grid-template-columns: 12px 1fr 18px; align-items: center; gap: 2px; padding: 2px 0; font-size: 12px; }
+  .pdf-m__l i { font-style: normal; border: 1px solid #999; text-align: center; font-weight: 700; }
+  .pdf-score { width: 100%; border-collapse: collapse; font-size: 9px; }
+  .pdf-score th, .pdf-score td { border: 1px solid #999; padding: 1px 3px; text-align: center; }
+  .pdf-score tfoot td { font-size: 12px; font-weight: 700; }
+  .pdf-bas { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 8px; }
+  .pdf-resultat { border: 1px solid #999; padding: 6px; font-size: 12px; line-height: 1.8; }
+  .pdf-sig { display: grid; gap: 4px; }
+  .pdf-sig > div { border: 1px solid #999; padding: 3px 6px; min-height: 48px; font-size: 9px; }
+  .pdf-sig img { display: block; height: 40px; width: auto; }
+  .pdf-envoi { margin: 8px 0 0; text-align: center; font-size: 11px; }
+}
+.fm-compo input, .fm-compo select, .fm-rempl select, #fm-lien {
+  width: 100%; min-height: 44px; padding: 0 10px; border-radius: 8px;
+  border: 1px solid var(--bord-fort); background: var(--carte); color: var(--blanc);
+  font: inherit; font-size: 16px; font-weight: 400;
+}
+.fm-compo input:focus, .fm-compo select:focus, .fm-rempl select:focus { border-color: var(--orange); outline: none; box-shadow: 0 0 0 2px var(--orange); }
+.fm-paire select { font-size: 14px; padding: 0 6px; }
+.fm-choix label > span { display: flex; flex-direction: column; font-weight: 600; }
+.fm-choix label input { width: 20px; height: 20px; accent-color: var(--orange); flex: none; }
