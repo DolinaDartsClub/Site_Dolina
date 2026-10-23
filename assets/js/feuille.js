@@ -90,6 +90,7 @@ async function appel(fn, args, ok) {
 async function demarrer() {
   moi = await profilConnecte().catch(() => null);
   if (params.get('rencontre')) return ouvrirRencontre(params.get('rencontre'));
+  if (params.get('nouvelle')) return nouvelleRencontre(params.get('nouvelle'));
   if (!params.get('id') && !code) return listeRencontres();
   await charger();
 }
@@ -180,6 +181,7 @@ async function listeRencontres() {
     return `
     <section class="section fm-equipe" data-equipe="${t.id}"${t.id === active ? '' : ' hidden'}>
       <h2 class="section__titre">${esc(t.name)}${nb ? ` <span class="section__aide">${nb} feuille${nb > 1 ? 's' : ''}</span>` : ''}</h2>
+      ${admin || estCapitaineDe(t, moi.id) ? `<a class="bouton bouton--plein fm-nouvelle" href="feuille.html?nouvelle=${t.id}">+ Nouvelle rencontre</a>` : ''}
       ${liste.length ? [[true, 'Domicile'], [false, 'Extérieur']].map(([dom, titre]) => {
     const groupe = liste.filter((r) => r.domicile === dom);
     return groupe.length ? `<p class="fm-ligne-groupe">${titre} · ${groupe.length}</p><div class="fm-liste">${groupe.map((r) => ligne(r, t)).join('')}</div>` : '';
@@ -194,6 +196,107 @@ async function listeRencontres() {
   }));
 }
 
+// ---------- Créer une rencontre (et sa feuille) directement d'ici ----------
+
+const champsFeuille = (domicile) => `
+      <fieldset class="champ"><legend>Notre équipe sur la feuille FFD</legend>
+        <div class="fm-choix">
+          <label><input type="radio" name="camp" value="A"${domicile ? '' : ' checked'}><span>Équipe A<small>joueurs A, B, C, D</small></span></label>
+          <label><input type="radio" name="camp" value="E"${domicile ? ' checked' : ''}><span>Équipe E<small>joueurs E, F, G, H</small></span></label>
+        </div>
+        <small>Comme sur la feuille papier : l'équipe qui reçoit en E, les visiteurs en A.</small>
+      </fieldset>
+      <label class="champ">Cibles disponibles
+        <select name="cibles">${[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `<option value="${n}"${n === 4 ? ' selected' : ''}>${n} cible${n > 1 ? 's' : ''}</option>`).join('')}</select>
+        <small>Les matchs sont répartis sur les cibles, sans qu'un joueur ait deux matchs en même temps. Modifiable ensuite.</small>
+      </label>`;
+
+async function nouvelleRencontre(teamId) {
+  const [rt, rs, rr] = await Promise.all([
+    supabase.from('teams').select('*').eq('id', teamId).maybeSingle(),
+    supabase.from('salles').select('*').order('nom'),
+    supabase.from('rencontres').select('adversaire, domicile, salle_id, division, poule, journee, date_match').eq('team_id', teamId).order('date_match', { ascending: false }).limit(60),
+  ]);
+  const t = rt.data;
+  if (!t || !moi || !(moi.role === 'admin' || estCapitaineDe(t, moi.id))) {
+    zone.innerHTML = '<p class="vide">Seuls le capitaine, le vice-capitaine de l\'équipe et les admins peuvent créer une rencontre.</p>';
+    return;
+  }
+  const passees = rr.data || [];
+  const derniere = passees[0] || {};
+  // Salle habituelle à domicile : la plus utilisée pour les matchs à domicile
+  const compte = {};
+  passees.filter((r) => r.domicile && r.salle_id).forEach((r) => { compte[r.salle_id] = (compte[r.salle_id] || 0) + 1; });
+  const salleDom = Object.entries(compte).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+  const adversaires = [...new Set(passees.map((r) => r.adversaire))].sort((a, b) => a.localeCompare(b, 'fr'));
+  const auj = new Date().toLocaleDateString('fr-CA');
+  zone.innerHTML = `
+    <form class="carte-info fm-creer" id="form-nouvelle" novalidate>
+      <h2>Nouvelle rencontre · ${esc(t.name)}</h2>
+      <p class="intro" style="margin:0">La rencontre est ajoutée au calendrier de l'équipe et sa feuille de match est ouverte aussitôt.</p>
+      <fieldset class="champ"><legend>Lieu</legend>
+        <div class="fm-choix">
+          <label><input type="radio" name="domicile" value="1" checked><span>Domicile<small>${esc(t.name)} reçoit</small></span></label>
+          <label><input type="radio" name="domicile" value="0"><span>Extérieur<small>${esc(t.name)} se déplace</small></span></label>
+        </div>
+      </fieldset>
+      <label class="champ">Adversaire<input type="text" name="adversaire" maxlength="80" required list="fm-adversaires" placeholder="ex. Darting Club"></label>
+      <datalist id="fm-adversaires">${adversaires.map((a) => `<option value="${esc(a)}">`).join('')}</datalist>
+      <div class="fm-deux">
+        <label class="champ">Date<input type="date" name="date_match" value="${auj}" required></label>
+        <label class="champ">Heure<input type="time" name="heure_match"></label>
+      </div>
+      <label class="champ">Salle
+        <select name="salle_id"><option value="">— Non précisée —</option>${(rs.data || []).map((x) => `<option value="${x.id}"${x.id === salleDom ? ' selected' : ''}>${esc(x.nom)}</option>`).join('')}</select>
+        <small>Une nouvelle salle s'ajoute depuis le calendrier de l'équipe (page Équipes).</small>
+      </label>
+      <div class="fm-trois">
+        <label class="champ">Division<input type="text" name="division" maxlength="40" value="${esc(derniere.division || '')}"></label>
+        <label class="champ">Poule<input type="text" name="poule" maxlength="40" value="${esc(derniere.poule || '')}"></label>
+        <label class="champ">Journée<input type="text" name="journee" maxlength="20" placeholder="ex. J3"></label>
+      </div>
+      ${champsFeuille(true)}
+      <p class="t-erreur" id="erreur-nouvelle" role="alert"></p>
+      <div class="actions"><a class="bouton" href="feuille.html#${encodeURIComponent(t.name)}">Annuler</a><button type="submit" class="bouton bouton--plein">Créer la rencontre et sa feuille</button></div>
+    </form>`;
+  const form = document.getElementById('form-nouvelle');
+  // Domicile / extérieur : salle habituelle et camp FFD suivent le choix
+  form.addEventListener('change', (e) => {
+    if (e.target.name !== 'domicile') return;
+    const dom = e.target.value === '1';
+    form.salle_id.value = dom ? salleDom : '';
+    form.querySelector(`input[name="camp"][value="${dom ? 'E' : 'A'}"]`).checked = true;
+  });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('erreur-nouvelle');
+    err.textContent = '';
+    const adversaire = form.adversaire.value.trim();
+    if (!adversaire) { err.textContent = 'Indiquez l\'adversaire.'; form.adversaire.focus(); return; }
+    if (!form.date_match.value) { err.textContent = 'Indiquez la date.'; return; }
+    if (occupe) return;
+    occupe = true;
+    const bouton = form.querySelector('button[type=submit]');
+    bouton.disabled = true;
+    const { data: r, error } = await supabase.from('rencontres').insert({
+      team_id: t.id,
+      date_match: form.date_match.value,
+      heure_match: form.heure_match.value || null,
+      domicile: form.domicile.value === '1',
+      adversaire,
+      salle_id: form.salle_id.value || null,
+      division: form.division.value.trim() || null,
+      poule: form.poule.value.trim() || null,
+      journee: form.journee.value.trim() || null,
+    }).select('id').single();
+    occupe = false;
+    if (error) { bouton.disabled = false; err.textContent = erreurFr(error); return; }
+    const idf = await appel('creer_feuille', { p_rencontre: r.id, p_notre_camp: form.camp.value, p_cibles: Number(form.cibles.value) });
+    bouton.disabled = false;
+    location.replace(idf ? `feuille.html?id=${idf}` : `feuille.html?rencontre=${r.id}`);
+  });
+}
+
 // ---------- Ouvrir la feuille d'une rencontre ----------
 
 async function ouvrirRencontre(idRencontre) {
@@ -205,17 +308,7 @@ async function ouvrirRencontre(idRencontre) {
     <form class="carte-info fm-creer" id="form-creer">
       <h2>Ouvrir la feuille de match</h2>
       <p class="intro" style="margin:0"><strong>${esc(r.teams?.name || '')}</strong> ${r.domicile ? 'reçoit' : 'chez'} <strong>${esc(r.adversaire)}</strong><br>${esc(dateMatch(r.date_match))}${r.journee ? ` · ${esc(r.journee)}` : ''}</p>
-      <fieldset class="champ"><legend>Notre équipe sur la feuille FFD</legend>
-        <div class="fm-choix">
-          <label><input type="radio" name="camp" value="A"${r.domicile ? '' : ' checked'}><span>Équipe A<small>joueurs A, B, C, D</small></span></label>
-          <label><input type="radio" name="camp" value="E"${r.domicile ? ' checked' : ''}><span>Équipe E<small>joueurs E, F, G, H</small></span></label>
-        </div>
-        <small>Comme sur la feuille papier : l'équipe qui reçoit en E, les visiteurs en A.</small>
-      </fieldset>
-      <label class="champ">Cibles disponibles
-        <select name="cibles">${[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `<option value="${n}"${n === 4 ? ' selected' : ''}>${n} cible${n > 1 ? 's' : ''}</option>`).join('')}</select>
-        <small>Les matchs sont répartis sur les cibles, sans qu'un joueur ait deux matchs en même temps. Modifiable ensuite.</small>
-      </label>
+      ${champsFeuille(r.domicile)}
       <div class="actions"><a class="bouton" href="feuille.html">Annuler</a><button type="submit" class="bouton bouton--plein">Ouvrir la feuille</button></div>
     </form>`;
   document.getElementById('form-creer').addEventListener('submit', async (e) => {

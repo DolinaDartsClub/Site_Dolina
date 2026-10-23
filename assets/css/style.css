@@ -2679,3 +2679,8 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .fm-compo--masquee { justify-content: center; text-align: center; align-items: center; min-height: 160px; border-style: dashed; }
 .fm-masque { margin: 0; font-weight: 600; font-size: 16px; }
 .fm-ligne-groupe { margin: 14px 0 -6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+.fm-nouvelle { align-self: flex-start; margin: -4px 0 4px; }
+.fm-equipe { display: flex; flex-direction: column; }
+.fm-deux, .fm-trois { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fm-trois { grid-template-columns: 1fr 1fr 1fr; }
+.fm-trois .champ input { padding: 0 8px; }
