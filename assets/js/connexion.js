@@ -54,3 +54,6 @@ form.addEventListener('submit', async (e) => {
   }
   location.replace('compte.html');
 });
+
+// Le formulaire est prêt (voir le filet de sécurité dans connexion.html)
+window.__connexionPrete = true;

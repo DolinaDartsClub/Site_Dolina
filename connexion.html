@@ -12,6 +12,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+  <script>
+    // Filet de sécurité (anciens navigateurs, bloqueurs) : si le site ne se charge pas,
+    // le bouton « Se connecter » explique pourquoi au lieu de ne rien faire
+    window.__erreursSite = [];
+    window.addEventListener('error', function (e) {
+      var t = e && e.target;
+      window.__erreursSite.push(t && t.src ? 'Chargement impossible : ' + t.src.split('?')[0] : (e.message || 'Erreur inconnue'));
+    }, true);
+    document.addEventListener('submit', function (e) {
+      if (window.__connexionPrete) return;
+      e.preventDefault();
+      var z = document.getElementById('message');
+      var v = (navigator.userAgent.match(/OS (\d+)_(\d+)/) || []).slice(1).join('.');
+      z.hidden = false;
+      z.textContent = 'Le site n\'a pas pu se charger sur ce navigateur' + (v ? ' (iOS ' + v + ')' : '') + '. '
+        + (window.__erreursSite.length ? 'Détail : ' + window.__erreursSite.join(' | ') + '. ' : 'Patientez quelques secondes puis réessayez. ')
+        + 'Faites une capture de ce message et envoyez-la à un admin du club.';
+    }, true);
+  </script>
   <script type="module" src="assets/js/connexion.js?v=__VERSION__"></script>
 </head>
 <body>

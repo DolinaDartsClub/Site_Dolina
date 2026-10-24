@@ -100,7 +100,7 @@ async function charger() {
       .eq('status', 'accepted');
     (data || []).forEach((m) => {
       if (!m.profiles || m.profiles.status !== 'active') return;
-      (effectifs[m.team_id] ||= []).push(m.profiles);
+      (effectifs[m.team_id] = effectifs[m.team_id] || []).push(m.profiles);
     });
     Object.values(effectifs).forEach((l) => l.sort((a, b) => nomAffiche(a).localeCompare(nomAffiche(b), 'fr')));
   }
