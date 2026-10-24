@@ -5,7 +5,7 @@
 import { BOT_DEFAUT, nomCampBot, bullBot } from './dartbot.js?v=__VERSION__';
 import { cibleSvg, pointCible, marque } from './cible.js?v=__VERSION__';
 import { reglageVoix, definirVoix, voixDisponible, dire, voixDeLaLangue, quandVoixChangent, tonDuScore } from './voix.js?v=__VERSION__';
-import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie, supprimerPartie, avatar, brancherTypeMatch } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, formatPartie, supprimerPartie, avatar } from './app.js?v=__VERSION__';
 
 const MAX_JOUEURS = 4;
 const DUREE_REPRISE_H = 24;
@@ -19,7 +19,6 @@ let membres = [];
 const choix = { variant: '501', mode: 'single', public: true, guide: true };
 let joueurs = [];          // { type: 'membre' | 'invite', id?, nom }
 let affectation = {};      // index du joueur -> 1 | 2 (doublettes)
-const typeMatch = brancherTypeMatch(document.getElementById('type-match'));
 
 // ---------- Onglets du choix des jeux : « Jouer un match » / « S'entraîner et s'échauffer » ----------
 const CLE_ONGLET = 'dolina-jouer-onglet';
@@ -172,7 +171,6 @@ function afficherJoueurs() {
   const plein = joueurs.length >= (bot ? 1 : MAX_JOUEURS);
   document.getElementById('ajout-joueurs').hidden = plein;
   document.getElementById('bloc-bot').hidden = !bot;
-  document.getElementById('bloc-type').hidden = bot;
   document.getElementById('bloc-visi').hidden = bot;   // contre le dartbot : partie toujours privée
   document.getElementById('aide-joueurs').textContent = choix.mode === 'double'
     ? `Double 2v2 : ajoutez 4 joueurs (${joueurs.length}/4), puis formez les deux doublettes.`
@@ -417,7 +415,6 @@ function verifier() {
     const s = Number(f.start_score.value);
     if (!Number.isInteger(s) || s < 2 || s > 9999) return 'Le score de départ doit être un nombre entre 2 et 9999.';
   }
-  if (choix.mode !== 'bot' && typeMatch.manque()) return typeMatch.manque();
   if (!joueurs.length) return 'Ajoutez au moins un joueur.';
   if (choix.mode === 'bot' && joueurs.length !== 1) return 'Contre le dartbot, un seul joueur : retirez les autres.';
   if (choix.mode === 'double') {
@@ -522,7 +519,7 @@ async function creerPartie(premier) {
     visibility: choix.public && choix.mode !== 'bot' ? 'public' : 'private',
     first_side: premier,
     show_checkout: choix.guide,
-    match_type: choix.mode === 'bot' ? 'club' : (typeMatch.valeur() || 'club'),
+    match_type: 'club',   // les matchs de ligue se jouent uniquement depuis la rubrique Ligue
   };
   let { data: game, error } = await supabase.from('games').insert(ligneGame).select('id').single();
   // Base pas encore à jour (script 029 non exécuté) : on crée la partie sans le type
