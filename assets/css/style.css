@@ -2684,3 +2684,6 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .fm-deux, .fm-trois { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .fm-trois { grid-template-columns: 1fr 1fr 1fr; }
 .fm-trois .champ input { padding: 0 8px; }
+/* Niveau des inscrits (script 060) */
+.t-niveau { min-height: 34px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--bord-fort); background: var(--carte); color: var(--blanc); font: inherit; font-size: 13px; flex: none; }
+.t-aide-niveau { margin: 0 0 10px; font-size: 13px; color: var(--gris-clair); }

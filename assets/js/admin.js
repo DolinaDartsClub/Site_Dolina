@@ -37,6 +37,7 @@ const recherche = document.getElementById('recherche');
 let moi = null;
 let profils = [];
 let equipes = [];
+let niveaux = null;   // profile_id -> niveau (1 à 5), null si script 060 absent
 const ouverts = new Set(); // fiches membres dépliées (gardées ouvertes après une action)
 
 const STATUT = { pending: 'En attente', active: 'Validé', refused: 'Refusé' };
@@ -58,6 +59,9 @@ async function charger() {
       .order('last_name'),
     supabase.from('teams').select('*').order('sort_order'),
   ]);
+  // Niveaux des joueurs (script 060) : privés, pour équilibrer les poules
+  const rn = await supabase.from('niveaux_joueurs').select('profile_id, niveau');
+  niveaux = rn.error ? null : new Map((rn.data || []).map((x) => [x.profile_id, x.niveau]));
   if (rp.error || rt.error) {
     message(zoneMessage, erreurFr(rp.error || rt.error));
     return;
@@ -210,6 +214,11 @@ function afficherMembres() {
             <label class="champ">Nom<input type="text" maxlength="60" value="${esc(p.last_name)}" data-champ="last_name" data-id="${p.id}"></label>
           </div>
           <button type="button" class="bouton bouton--petit" data-action="renommer" data-id="${p.id}" style="align-self:flex-start">Enregistrer le nom</button>
+          ${niveaux && p.status === 'active' ? `<label class="champ">Niveau <small>(privé · sert à équilibrer les poules des ligues et tournois)</small>
+            <select data-action="niveau" data-id="${p.id}">
+              <option value="">— Non noté —</option>
+              ${[[1, '1 · Très fort'], [2, '2 · Fort'], [3, '3 · Moyen'], [4, '4 · Débutant confirmé'], [5, '5 · Débutant']].map(([v, l]) => `<option value="${v}"${niveaux.get(p.id) === v ? ' selected' : ''}>${l}</option>`).join('')}
+            </select></label>` : ''}
           ${p.role !== 'admin' || estMoi ? `<div class="se-fiche">
             <button type="button" class="bouton bouton--petit" data-nouveau-code="${p.id}" data-prenom="${esc(p.first_name)}" data-tel="${esc(c.phone || '')}" data-email="${esc(c.email || '')}">${p.compte === 'gere' ? 'Donner un accès (identifiant + mot de passe)' : 'Mot de passe provisoire'}</button>
             <span class="match__format">${p.compte === 'gere' ? `Identifiant prévu : ${esc(identifiantDe(c.email))}` : 'Mot de passe oublié ? Le site en tire un provisoire, à envoyer au membre.'}${p.mdp_provisoire ? ' · <strong>Provisoire pas encore changé</strong>' : ''}</span>
@@ -417,6 +426,10 @@ async function executer(action, el) {
       if (!res.error) message(zoneMessage, `Équipe « ${t?.name} » supprimée.`, 'ok');
       break;
     }
+    case 'niveau':
+      res = await supabase.rpc('definir_niveau_joueur', { p_profile: id, p_niveau: el.value ? Number(el.value) : null });
+      if (!res.error) message(zoneMessage, `Niveau de ${nomComplet(p)} enregistré.`, 'ok');
+      break;
     case 'accueil-equipe':
       res = await supabase.from('teams').update({ accueil: !el.checked }).eq('id', team);
       if (!res.error) message(zoneMessage, el.checked ? 'Équipe masquée de la page d\'accueil.' : 'Équipe de nouveau affichée sur la page d\'accueil.', 'ok');
@@ -443,7 +456,7 @@ async function executer(action, el) {
     // Code P0001 = message écrit en français dans la base (ex. « garder au moins un administrateur »)
     const doublon = res.error.code === '23505' && /team/.test(res.error.message || '');
     message(zoneMessage, doublon ? 'Une équipe porte déjà ce nom.' : (res.error.code === 'P0001' ? res.error.message : erreurFr(res.error)));
-  } else if (!['creer-equipe', 'supprimer-equipe', 'accueil-equipe'].includes(action)) {
+  } else if (!['creer-equipe', 'supprimer-equipe', 'accueil-equipe', 'niveau'].includes(action)) {
     message(zoneMessage, '');
     if (/equipe/.test(action)) document.dispatchEvent(new CustomEvent('dolina:equipes-maj', { detail: { source: 'admin' } }));
   }
