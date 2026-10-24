@@ -10,6 +10,15 @@ const zoneMessage = document.getElementById('message');
 const bouton = document.getElementById('envoyer');
 const lienOubli = document.getElementById('oubli');
 
+// Navigateur qui bloque le stockage (Safari « Bloquer tous les cookies ») : la session
+// ne peut pas être gardée d'une page à l'autre, on prévient tout de suite
+function stockageOk() {
+  try { localStorage.setItem('dolina-test', '1'); localStorage.removeItem('dolina-test'); return true; } catch { return false; }
+}
+if (!stockageOk()) {
+  message(zoneMessage, 'Votre navigateur bloque le stockage du site : la connexion ne peut pas être gardée. Sur iPhone ou iPad : Réglages › Safari › désactivez « Bloquer tous les cookies », puis rechargez la page (pas en navigation privée).');
+}
+
 // Déjà connecté ? On va directement à « Mon compte »
 supabase.auth.getSession().then(({ data: { session } }) => {
   if (session) location.replace('compte.html');
