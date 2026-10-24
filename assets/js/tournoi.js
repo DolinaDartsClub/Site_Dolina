@@ -391,8 +391,10 @@ function panneauOrganisateur() {
         ${blocTableauB()}
         ${ajoutEnCoursPossible() ? `
         <div class="t-gestion__ligne">
-          <span><strong>Un joueur arrive en retard ?</strong><small>Ajoutez-le dans une poule : ses matchs contre chaque joueur de la poule sont créés automatiquement.</small></span>
-          <button type="button" class="bouton bouton--petit" data-action="ajouter"${inscrits.length >= t.max_participants ? ' disabled title="Tournoi complet"' : ''}>+ Ajouter ${t.team_mode === 'double' ? 'une doublette' : 'un joueur'}</button>
+          <span><strong>${estLigue() ? 'Un membre rejoint la ligue en cours de saison ?' : 'Un joueur arrive en retard ?'}</strong><small>${estLigue()
+    ? `Ajoutez-le dans une poule, même si la ligue est complète : ses matchs contre chaque joueur de la poule sont créés et il les joue${t.fin_saison ? ` avant la fin de saison (${new Date(`${t.fin_saison}T12:00:00`).toLocaleDateString('fr-FR')})` : ' avant la fin de saison'}.`
+    : 'Ajoutez-le dans une poule : ses matchs contre chaque joueur de la poule sont créés automatiquement.'}</small></span>
+          <button type="button" class="bouton bouton--petit" data-action="ajouter"${!ligueOuverte() && inscrits.length >= t.max_participants ? ' disabled title="Tournoi complet"' : ''}>+ Ajouter ${t.team_mode === 'double' ? 'une doublette' : (estLigue() ? 'un membre' : 'un joueur')}</button>
         </div>` : ''}
         <div class="t-gestion__ligne">
           <span><strong>Tournoi lancé</strong><small>${commence ? 'Des matchs ont été joués : le tirage est définitif.' : 'Aucun match joué : vous pouvez encore annuler le lancement pour corriger les inscriptions.'}</small></span>
@@ -1975,15 +1977,19 @@ const cochesAjout = new Set();
 let membresAjout = [];
 let ajoutsFaits = 0;
 
+// Ligue lancée : une place est créée pour chaque membre ajouté (script 059), jusqu'à 64
+const ligueOuverte = () => estLigue() && t.status === 'running';
 function placesRestantes() {
-  return t.max_participants - inscrits.length;
+  return (ligueOuverte() ? 64 : t.max_participants) - inscrits.length;
 }
 
 function majPlacesAjout() {
   const reste = placesRestantes();
   const nbInvites = lireInvites().length;
   const total = cochesAjout.size + nbInvites;
-  document.getElementById('ajout-places').textContent = `${inscrits.length} / ${t.max_participants} inscrits · ${reste} place${reste > 1 ? 's' : ''} restante${reste > 1 ? 's' : ''}`;
+  document.getElementById('ajout-places').textContent = ligueOuverte()
+    ? `${inscrits.length} joueurs dans la ligue · une place est ajoutée pour chaque nouveau membre`
+    : `${inscrits.length} / ${t.max_participants} inscrits · ${reste} place${reste > 1 ? 's' : ''} restante${reste > 1 ? 's' : ''}`;
   document.getElementById('aj-nb-membres').textContent = cochesAjout.size ? `(${cochesAjout.size} coché${cochesAjout.size > 1 ? 's' : ''})` : '';
   const bouton = document.getElementById('aj-valider');
   if (t.team_mode !== 'double') {
@@ -2026,6 +2032,11 @@ async function ouvrirAjout() {
   const blocPoule = document.getElementById('aj-poule');
   blocPoule.hidden = !enCoursT || nbP < 2;
   document.getElementById('aj-encours').hidden = !enCoursT;
+  if (enCoursT) {
+    document.getElementById('aj-encours').textContent = estLigue()
+      ? `Ligue en cours : chaque membre ajouté rejoint une poule et ses matchs contre tous les joueurs de la poule sont créés. Il a moins de temps pour les jouer${t.fin_saison ? ` : fin de saison le ${new Date(`${t.fin_saison}T12:00:00`).toLocaleDateString('fr-FR')}` : ''}.`
+      : 'Tournoi en cours : chaque joueur ajouté rejoint une poule, et ses matchs contre tous les joueurs de cette poule sont créés.';
+  }
   if (enCoursT) {
     blocPoule.querySelector('select').innerHTML = `<option value="">La moins remplie</option>${Array.from({ length: nbP }, (_, i) => i + 1)
       .map((k) => `<option value="${k}">Poule ${lettrePoule(k)} (${inscrits.filter((x) => x.pool_no === k).length} joueurs)</option>`).join('')}`;
