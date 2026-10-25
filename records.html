@@ -31,10 +31,19 @@
 <main class="page page--records">
   <div id="acces" hidden></div>
   <div id="contenu" hidden>
-    <div class="rc-tete">
-      <h1 class="section__titre">Records du club</h1>
-      <a class="rc-lien" href="classement.html">Classement →</a>
+    <div class="mp-entete">
+      <div class="rc-tete"><h1 class="section__titre">Classement du club</h1></div>
+      <span class="actions" style="margin:0">
+        <a class="bouton bouton--petit bouton--plein" href="face-a-face.html">Face-à-face</a>
+        <a class="bouton bouton--petit" href="stats.html">Mes stats</a>
+      </span>
     </div>
+    <nav class="t-onglets" role="tablist" aria-label="Classements">
+      <a role="tab" href="classement.html" aria-selected="false">Joueurs</a>
+      <a role="tab" href="classement.html#doublettes" aria-selected="false">Doublettes</a>
+      <a role="tab" href="records.html" aria-selected="true" aria-current="page">Records du club</a>
+    </nav>
+    <h2 class="section__titre rc-titre">Records du club</h2>
     <p class="intro rc-intro">Meilleure moyenne sur une partie et plus haut finish de chaque joueur. Parties de 301 et 501 terminées, en individuel, hors matchs amicaux et dartbot.</p>
     <div class="rc-filtres">
       <div class="mp-filtre" role="group" aria-label="Saison" id="rc-saisons"></div>
