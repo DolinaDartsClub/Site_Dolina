@@ -37,3 +37,10 @@ do $$ declare e record; begin
 select _t(:'T', 'lancer en 3 poules', $$select lancer_tournoi(current_setting('t.s')::uuid, '{"variant":"501","legs_kind":"first_to","legs_n":2}', 3)::text$$);
 select 'serpentin (attendu 1:123 2:123 3:123) → ' || (select string_agg(pool_no || ':' || niveaux, ' ' order by pool_no) from (
   select pool_no, string_agg(niveau_inscrit(id)::text, '' order by niveau_inscrit(id)) niveaux from tournament_entries where tournament_id = current_setting('t.s')::uuid group by pool_no) x);
+-- 062 : un membre organisateur ne voit pas les niveaux donnés par l'admin
+select _t(:'W', 'Will crée un tournoi', $$insert into tournaments(name, format, max_participants, status, pool_qualifiers) values ('De Will', 'pools', 16, 'open', 1) returning id::text$$);
+select set_config('t.w', (select id::text from tournaments where name = 'De Will'), false);
+insert into tournament_entries(tournament_id, profile_id) values (current_setting('t.w')::uuid, '33333333-3333-3333-3333-333333333333');
+select _t(:'W', 'organisateur membre : niveau admin de Franck masqué', $$select coalesce((select niveau::text from niveaux_tournoi(current_setting('t.w')::uuid)), 'masqué')$$);
+select _t(:'T', 'admin : voit le niveau de Franck', $$select niveau::text from niveaux_tournoi(current_setting('t.w')::uuid)$$);
+select _t('33333333-3333-3333-3333-333333333333', 'joueur inscrit : aucun niveau', $$select count(*)::text from niveaux_tournoi(current_setting('t.w')::uuid)$$, 'Seul l''organisateur');

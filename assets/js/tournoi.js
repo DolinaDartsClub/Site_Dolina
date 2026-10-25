@@ -465,7 +465,7 @@ function vueParticipants() {
   }).join('');
   const quitter = mi && moi && mi.profile_id === moi.id && avantLancement()
     ? `<button type="button" class="bouton bouton--petit bouton--danger" data-retirer="${mi.id}" data-moi="1">Me désinscrire</button>` : '';
-  const aideNiveaux = niveauxInscrits ? `<p class="t-aide-niveau">Niveau de chaque joueur (visible de vous seul) : 1 = meilleur, 5 = débutant. Au lancement, les poules sont équilibrées : chaque poule reçoit des joueurs de chaque niveau. Les membres reprennent le niveau donné par l'admin.</p>` : '';
+  const aideNiveaux = niveauxInscrits ? `<p class="t-aide-niveau">Niveau de chaque joueur (visible de vous seul) : 1 = meilleur, 5 = débutant. Au lancement, les poules sont équilibrées : chaque poule reçoit des joueurs de chaque niveau. ${moi?.role === 'admin' ? 'Les membres reprennent le niveau donné dans Admin › Membres.' : ''} Les joueurs ne voient jamais les niveaux.</p>` : '';
   return `${aideNiveaux}<ol class="t-inscrits">${lignes}</ol>${quitter ? `<div class="actions">${quitter}</div>` : ''}`;
 }
 
