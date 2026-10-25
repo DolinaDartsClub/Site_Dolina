@@ -214,6 +214,15 @@ function afficherMembres() {
             <label class="champ">Nom<input type="text" maxlength="60" value="${esc(p.last_name)}" data-champ="last_name" data-id="${p.id}"></label>
           </div>
           <button type="button" class="bouton bouton--petit" data-action="renommer" data-id="${p.id}" style="align-self:flex-start">Enregistrer le nom</button>
+          ${identifiantDe(c.email) ? `<div class="se-email">
+            <strong>Passer à un compte avec email</strong>
+            <span class="match__format">Le membre se connectera ensuite avec son email (son identifiant « ${esc(identifiantDe(c.email))} » ne servira plus). Profil, parties, équipes et stats sont gardés.</span>
+            <div class="deux-colonnes">
+              <label class="champ">Email<input type="email" maxlength="120" autocomplete="off" data-email-nouveau="${p.id}" placeholder="prenom.nom@exemple.fr"></label>
+              <label class="champ">Téléphone<input type="tel" maxlength="30" autocomplete="off" data-tel-nouveau="${p.id}" value="${esc(c.phone || '')}"></label>
+            </div>
+            <button type="button" class="bouton bouton--petit bouton--plein" data-action="ajouter-email" data-id="${p.id}" style="align-self:flex-start">Enregistrer l'email</button>
+          </div>` : ''}
           ${niveaux && p.status === 'active' ? `<label class="champ">Niveau <small>(privé · sert à équilibrer les poules des ligues et tournois)</small>
             <select data-action="niveau" data-id="${p.id}">
               <option value="">— Non noté —</option>
@@ -426,6 +435,15 @@ async function executer(action, el) {
       if (!res.error) message(zoneMessage, `Équipe « ${t?.name} » supprimée.`, 'ok');
       break;
     }
+    case 'ajouter-email': {
+      const mail = document.querySelector(`[data-email-nouveau="${id}"]`).value.trim();
+      const tel = document.querySelector(`[data-tel-nouveau="${id}"]`).value.trim();
+      if (!mail) { message(zoneMessage, 'Indiquez l\'email du membre.'); return; }
+      if (!confirm(`Donner l'email ${mail} à ${nomComplet(p)} ?\n\nIl se connectera désormais avec cet email et son mot de passe actuel (ou un mot de passe provisoire). Son identifiant ne servira plus.`)) return;
+      res = await supabase.rpc('admin_ajouter_email', { p_user: id, p_email: mail, p_phone: tel || null });
+      if (!res.error) message(zoneMessage, `${nomComplet(p)} se connecte maintenant avec ${mail}.${p.compte === 'gere' ? ' Donnez-lui un mot de passe provisoire pour sa première connexion.' : ''}`, 'ok');
+      break;
+    }
     case 'niveau':
       res = await supabase.rpc('definir_niveau_joueur', { p_profile: id, p_niveau: el.value ? Number(el.value) : null });
       if (!res.error) message(zoneMessage, `Niveau de ${nomComplet(p)} enregistré.`, 'ok');
@@ -456,7 +474,7 @@ async function executer(action, el) {
     // Code P0001 = message écrit en français dans la base (ex. « garder au moins un administrateur »)
     const doublon = res.error.code === '23505' && /team/.test(res.error.message || '');
     message(zoneMessage, doublon ? 'Une équipe porte déjà ce nom.' : (res.error.code === 'P0001' ? res.error.message : erreurFr(res.error)));
-  } else if (!['creer-equipe', 'supprimer-equipe', 'accueil-equipe', 'niveau'].includes(action)) {
+  } else if (!['creer-equipe', 'supprimer-equipe', 'accueil-equipe', 'niveau', 'ajouter-email'].includes(action)) {
     message(zoneMessage, '');
     if (/equipe/.test(action)) document.dispatchEvent(new CustomEvent('dolina:equipes-maj', { detail: { source: 'admin' } }));
   }

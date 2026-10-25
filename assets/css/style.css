@@ -2692,3 +2692,4 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .t-onglets a[aria-selected="true"] { background: var(--orange); color: var(--noir); box-shadow: 0 4px 14px rgba(245,122,0,.35); }
 .t-onglets a:hover:not([aria-selected="true"]) { color: var(--blanc); }
 .rc-titre { margin-top: 4px; }
+.se-email { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px dashed var(--bord-fort); border-radius: var(--rayon); }
