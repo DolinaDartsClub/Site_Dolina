@@ -19,9 +19,15 @@ if (!stockageOk()) {
   message(zoneMessage, 'Votre navigateur bloque le stockage du site : la connexion ne peut pas être gardée. Sur iPhone ou iPad : Réglages › Safari › désactivez « Bloquer tous les cookies », puis rechargez la page (pas en navigation privée).');
 }
 
+// Après la connexion : la page d'où l'on venait (lien interne seulement), sinon « Mon compte »
+function apresConnexion() {
+  const r = new URLSearchParams(location.search).get('retour') || '';
+  return /^[\w-]+\.html([?#].*)?$/.test(r) && !/^(connexion|inscription)\.html/.test(r) ? r : 'compte.html';
+}
+
 // Déjà connecté ? On va directement à « Mon compte »
 supabase.auth.getSession().then(({ data: { session } }) => {
-  if (session) location.replace('compte.html');
+  if (session) location.replace(apresConnexion());
 });
 
 // Si un email est déjà saisi, on le transmet à la page « Mot de passe oublié »
@@ -52,7 +58,7 @@ form.addEventListener('submit', async (e) => {
       : erreurFr(error));
     return;
   }
-  location.replace('compte.html');
+  location.replace(apresConnexion());
 });
 
 // Le formulaire est prêt (voir le filet de sécurité dans connexion.html)

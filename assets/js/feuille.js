@@ -617,7 +617,7 @@ function carteMatch(n, pret) {
     actions = `<button type="button" class="bouton bouton--petit bouton--plein" data-jouer="${n}">Jouer au scorer</button><button type="button" class="bouton bouton--petit" data-saisir="${n}">Saisir le score</button>`;
   }
   return `
-    <article class="fm-match fm-match--${m.statut}${o.a.length === 2 ? ' fm-match--double' : ''}">
+    <article class="fm-match fm-match--${m.statut}${o.a.length === 2 ? ' fm-match--double' : ''}" id="fm-m-${n}">
       <div class="fm-match__haut"><b>Match #${n}</b><span>${m.statut === 'en_cours' ? '<i class="fm-direct">En cours</i>' : `Cible ${cible}${tour ? ' · ensuite' : ''}`}</span></div>
       ${ligne('A')}${ligne('E')}
       ${actions ? `<div class="fm-match__actions">${actions}</div>` : ''}
@@ -638,7 +638,7 @@ zone.addEventListener('click', async (e) => {
     const n = Number(remettre.dataset.remettre);
     const m = d.matchs[n - 1];
     if (!confirm(`Remettre le match #${n} à jouer ?${m.game_id ? '\n\nLa partie jouée au scorer sera effacée, avec ses statistiques.' : ''}`)) return;
-    if (await appel('remettre_match_feuille', { p_feuille: f().id, p_numero: n }, `Match #${n} remis à jouer.`)) await actualiserMaintenant();
+    if (await appelSurPlace('remettre_match_feuille', { p_feuille: f().id, p_numero: n })) await actualiserSurPlace(n);
   }
 });
 
@@ -664,9 +664,31 @@ fenScore.addEventListener('click', async (e) => {
   if (!b) return;
   const [x, y] = b.dataset.score.split('-').map(Number);
   const n = Number(fenScore.dataset.n);
-  const ok = await appel('saisir_resultat_feuille', { p_feuille: f().id, p_numero: n, p_manches_a: x, p_manches_e: y }, `Match #${n} : ${x}-${y} enregistré.`);
-  if (ok) { fenScore.hidden = true; await actualiserMaintenant(); }
+  const ok = await appelSurPlace('saisir_resultat_feuille', { p_feuille: f().id, p_numero: n, p_manches_a: x, p_manches_e: y }, document.getElementById('erreur-score'));
+  if (ok) { fenScore.hidden = true; await actualiserSurPlace(n); }
 });
+
+// Saisie d'un score ou correction : la page reste à sa place (pas de remontée vers le message du haut)
+async function appelSurPlace(fn, args, zoneErreur = null) {
+  if (occupe) return null;
+  occupe = true;
+  const { error } = await supabase.rpc(fn, args);
+  occupe = false;
+  if (error) {
+    const texte = error.code === 'P0001' ? error.message : erreurFr(error);
+    if (zoneErreur) zoneErreur.textContent = texte; else alert(texte);
+    return null;
+  }
+  return true;
+}
+async function actualiserSurPlace(n) {
+  const y = window.scrollY;
+  await actualiserMaintenant();
+  window.scrollTo(0, y);
+  // Le match mis à jour s'allume un instant
+  const carte = document.getElementById(`fm-m-${n}`);
+  if (carte) { carte.classList.remove('fm-match--maj'); void carte.offsetWidth; carte.classList.add('fm-match--maj'); }
+}
 
 // ----- Totaux, validation, PDF -----
 
@@ -787,11 +809,20 @@ function imprimer() {
       <p class="pdf-regle">Tous les matchs se jouent au meilleur des 3 manches de 501 points, départ direct, finish double. L'ordre de lancer est déterminé par le signe ⊙. Dans la colonne [SCORE], « 1 » pour un match gagné et « 0 » pour un match perdu.</p>
       <div class="pdf-corps">
         <div class="pdf-grille">${ORDRE.map((o) => caseMatch(o.n)).join('')}</div>
-        <table class="pdf-score"><thead><tr><th>A</th><th>SCORE</th><th>E</th></tr></thead><tbody>${scoreCol}</tbody>
-          <tfoot><tr><td>${t.pa}</td><th>TOTAL</th><td>${t.pe}</td></tr><tr><td>${t.ma}</td><th>MANCHES</th><td>${t.me}</td></tr></tfoot></table>
+        <table class="pdf-score"><thead><tr><th>A</th><th>SCORE</th><th>E</th></tr></thead><tbody>${scoreCol}</tbody></table>
       </div>
       <div class="pdf-bas">
-        <div class="pdf-resultat">RÉSULTAT : <b>${esc(nomEquipe(vainqueur))}</b> ${Math.max(t.pa, t.pe)}<br>${t.pa === t.pe ? 'NUL' : 'BAT'} <b>${esc(nomEquipe(vainqueur === 'A' ? 'E' : 'A'))}</b> ${Math.min(t.pa, t.pe)}</div>
+        <div class="pdf-final">
+          <table class="pdf-totaux">
+            <thead><tr><th></th><th>A · ${esc(nomEquipe('A'))}</th><th>E · ${esc(nomEquipe('E'))}</th></tr></thead>
+            <tbody><tr><th>TOTAL</th><td>${t.pa}</td><td>${t.pe}</td></tr><tr><th>MANCHES</th><td>${t.ma}</td><td>${t.me}</td></tr></tbody>
+          </table>
+          <div class="pdf-resultat"><span>RÉSULTAT</span>
+            <p><b>${esc(nomEquipe(vainqueur))}</b> <i>${Math.max(t.pa, t.pe)}</i></p>
+            <p class="pdf-bat">${t.pa === t.pe ? 'MATCH NUL AVEC' : 'BAT'}</p>
+            <p><b>${esc(nomEquipe(vainqueur === 'A' ? 'E' : 'A'))}</b> <i>${Math.min(t.pa, t.pe)}</i></p>
+          </div>
+        </div>
         <div class="pdf-sig">${['A', 'E'].map((c) => `<div>signature cap équipe ${c}${f()[`signature_${c.toLowerCase()}`] ? `<img src="${f()[`signature_${c.toLowerCase()}`]}" alt="">` : ''}</div>`).join('')}</div>
       </div>
       <p class="pdf-envoi">Envoyer à : ${EMAIL_CPARD}</p>

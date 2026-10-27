@@ -443,6 +443,44 @@ if ('serviceWorker' in navigator) {
 // de ligue se jouent uniquement depuis la rubrique Ligue (et la feuille CPARD).
 try { localStorage.removeItem('dolina-lieu'); } catch { /* stockage indisponible */ }
 
+// ---------- Accueil d'un visiteur non connecté ----------
+// À l'arrivée sur le site : se connecter, créer son compte joueur, ou continuer
+// en visiteur (choix gardé 7 jours). Évite que les membres passent par
+// « Rejoindre le club » (prise de contact) au lieu de créer leur compte.
+const CLE_VISITEUR = 'dolina-visiteur';
+const PAGES_SANS_ACCUEIL = /(connexion|inscription|mot-de-passe[\w-]*|live|article|scorer|mentions-legales|contact|bientot|mes-donnees)\.html$/;
+async function accueilVisiteur() {
+  const page = location.pathname;
+  if (PAGES_SANS_ACCUEIL.test(page) || /feuille\.html$/.test(page) && new URLSearchParams(location.search).has('code')) return;
+  try {
+    const t = Number(localStorage.getItem(CLE_VISITEUR) || 0);
+    if (Date.now() - t < 7 * 86400000) return;
+  } catch { /* stockage bloqué : on propose quand même */ }
+  const { data } = await supabase.auth.getSession().catch(() => ({ data: {} }));
+  if (data?.session) return;
+  const f = document.createElement('div');
+  f.className = 'fenetre accueil-visiteur';
+  f.setAttribute('role', 'dialog');
+  f.setAttribute('aria-modal', 'true');
+  f.setAttribute('aria-labelledby', 't-bienvenue');
+  const retour = encodeURIComponent(location.pathname.split('/').pop() + location.search + location.hash);
+  f.innerHTML = `
+    <div class="fenetre__boite accueil-visiteur__boite">
+      <img class="accueil-visiteur__logo" src="assets/img/logo.png" alt="">
+      <h2 id="t-bienvenue">Bienvenue au Dolina Darts Club</h2>
+      <a class="lieu-choix lieu-choix--actuel" href="connexion.html?retour=${retour}"><strong>Se connecter</strong><small>J'ai déjà un compte sur le site.</small></a>
+      <a class="lieu-choix" href="inscription.html"><strong>Créer mon compte joueur</strong><small>Je suis membre du club (ou je viens jouer) et je n'ai pas encore de compte. C'est ici, pas « Rejoindre le club ».</small></a>
+      <button type="button" class="lieu-choix" data-visiteur><strong>Continuer en tant que visiteur</strong><small>Voir les résultats, les tournois et les actualités sans compte.</small></button>
+      <p class="lieu-note">Pas encore membre et envie de nous rejoindre ? <a href="contact.html?motif=adhesion">Contactez le club</a>.</p>
+    </div>`;
+  document.body.appendChild(f);
+  f.querySelector('[data-visiteur]').addEventListener('click', () => {
+    try { localStorage.setItem(CLE_VISITEUR, String(Date.now())); } catch { /* idem */ }
+    f.remove();
+  });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', accueilVisiteur); else accueilVisiteur();
+
 // Petite étiquette pour l'affichage (rien pour une partie de club)
 export function etiquetteType(type) {
   if (type === 'ligue') return '<span class="type-match type-match--ligue">Ligue</span>';
