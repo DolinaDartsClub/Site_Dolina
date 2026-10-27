@@ -2635,11 +2635,11 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
   .fm-pdf { display: block !important; }
   .pdf { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #000; }
   .pdf h1 { margin: 0; text-align: center; font-size: 17px; line-height: 1.25; }
-  .pdf-haut { display: grid; grid-template-columns: 110px 1fr 110px; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .pdf-haut { display: grid; grid-template-columns: 130px 1fr 130px; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .pdf-logos { display: flex; align-items: center; gap: 8px; }
   .pdf-site { font-size: 8px; text-align: right; align-self: end; white-space: nowrap; }
-  .pdf-logo { width: 62px; height: auto; display: block; }
-  .pdf-pied { display: grid; grid-template-columns: 80px 1fr 80px; align-items: center; margin-top: 8px; }
-  .pdf-logo--cpard { width: 72px; }
+  .pdf-logo { width: 46px; height: auto; display: block; }
+  .pdf-logo--cpard { width: 62px; }
   .pdf b { font-weight: 700; }
   .pdf-info { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-bottom: 6px; font-size: 11px; }
   .pdf-equipes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -2662,7 +2662,7 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
   .pdf-score tfoot td { font-size: 12px; font-weight: 700; }
   .pdf-bas { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; margin-top: 10px; align-items: start; }
   .pdf-final { display: grid; gap: 8px; }
-  .pdf-totaux { width: 100%; border-collapse: collapse; }
+  .pdf-totaux { width: 100%; border-collapse: collapse; table-layout: fixed; }
   .pdf-totaux th, .pdf-totaux td { border: 2px solid #000; padding: 4px 8px; text-align: center; }
   .pdf-totaux thead th { font-size: 10px; font-weight: 700; }
   .pdf-totaux tbody th { font-size: 12px; text-align: left; width: 28%; }
@@ -2675,7 +2675,10 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
   .pdf-sig { display: grid; gap: 4px; }
   .pdf-sig > div { border: 1px solid #999; padding: 3px 6px; min-height: 70px; font-size: 9px; }
   .pdf-sig img { display: block; height: 40px; width: auto; }
-  .pdf-envoi { margin: 0; text-align: center; font-size: 11px; }
+  .pdf-envoi { margin: 8px 0 0; text-align: center; font-size: 11px; }
+  /* Une seule page A4 */
+  .pdf { break-inside: avoid; page-break-inside: avoid; }
+  .fm-pdf { max-height: 281mm; overflow: hidden; }
 }
 .fm-compo input, .fm-compo select, .fm-rempl select, #fm-lien {
   width: 100%; min-height: 44px; padding: 0 10px; border-radius: 8px;

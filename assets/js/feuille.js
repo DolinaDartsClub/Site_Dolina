@@ -788,7 +788,7 @@ function imprimer() {
   document.getElementById('impression').innerHTML = `
     <div class="pdf">
       <div class="pdf-haut">
-        <img class="pdf-logo" src="assets/img/ffd.jpg" alt="FFD">
+        <span class="pdf-logos"><img class="pdf-logo" src="assets/img/ffd.jpg" alt="FFD"><img class="pdf-logo pdf-logo--cpard" src="assets/img/cpard.jpg" alt="CPARD"></span>
         <h1>FÉDÉRATION FRANÇAISE DE DARTS<br>CHAMPIONNAT PAR ÉQUIPES</h1>
         <span class="pdf-site">https://www.ffdarts.fr</span>
       </div>
@@ -823,7 +823,7 @@ function imprimer() {
         </div>
         <div class="pdf-sig">${['A', 'E'].map((c) => `<div>signature cap équipe ${c}${f()[`signature_${c.toLowerCase()}`] ? `<img src="${f()[`signature_${c.toLowerCase()}`]}" alt="">` : ''}</div>`).join('')}</div>
       </div>
-      <div class="pdf-pied"><img class="pdf-logo pdf-logo--cpard" src="assets/img/cpard.jpg" alt="CPARD"><p class="pdf-envoi">Envoyer à : ${EMAIL_CPARD}</p></div>
+      <p class="pdf-envoi">Envoyer à : ${EMAIL_CPARD}</p>
     </div>`;
   const titre = document.title;
   document.title = sujetMail();
