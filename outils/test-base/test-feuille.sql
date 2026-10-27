@@ -9,7 +9,7 @@
 update teams set captain_id = :'W' where name = 'Dolina 2';
 insert into team_members (team_id, profile_id, status) select id, :'F', 'accepted' from teams where name = 'Dolina 2';
 insert into rencontres (team_id, date_match, adversaire, domicile, division, poule, journee)
-select id, '2026-10-13', 'Darting Test', true, '1', 'B', 'J2' from teams where name = 'Dolina 2';
+select id, '2026-10-13', 'Darting Test', false, '1', 'B', 'J2' from teams where name = 'Dolina 2';
 select set_config('t.r', (select id::text from rencontres where adversaire = 'Darting Test'), false);
 -- Vérification d'une valeur (hors droits)
 create or replace function _v(label text, q text, attendu text) returns text language plpgsql as $f$
@@ -114,3 +114,6 @@ select _t(:'W', 'rouvrir', $$select rouvrir_feuille(current_setting('t.f')::uuid
 select _v('rouverte : signatures effacées', $$select statut || ' ' || coalesce(signature_a, 'vide') from feuilles_match$$, 'en_cours vide');
 select _t(:'W', 'supprimer la feuille', $$select supprimer_feuille(current_setting('t.f')::uuid)::text$$);
 select _v('parties jouées gardées, feuille effacée', $$select (select count(*) from games where id = current_setting('t.g1')::uuid) || ' ' || (select count(*) from feuille_matchs)$$, '1 0');
+-- 064 : à domicile, notre équipe est toujours A
+insert into rencontres (team_id, date_match, adversaire, domicile) select id, '2026-11-20', 'Recoit Test', true from teams where name = 'Dolina 2';
+select _t(:'W', 'domicile : feuille ouverte en A (même si E demandé)', $$select (select notre_camp from feuilles_match where id = creer_feuille((select id from rencontres where adversaire = 'Recoit Test'), 'E', 2))$$);

@@ -199,13 +199,7 @@ async function listeRencontres() {
 // ---------- Créer une rencontre (et sa feuille) directement d'ici ----------
 
 const champsFeuille = (domicile) => `
-      <fieldset class="champ"><legend>Notre équipe sur la feuille FFD</legend>
-        <div class="fm-choix">
-          <label><input type="radio" name="camp" value="A"${domicile ? '' : ' checked'}><span>Équipe A<small>joueurs A, B, C, D</small></span></label>
-          <label><input type="radio" name="camp" value="E"${domicile ? ' checked' : ''}><span>Équipe E<small>joueurs E, F, G, H</small></span></label>
-        </div>
-        <small>Comme sur la feuille papier : l'équipe qui reçoit en E, les visiteurs en A.</small>
-      </fieldset>
+      <p class="fm-info">${domicile ? 'Nous recevons : notre équipe est l\'<strong>équipe A</strong> (A, B, C, D), à gauche sur la feuille.' : 'Nous nous déplaçons : notre équipe est l\'<strong>équipe E</strong> (E, F, G, H), l\'équipe qui reçoit est A.'}</p>
       <label class="champ">Cibles disponibles
         <select name="cibles">${[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `<option value="${n}"${n === 4 ? ' selected' : ''}>${n} cible${n > 1 ? 's' : ''}</option>`).join('')}</select>
         <small>Les matchs sont répartis sur les cibles, sans qu'un joueur ait deux matchs en même temps. Modifiable ensuite.</small>
@@ -265,7 +259,7 @@ async function nouvelleRencontre(teamId) {
     if (e.target.name !== 'domicile') return;
     const dom = e.target.value === '1';
     form.salle_id.value = dom ? salleDom : '';
-    form.querySelector(`input[name="camp"][value="${dom ? 'E' : 'A'}"]`).checked = true;
+    form.querySelector('.fm-info').outerHTML = champsFeuille(dom).split('\n').find((l) => l.includes('fm-info'));
   });
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -291,7 +285,7 @@ async function nouvelleRencontre(teamId) {
     }).select('id').single();
     occupe = false;
     if (error) { bouton.disabled = false; err.textContent = erreurFr(error); return; }
-    const idf = await appel('creer_feuille', { p_rencontre: r.id, p_notre_camp: form.camp.value, p_cibles: Number(form.cibles.value) });
+    const idf = await appel('creer_feuille', { p_rencontre: r.id, p_notre_camp: form.domicile.value === '1' ? 'A' : 'E', p_cibles: Number(form.cibles.value) });
     bouton.disabled = false;
     location.replace(idf ? `feuille.html?id=${idf}` : `feuille.html?rencontre=${r.id}`);
   });
@@ -314,7 +308,7 @@ async function ouvrirRencontre(idRencontre) {
   document.getElementById('form-creer').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const idf = await appel('creer_feuille', { p_rencontre: r.id, p_notre_camp: fd.get('camp'), p_cibles: Number(fd.get('cibles')) });
+    const idf = await appel('creer_feuille', { p_rencontre: r.id, p_cibles: Number(fd.get('cibles')) });
     if (idf) location.replace(`feuille.html?id=${idf}`);
   });
 }
