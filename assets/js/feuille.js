@@ -787,7 +787,11 @@ function imprimer() {
   const vainqueur = t.pa >= t.pe ? 'A' : 'E';
   document.getElementById('impression').innerHTML = `
     <div class="pdf">
-      <h1>FÉDÉRATION FRANÇAISE DE DARTS<br>CHAMPIONNAT PAR ÉQUIPES</h1>
+      <div class="pdf-haut">
+        <img class="pdf-logo" src="assets/img/ffd.jpg" alt="FFD">
+        <h1>FÉDÉRATION FRANÇAISE DE DARTS<br>CHAMPIONNAT PAR ÉQUIPES</h1>
+        <span class="pdf-site">https://www.ffdarts.fr</span>
+      </div>
       <div class="pdf-info">
         <span>DATE : <b>${esc(dt)}</b></span><span>LIEU : <b>${esc(r.salle?.nom || '')}</b></span>
         <span>DIVISION : <b>${esc(r.division || '')}</b></span><span>POULE : <b>${esc(r.poule || '')}</b></span><span>JOURNÉE : <b>${esc(String(r.journee || '').replace(/^J/i, ''))}</b></span>
@@ -819,11 +823,14 @@ function imprimer() {
         </div>
         <div class="pdf-sig">${['A', 'E'].map((c) => `<div>signature cap équipe ${c}${f()[`signature_${c.toLowerCase()}`] ? `<img src="${f()[`signature_${c.toLowerCase()}`]}" alt="">` : ''}</div>`).join('')}</div>
       </div>
-      <p class="pdf-envoi">Envoyer à : ${EMAIL_CPARD}</p>
+      <div class="pdf-pied"><img class="pdf-logo pdf-logo--cpard" src="assets/img/cpard.jpg" alt="CPARD"><p class="pdf-envoi">Envoyer à : ${EMAIL_CPARD}</p></div>
     </div>`;
   const titre = document.title;
   document.title = sujetMail();
-  setTimeout(() => { window.print(); document.title = titre; }, 50);
+  // Les logos doivent être chargés avant l'impression
+  const images = [...document.querySelectorAll('#impression img')];
+  Promise.all(images.map((im) => (im.complete ? null : new Promise((ok) => { im.onload = ok; im.onerror = ok; }))))
+    .then(() => setTimeout(() => { window.print(); document.title = titre; }, 50));
 }
 
 demarrer();

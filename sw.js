@@ -97,6 +97,8 @@ const FICHIERS = [
   'assets/js/tournoi.js',
   'assets/js/tournoi-creer.js',
   'assets/img/logo.png',
+  'assets/img/ffd.jpg',
+  'assets/img/cpard.jpg',
   'assets/img/favicon.png',
 ];
 
