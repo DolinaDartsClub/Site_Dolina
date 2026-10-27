@@ -62,6 +62,7 @@ function remplir(t) {
   f.pool_qualifiers.value = t.pool_qualifiers || 2;
   f.third_place.checked = t.third_place;
   f.tournoi_b.checked = !!t.tournoi_b;
+  f.b_double.checked = !!t.b_double;
   f.public_matches.checked = t.public_matches;
   f.show_checkout.checked = t.show_checkout === true;
   choix.team_mode = t.team_mode;
@@ -101,8 +102,17 @@ function majAffichage() {
   }
   document.getElementById('bloc-poules').hidden = choix.format !== 'pools';
   document.getElementById('case-tableau-b').hidden = choix.format !== 'pools';
+  document.getElementById('case-b-double').hidden = choix.format !== 'knockout';
+  majTroisieme();
   majOptionsPoules();
 }
+
+// Tableau B en double élimination (script 065) : pas de match pour la 3e place
+function majTroisieme() {
+  const b = choix.format === 'knockout' && form.elements.b_double.checked;
+  document.getElementById('case-troisieme').hidden = b;
+}
+form.elements.b_double.addEventListener('change', majTroisieme);
 
 // Nombre de poules possible : au moins 2 joueurs par poule
 function majOptionsPoules() {
@@ -151,8 +161,9 @@ function lire() {
     max_participants: Number(f.max_participants.value),
     pool_qualifiers: choix.format === 'pools' ? Number(f.pool_qualifiers.value) : null,
     pools_count: choix.format === 'pools' && f.pools_count.value ? Number(f.pools_count.value) : null,
-    third_place: f.third_place.checked,
+    third_place: f.third_place.checked && !(choix.format === 'knockout' && f.b_double.checked),
     tournoi_b: choix.format === 'pools' && f.tournoi_b.checked,
+    b_double: choix.format === 'knockout' && f.b_double.checked,
     public_matches: f.public_matches.checked,
     show_checkout: f.show_checkout.checked,
   };
@@ -187,7 +198,8 @@ form.addEventListener('submit', (e) => {
     lignes.push(['Classement des poules', '3 pts par victoire, 1 pt par défaite · égalité : manches gagnées, puis confrontation directe']);
   }
   if (v.format === 'pools') lignes.push(['Tableau B (non-qualifiés)', v.tournoi_b ? 'Oui, créé à la fin des poules' : 'Non']);
-  lignes.push(['Match pour la 3e place', v.third_place ? 'Oui' : 'Non']);
+  if (v.format === 'knockout') lignes.push(['Tableau B (double élimination)', v.b_double ? 'Oui : les éliminés du A rejoignent le B, qui a son propre vainqueur. Format des matchs du B choisi au lancement' : 'Non']);
+  if (!v.b_double) lignes.push(['Match pour la 3e place', v.third_place ? 'Oui' : 'Non']);
   lignes.push(['Matchs', v.public_matches ? 'Publics (visibles dans « Matchs en cours »)' : 'Privés']);
   lignes.push(['Guide de finish', v.show_checkout ? 'Affiché dans le scorer' : 'Masqué']);
   lignes.push(['Format des matchs', 'Choisi au lancement de chaque phase']);
@@ -216,6 +228,13 @@ document.getElementById('btn-confirmer').addEventListener('click', async () => {
     res = await supabase.from('tournaments')
       .insert({ ...v, status: form.elements.ouvrir.checked ? 'open' : 'draft' })
       .select('id').single();
+  }
+  // Base pas encore à jour (script 065 non exécuté) : enregistrement sans le tableau B en double élimination
+  if (res.error && /b_double/.test(res.error.message || '')) {
+    delete v.b_double;
+    res = existant
+      ? await supabase.from('tournaments').update(v).eq('id', existant.id).select('id').single()
+      : await supabase.from('tournaments').insert({ ...v, status: form.elements.ouvrir.checked ? 'open' : 'draft' }).select('id').single();
   }
   // Base pas encore à jour (script 052 non exécuté) : enregistrement sans l'option « tableau B »
   if (res.error && /tournoi_b/.test(res.error.message || '')) {

@@ -152,6 +152,19 @@
     <label class="champ" id="lancer-poules" hidden>Nombre de poules
       <select name="poules"></select>
     </label>
+    <fieldset class="champ lancer-b" id="lancer-format-b" hidden>
+      <legend>Format des matchs du tableau B</legend>
+      <div class="ligne-format">
+        <span class="ligne-format__nom">Jeu</span>
+        <select name="b_variant" aria-label="Jeu du tableau B"><option value="501">501</option><option value="301">301</option></select>
+      </div>
+      <div class="ligne-format">
+        <span class="ligne-format__nom">Manches</span>
+        <select name="b_legs_kind" aria-label="Type de format du tableau B"><option value="first_to">Premier à</option><option value="best_of">Au meilleur de</option></select>
+        <input type="number" inputmode="numeric" name="b_legs_n" min="1" max="21" value="2" aria-label="Nombre de manches du tableau B">
+      </div>
+      <small>Les éliminés du tableau A rejoignent le tableau B au tour qui leur correspond. Le B a son propre vainqueur.</small>
+    </fieldset>
     <label class="champ" id="lancer-qualifies" hidden>Qualifiés par poule pour le Master
       <select name="qualifies_ligue"></select>
       <small>Les premiers de chaque poule jouent le Master. Modifiable jusqu'au lancement du Master.</small>

@@ -2719,3 +2719,4 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .accueil-visiteur__boite .lieu-choix { text-decoration: none; }
 .accueil-visiteur__logo { width: 72px; height: 72px; margin: 0 auto; }
 .accueil-visiteur__boite h2 { font-family: var(--police-titre); font-size: 24px; text-transform: uppercase; }
+.a-titre-b { margin-top: 22px; }

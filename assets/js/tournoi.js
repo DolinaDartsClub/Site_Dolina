@@ -226,7 +226,8 @@ function podium() {
         </div>`).join('')}
     </section>`;
   }
-  const finale = matchs.find((m) => m.phase === 'final' && !m.is_third_place && !m.next_match_id);
+  const finale = matchs.find((m) => m.phase === 'final' && !m.is_third_place && !m.tableau_b && !m.next_match_id);
+  const finaleB = matchs.find((m) => m.tableau_b && !m.next_match_id);
   const petite = matchs.find((m) => m.is_third_place);
   const finieSansVainqueur = (x) => x?.status === 'done' && !x.winner_entry && (x.nul || x.sans_suite);
   if (!finale?.winner_entry && !finieSansVainqueur(finale)) return '';
@@ -239,6 +240,7 @@ function podium() {
   }
   if (petite?.winner_entry) places.push(['3', '3e place', petite.winner_entry]);
   else if (finieSansVainqueur(petite)) places.push(['3', '3e ex aequo', petite.entry_a], ['3', '3e ex aequo', petite.entry_b]);
+  if (finaleB?.winner_entry) places.push(['B', 'Vainqueur du tableau B', finaleB.winner_entry]);
   const mi = monInscription();
   return `
     <section class="t-podium" aria-label="Podium">
@@ -504,8 +506,15 @@ function placeVide(m, cote) {
 function libelleMatch(m) {
   if (m.phase === 'pool') return `Poule ${lettrePoule(m.pool_no)} · journée ${m.round_no}`;
   if (m.is_third_place) return 'Match pour la 3e place';
-  const nb = matchs.filter((x) => x.phase === 'final' && x.round_no === m.round_no && !x.is_third_place).length;
+  if (m.tableau_b) return nomTourB(m.round_no);
+  const nb = matchs.filter((x) => x.phase === 'final' && x.round_no === m.round_no && !x.is_third_place && !x.tableau_b).length;
   return nomTour(nb);
+}
+
+// Tableau B en double élimination (script 065) : « Tableau B · tour 2 », « Finale du tableau B »
+function nomTourB(r) {
+  const dernier = Math.max(...matchs.filter((x) => x.tableau_b).map((x) => x.round_no));
+  return r === dernier ? 'Finale du tableau B' : `Tableau B · tour ${r}`;
 }
 
 const STATUT_MATCH = {
@@ -1114,7 +1123,8 @@ function enteteTour(r, duTour, petite) {
 }
 
 function vueArbre() {
-  const finals = matchs.filter((m) => m.phase === 'final');
+  const finals = matchs.filter((m) => m.phase === 'final' && !m.tableau_b);
+  const matchsB = matchs.filter((m) => m.tableau_b);
   if (!finals.length) {
     if (t.format === 'pools') {
       const q = (t.pool_qualifiers || 0) * (t.pools_count || 0);
@@ -1143,7 +1153,29 @@ function vueArbre() {
     ${reglageCiblesFinale()}
     ${cibleF ? `<div class="c-cibles a-cibles">${cibleF}</div>` : ''}
     <p class="t-legende">Faites défiler l'arbre de gauche à droite. ${mien ? 'Vos matchs sont encadrés en orange (« Mon match »).' : ''} Touchez un match pour voir ses détails dans l'onglet Matchs.</p>
-    <div class="a-cadre"><div class="a-arbre" style="--tours:${tours}">${colonnes.join('')}</div></div>`;
+    <div class="a-cadre"><div class="a-arbre" style="--tours:${tours}">${colonnes.join('')}</div></div>
+    ${matchsB.length ? arbreB(matchsB) : ''}`;
+}
+
+// Tableau B : les éliminés du A arrivent à chaque tour (« Perdant M5 »)
+function arbreB(matchsB) {
+  const toursB = Math.max(...matchsB.map((m) => m.round_no));
+  const colonnes = [];
+  for (let r = 1; r <= toursB; r++) {
+    const duTour = matchsB.filter((m) => m.round_no === r).sort((a, b) => a.position - b.position);
+    colonnes.push(`
+      <div class="a-tour">
+        <h3 class="a-tour__titre">${esc(r === toursB ? 'Finale du B' : `Tour ${r}`)}</h3>
+        <div class="a-tour__matchs">
+          ${duTour.map((m) => `<div class="a-case">${carteMatch(m, { avecLibelle: false, compacte: true })}</div>`).join('')}
+        </div>
+      </div>`);
+  }
+  const f = formatMatch(matchsB.find((m) => m.status !== 'bye') || matchsB[0]);
+  return `
+    <h2 class="section__titre a-titre-b">Tableau B <span class="section__aide">double élimination${f ? ` · ${esc(formatPartie(f))}` : ''}</span></h2>
+    <p class="t-legende">Chaque joueur éliminé du tableau A rejoint le tableau B au tour qui lui correspond (« Perdant M… »). Le tableau B a son propre vainqueur.</p>
+    <div class="a-cadre"><div class="a-arbre" style="--tours:${toursB}">${colonnes.join('')}</div></div>`;
 }
 
 // ---------- Liste des matchs ----------
@@ -1635,6 +1667,8 @@ function ouvrirLancement(mode = 'tournoi', tour = null) {
   const blocPoules = document.getElementById('lancer-poules');
   blocPoules.hidden = t.format !== 'pools' || mode === 'finale' || sansFinale();
   document.getElementById('lancer-qualifies').hidden = !(estLigue() && mode === 'tournoi');
+  // Tableau B en double élimination (script 065) : son format se choisit au lancement
+  document.getElementById('lancer-format-b').hidden = !(mode === 'tournoi' && t.format === 'knockout' && t.b_double);
   // Cibles : par poule au lancement des poules, phase finale au lancement de l'arbre
   const blocCP = document.getElementById('lancer-cibles-poule');
   const blocCF = document.getElementById('lancer-cibles-finale');
@@ -1647,7 +1681,7 @@ function ouvrirLancement(mode = 'tournoi', tour = null) {
   document.getElementById('t-lancer').textContent = estLigue() ? (mode === 'finale' ? 'Lancer le tournoi Master' : 'Lancer la ligue') : (mode === 'finale' ? 'Lancer la phase finale' : 'Lancer le tournoi');
   f.querySelector('[type=submit]').textContent = estLigue() ? (mode === 'finale' ? 'Créer l\'arbre du Master' : 'Créer les matchs de la ligue') : (mode === 'finale' ? 'Créer l\'arbre final' : 'Lancer et tirer au sort');
   if (mode === 'tour') {
-    const duTour = matchs.filter((m) => m.phase === 'final' && m.round_no === tour);
+    const duTour = matchs.filter((m) => m.phase === 'final' && m.round_no === tour && !m.tableau_b);
     const nb = duTour.filter((m) => !m.is_third_place).length;
     const actuel = formatMatch(duTour.find((m) => m.status !== 'bye') || duTour[0]) || t.final_format;
     if (actuel) {
@@ -1793,6 +1827,12 @@ document.getElementById('form-lancer').addEventListener('submit', (e) => {
       ({ error } = await supabase.rpc('lancer_phase_finale', { p_tournoi: t.id, p_format: format }));
     } else {
       const params = { p_tournoi: t.id, p_format: format };
+      if (!document.getElementById('lancer-format-b').hidden) {
+        const el = e.target.elements;
+        const v = el.b_variant.value;
+        if (el.b_legs_kind.value === 'best_of' && Number(el.b_legs_n.value) % 2 === 0) { bouton.disabled = false; erreur.textContent = 'Tableau B : « Au meilleur de » demande un nombre impair de manches.'; return; }
+        params.p_format_b = { variant: v, start_score: Number(v), legs_kind: el.b_legs_kind.value, legs_n: Number(el.b_legs_n.value), sets_kind: null, sets_n: null };
+      }
       if (t.format === 'pools') params.p_poules = Number(e.target.elements.poules.value);
       // Ligue : nombre de qualifiés par poule, enregistré avant le tirage (vérifié au lancement)
       if (estLigue() && Number(e.target.elements.qualifies_ligue.value) !== t.pool_qualifiers) {
