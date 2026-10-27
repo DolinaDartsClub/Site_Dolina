@@ -2685,7 +2685,7 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .fm-trois { grid-template-columns: 1fr 1fr 1fr; }
 .fm-trois .champ input { padding: 0 8px; }
 /* Niveau des inscrits (script 060) */
-.t-niveau { min-height: 34px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--bord-fort); background: var(--carte); color: var(--blanc); font: inherit; font-size: 13px; flex: none; }
+.t-niveau { padding: 3px 8px; border-radius: 999px; border: 1px solid var(--bord-fort); color: var(--gris-clair); font-size: 12px; font-weight: 600; flex: none; }
 .t-aide-niveau { margin: 0 0 10px; font-size: 13px; color: var(--gris-clair); }
 /* Onglets du classement : « Records du club » est un lien vers sa page */
 .t-onglets a { flex: 1 0 auto; display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border-radius: 999px; color: var(--gris-clair); font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: background .25s, color .25s; }

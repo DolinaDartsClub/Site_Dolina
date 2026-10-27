@@ -70,9 +70,9 @@ async function charger() {
   }
   etiquettes = null;
   statsTournoi = null;
-  // Niveaux des inscrits (script 060) : organisateur, tournoi en poules pas encore lancé
+  // Niveaux des inscrits (scripts 060, 063) : rappel pour l'admin, ligue interne pas encore lancée
   niveauxInscrits = null;
-  if (role === 'organisateur' && t.format === 'pools' && (t.status === 'draft' || t.status === 'open')) {
+  if (moi?.role === 'admin' && t.est_ligue && (t.status === 'draft' || t.status === 'open')) {
     const rn = await supabase.rpc('niveaux_tournoi', { p_tournoi: id });
     if (!rn.error) niveauxInscrits = new Map((rn.data || []).map((x) => [x.entry_id, x]));
   }
@@ -457,15 +457,13 @@ function vueParticipants() {
         <span class="t-inscrit__nom"><strong>${moi && e.profile_id ? `<a href="profil.html?id=${e.profile_id}">${esc(e.nom)}</a>` : esc(e.nom)}</strong>${e.detail ? `<small>${esc(e.detail)}</small>` : ''}</span>
         ${e.pool_no && t.format === 'pools' ? `<span class="t-poule-mini">Poule ${lettrePoule(e.pool_no)}</span>` : ''}
         ${moiIci ? '<span class="t-moi">Vous</span>' : ''}
-        ${niveauxInscrits ? `<select class="t-niveau" data-niveau="${e.id}" aria-label="Niveau de ${esc(e.nom)}" title="Niveau (privé) : 1 = meilleur">
-          <option value="">Niv. —</option>${[1, 2, 3, 4, 5].map((v) => `<option value="${v}"${niveauxInscrits.get(e.id)?.niveau === v ? ' selected' : ''}>Niv. ${v}</option>`).join('')}
-        </select>` : ''}
+        ${niveauxInscrits ? `<span class="t-niveau" title="Niveau donné dans Admin › Membres (visible des admins seulement)">${niveauxInscrits.get(e.id)?.niveau ? `Niv. ${niveauxInscrits.get(e.id).niveau}` : 'Niv. —'}</span>` : ''}
         ${peutRetirer ? `<button type="button" class="bouton bouton--icone bouton--danger" data-retirer="${e.id}" aria-label="${moi && e.profile_id === moi.id ? 'Me désinscrire' : `Retirer ${esc(e.nom)}`}" title="${moi && e.profile_id === moi.id ? 'Me désinscrire' : 'Retirer'}">✕</button>` : ''}
       </li>`;
   }).join('');
   const quitter = mi && moi && mi.profile_id === moi.id && avantLancement()
     ? `<button type="button" class="bouton bouton--petit bouton--danger" data-retirer="${mi.id}" data-moi="1">Me désinscrire</button>` : '';
-  const aideNiveaux = niveauxInscrits ? `<p class="t-aide-niveau">Niveau de chaque joueur (visible de vous seul) : 1 = meilleur, 5 = débutant. Au lancement, les poules sont équilibrées : chaque poule reçoit des joueurs de chaque niveau. ${moi?.role === 'admin' ? 'Les membres reprennent le niveau donné dans Admin › Membres.' : ''} Les joueurs ne voient jamais les niveaux.</p>` : '';
+  const aideNiveaux = niveauxInscrits ? `<p class="t-aide-niveau">Niveaux (visibles des admins seulement, à régler dans Admin › Membres) : au lancement, les poules de la ligue sont équilibrées, chaque poule reçoit des joueurs de chaque niveau. Les joueurs ne voient jamais les niveaux.</p>` : '';
   return `${aideNiveaux}<ol class="t-inscrits">${lignes}</ol>${quitter ? `<div class="actions">${quitter}</div>` : ''}`;
 }
 
@@ -1394,11 +1392,6 @@ function brancher() {
     filtrePoule = b.dataset.filtrePoule;
     zone.querySelectorAll('[data-filtre-poule]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     zone.querySelectorAll('.p-poule').forEach((p) => p.classList.toggle('p-poule--cachee', filtrePoule !== 'tout' && p.dataset.pouleNo !== filtrePoule));
-  }));
-  zone.querySelectorAll('[data-niveau]').forEach((sel) => sel.addEventListener('change', async () => {
-    const { error } = await supabase.rpc('definir_niveau_inscrit', { p_entry: sel.dataset.niveau, p_niveau: sel.value ? Number(sel.value) : null });
-    if (error) { message(zoneMsg, error.code === 'P0001' ? error.message : erreurFr(error)); return; }
-    niveauxInscrits.set(sel.dataset.niveau, { niveau: sel.value ? Number(sel.value) : null, propre: true });
   }));
   zone.querySelectorAll('[data-retirer]').forEach((b) => b.addEventListener('click', () => retirer(b.dataset.retirer, !!b.dataset.moi || parId.get(b.dataset.retirer)?.profile_id === moi?.id)));
   zone.querySelector('[data-action="basculer"]')?.addEventListener('click', basculer);

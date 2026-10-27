@@ -16,5 +16,5 @@ M="012_tournois 013_tournois_tirage 014_accueil_tournois 015_guide_finish 016_to
 
 `stub.sql` imite le minimum de Supabase (schéma auth, auth.uid(), rôles anon / authenticated).
 ./reconstruire.sh $M && psql -d dt -f seed.sql -f harness.sql -f test-feuille.sql                     # feuille de match CPARD, scripts 056-057 (69)
-./reconstruire.sh $M && psql -d dt -f seed.sql -f harness.sql -f test-niveaux.sql                    # niveaux et poules équilibrées, script 060
+./reconstruire.sh $M && psql -d dt -f seed.sql -f harness.sql -f test-niveaux.sql                    # niveaux (admin) et poules de la ligue, scripts 060-063
 ./reconstruire.sh $M && psql -d dt -f seed.sql -f harness.sql -f test-email-ajout.sql                # email ajouté à un compte sans email, script 061
