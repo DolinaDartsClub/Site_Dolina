@@ -85,7 +85,7 @@ begin
   end if;
 
   create temp table if not exists _non_qualifies (entry_id uuid) on commit drop;
-  delete from _non_qualifies;
+  delete from _non_qualifies where true;
   insert into _non_qualifies
   select c.entry_id from generate_series(1, coalesce(t.pools_count, 1)) k
   cross join lateral public.classement_poule(p_tournoi, k) c
