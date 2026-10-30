@@ -3,7 +3,7 @@
 //  Rédiger, illustrer, publier, dépublier et supprimer les articles.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, dateFr, urlImage } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, dateFr, urlImage, surPlace } from './app.js?v=__VERSION__';
 
 const CATEGORIES = { annonce: 'Annonce de match', resultat: 'Résultat', vie_club: 'Vie du club', evenement: 'Événement' };
 const BUCKET = 'public-images';
@@ -202,7 +202,7 @@ async function enregistrer(publier) {
   }
 
   fermer();
-  await charger();
+  await surPlace(charger);
 }
 
 async function supprimer() {
@@ -215,7 +215,7 @@ async function supprimer() {
   }
   if (enCours.image_path) await supabase.storage.from(BUCKET).remove([enCours.image_path]);
   fermer();
-  await charger();
+  await surPlace(charger);
 }
 
 form.addEventListener('click', (e) => {

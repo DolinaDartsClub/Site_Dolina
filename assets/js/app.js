@@ -227,10 +227,51 @@ export function erreurFr(error) {
 
 // Affiche un message dans une zone (classe message--erreur ou message--ok)
 export function message(zone, texte, type = 'erreur') {
+  // Espace admin : on reste à sa place. Une zone de message au-dessus de l'écran ne s'ouvre pas
+  // (elle décalerait la page) : le message s'affiche en bandeau flottant
+  if (texte && document.body.classList.contains('sans-remontee')) {
+    const repere = zone.hidden ? (zone.nextElementSibling || zone.parentElement) : zone;
+    const r = repere.getBoundingClientRect();
+    if (r.top < 0 || r.top > window.innerHeight) {
+      if (!zone.hidden) {
+        // Zone déjà ouverte au-dessus : on la referme sans faire sauter la page
+        const suivant = zone.nextElementSibling || zone.parentElement;
+        const avant = suivant.getBoundingClientRect().top;
+        zone.hidden = true;
+        window.scrollBy(0, suivant.getBoundingClientRect().top - avant);
+      }
+      bandeauFlottant(texte, type);
+      return;
+    }
+  }
   zone.hidden = !texte;
   zone.className = `message message--${type}`;
   zone.textContent = texte || '';
-  if (texte) zone.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  if (!texte || document.body.classList.contains('sans-remontee')) return;
+  zone.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+let minuteurBandeau = null;
+function bandeauFlottant(texte, type) {
+  let b = document.getElementById('bandeau-flottant');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'bandeau-flottant';
+    b.setAttribute('role', 'status');
+    b.addEventListener('click', () => { b.hidden = true; });
+    document.body.appendChild(b);
+  }
+  b.className = `message message--${type} bandeau-flottant`;
+  b.textContent = texte;
+  b.hidden = false;
+  clearTimeout(minuteurBandeau);
+  minuteurBandeau = setTimeout(() => { b.hidden = true; }, type === 'ok' ? 3500 : 7000);
+}
+// Recharge une liste sans bouger la page (espace admin)
+export async function surPlace(fn) {
+  const y = window.scrollY;
+  const r = await fn();
+  window.scrollTo(0, y);
+  return r;
 }
 
 // Supprime une partie non terminée (abandon) avec ses joueurs et ses volées.

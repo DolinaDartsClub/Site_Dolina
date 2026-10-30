@@ -4,7 +4,7 @@
 //  comme parties libres, au choix)
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, nomAffiche } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, nomAffiche, surPlace } from './app.js?v=__VERSION__';
 import { badgeStatut, resumeFormat } from './tournoi-commun.js?v=__VERSION__';
 
 const fmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -16,7 +16,7 @@ export async function initTournois(zoneMessage) {
   zone = document.getElementById('vue-tournois');
   zoneMsg = zoneMessage;
   zone.addEventListener('click', clic);
-  await charger();
+  await surPlace(charger);
 }
 
 async function charger() {
@@ -145,5 +145,5 @@ async function clic(e) {
   }
   const nb = data?.parties || 0;
   message(zoneMsg, `Tournoi supprimé.${nb ? (avecParties ? ` ${nb} partie${nb > 1 ? 's' : ''} supprimée${nb > 1 ? 's' : ''}.` : ` ${nb} partie${nb > 1 ? 's' : ''} gardée${nb > 1 ? 's' : ''} comme partie${nb > 1 ? 's' : ''} libre${nb > 1 ? 's' : ''}.`) : ''}`, 'ok');
-  await charger();
+  await surPlace(charger);
 }

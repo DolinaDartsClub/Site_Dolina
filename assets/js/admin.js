@@ -6,7 +6,7 @@
 //  Les droits sont vérifiés par la base : un non-admin ne peut rien modifier.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur, avatar, DOSSIER_PHOTOS, formatPartie, identifiantDe } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur, avatar, DOSSIER_PHOTOS, formatPartie, identifiantDe, surPlace } from './app.js?v=__VERSION__';
 import { initSansEmail } from './admin-sans-email.js?v=__VERSION__';
 import { initRattachementInvites } from './admin-invites.js?v=__VERSION__';
 import { initActus } from './admin-actus.js?v=__VERSION__';
@@ -478,7 +478,7 @@ async function executer(action, el) {
     message(zoneMessage, '');
     if (/equipe/.test(action)) document.dispatchEvent(new CustomEvent('dolina:equipes-maj', { detail: { source: 'admin' } }));
   }
-  await charger();
+  await surPlace(charger);
 }
 
 // ---------- Parties d'un membre (suppression par l'admin) ----------

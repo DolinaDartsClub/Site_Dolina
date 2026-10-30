@@ -5,7 +5,7 @@
 //  une fois par mois, et le range en lieu sûr.
 // =====================================================================
 
-import { supabase, esc, message, erreurFr } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, surPlace } from './app.js?v=__VERSION__';
 
 const LIMITE_BASE = 500 * 1024 * 1024;      // plan gratuit : 500 Mo de base de données
 const LIMITE_FICHIERS = 1024 * 1024 * 1024; // plan gratuit : 1 Go de fichiers
@@ -25,7 +25,7 @@ export async function initSauvegarde(zoneMessage) {
   zone = document.getElementById('vue-sauvegarde');
   zoneMsg = zoneMessage;
   zone.addEventListener('click', clic);
-  await charger();
+  await surPlace(charger);
 }
 
 function jauge(titre, utilise, limite, limiteTexte) {
@@ -91,5 +91,5 @@ async function clic(e) {
   setTimeout(() => URL.revokeObjectURL(lien.href), 10000);
   const total = Object.values(data.nombres || {}).reduce((a, n) => a + n, 0);
   message(zoneMsg, `Sauvegarde téléchargée (${total.toLocaleString('fr-FR')} lignes, ${taille(contenu.length)}). Rangez le fichier en lieu sûr.`, 'ok');
-  await charger();
+  await surPlace(charger);
 }

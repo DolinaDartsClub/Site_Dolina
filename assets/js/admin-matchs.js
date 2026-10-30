@@ -5,7 +5,7 @@
 //  qui se corrige depuis la page du tournoi).
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, formatPartie, nomAffiche } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, formatPartie, nomAffiche, surPlace } from './app.js?v=__VERSION__';
 
 const PAR_PAGE = 50;
 const STATUTS = { live: 'En cours', finished: 'Terminé', abandoned: 'Abandonné' };
@@ -27,7 +27,7 @@ export async function initMatchs(zoneMessage) {
   zone.addEventListener('input', (e) => {
     if (e.target.id === 'mt-recherche') { recherche = e.target.value.trim().toLowerCase(); afficherListe(); }
   });
-  await charger();
+  await surPlace(charger);
 }
 
 async function charger(plus = false) {

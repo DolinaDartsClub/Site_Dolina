@@ -5,7 +5,7 @@
 // =====================================================================
 
 import { motDePasseProvisoire } from './admin-sans-email.js?v=__VERSION__';
-import { supabase, esc, message, erreurFr, avatar, nomAffiche, DOMAINE_IDENTIFIANT } from './app.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, avatar, nomAffiche, DOMAINE_IDENTIFIANT, surPlace } from './app.js?v=__VERSION__';
 
 const MOTIFS = { adhesion: 'Rejoindre le club', question: 'Question', autre: 'Autre', mot_de_passe: 'Mot de passe oublié' };
 const fmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -22,7 +22,7 @@ export async function initDemandes(zoneMessage) {
   zone.addEventListener('click', clic);
   // Les autres onglets (Membres, Équipes) préviennent quand une équipe change
   document.addEventListener('dolina:equipes-maj', () => charger());
-  await charger();
+  await surPlace(charger);
 }
 
 async function charger() {
@@ -154,7 +154,7 @@ async function clic(e) {
   b.disabled = false;
   if (res.error) return message(zoneMsg, erreurFr(res.error));
   message(zoneMsg, b.dataset.enregistrerNote ? 'Note enregistrée.' : (b.dataset.supprimer ? 'Demande supprimée.' : 'Demande mise à jour.'), 'ok');
-  await charger();
+  await surPlace(charger);
 }
 
 // Demande « Mot de passe oublié » : retrouver le compte, lui donner un mot de passe provisoire
