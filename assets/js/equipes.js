@@ -169,7 +169,7 @@ function carteRencontre(r, gerer) {
         <div class="eq-rencontre__actions">
           ${!res && !aConfirmer(r) ? `<button type="button" class="bouton bouton--petit" data-agenda="${r.id}">Ajouter à mon agenda</button>` : ''}
           ${feuilles.get(r.id) ? `<a class="bouton bouton--petit${feuilles.get(r.id).statut === 'en_cours' ? ' bouton--plein' : ''}" href="feuille.html?id=${feuilles.get(r.id).feuille_id}">Feuille de match</a>`
-    : (gerer && !res ? `<a class="bouton bouton--petit" href="feuille.html?rencontre=${r.id}">Feuille de match</a>` : '')}
+    : (gerer ? `<a class="bouton bouton--petit" href="feuille.html?rencontre=${r.id}">Feuille de match</a>` : '')}
           ${gerer ? `<button type="button" class="bouton bouton--petit" data-modifier="${r.id}">${res ? 'Modifier' : 'Modifier / score'}</button>` : ''}
           ${moi?.role === 'admin' && moi.status === 'active' ? `<a class="bouton bouton--petit" href="admin.html?rencontre=${encodeURIComponent(r.id)}#actus">Nouvel article</a>` : ''}
         </div>

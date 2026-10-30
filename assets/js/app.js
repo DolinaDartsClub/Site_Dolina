@@ -171,7 +171,8 @@ export function lienJoueur(profileId, html) {
 }
 if (typeof document !== 'undefined') {
   const ouvrirProfil = (e) => {
-    const el = e.target.closest?.('[data-profil]');
+    // Seulement les noms de joueurs (lienJoueur) : d'autres boutons portent aussi data-profil
+    const el = e.target.closest?.('.lien-joueur[data-profil]');
     if (!el) return false;
     e.preventDefault();
     e.stopPropagation();
@@ -179,7 +180,7 @@ if (typeof document !== 'undefined') {
     return true;
   };
   document.addEventListener('click', ouvrirProfil, true);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches?.('[data-profil]')) ouvrirProfil(e); }, true);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches?.('.lien-joueur[data-profil]')) ouvrirProfil(e); }, true);
 }
 
 export function avatar(profil, classe = '') {
