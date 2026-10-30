@@ -19,7 +19,7 @@ async function charger() {
   }
   const { data, error } = await supabase
     .from('games')
-    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, game_sides(side, name, is_bot), game_players(id, side, profile_id, display_name, throw_order)')
+    .select('*, game_sides(side, name, is_bot), game_players(id, side, profile_id, display_name, throw_order)')
     .eq('id', id)
     .maybeSingle();
 

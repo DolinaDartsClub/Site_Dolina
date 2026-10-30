@@ -19,7 +19,7 @@ async function chargerMatchs() {
   const zone = document.getElementById('matchs');
   const { data: games, error } = await supabase
     .from('games')
-    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, game_sides(side, name, is_bot), game_players(side, profile_id, display_name, throw_order)')
+    .select('*, game_sides(side, name, is_bot), game_players(side, profile_id, display_name, throw_order)')
     .eq('status', 'live')
     .eq('visibility', 'public')
     .neq('mode', 'bot')

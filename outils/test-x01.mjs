@@ -125,4 +125,30 @@ test('suggestions de finish (simples privilégiés)', () => {
   assert.equal(suggestionFinish(1), null);
 });
 
+
+// Prolongation (script 067) : premier à 4, mais 5 manches si 3-3
+{
+  const g = { start_score: 501, legs_kind: 'first_to', legs_n: 4, first_side: 1, prolongation: true };
+  const fin = (side, k) => ({ id: k, side, score: 40, remaining_before: 40, is_bust: false, is_checkout: true, darts_used: 2, darts_at_double: 1 });
+  const suite = (cotes) => cotes.map((c, i) => fin(c, i + 1));
+  test('prolongation : 4-2 gagne normalement', () => {
+    const e = calculerEtat(g, [1, 2], suite([1, 2, 1, 2, 1, 1]));
+    assert.equal(e.gagnant, 1);
+  });
+  test('prolongation : à 3-3 il faut 5 manches (4-3 ne gagne pas)', () => {
+    const e = calculerEtat(g, [1, 2], suite([1, 2, 1, 2, 1, 2, 1]));
+    assert.equal(e.gagnant, null); assert.equal(e.cibleManches, 5); assert.equal(e.manches[1], 4);
+  });
+  test('prolongation : 5-3 gagne', () => {
+    assert.equal(calculerEtat(g, [1, 2], suite([1, 2, 1, 2, 1, 2, 1, 1])).gagnant, 1);
+  });
+  test('prolongation : 4-4 puis 5-4', () => {
+    const e = calculerEtat(g, [1, 2], suite([1, 2, 1, 2, 1, 2, 1, 2]));
+    assert.equal(e.gagnant, null);
+    assert.equal(calculerEtat(g, [1, 2], suite([1, 2, 1, 2, 1, 2, 1, 2, 2])).gagnant, 2);
+  });
+  test('sans prolongation : 4-3 gagne', () => {
+    assert.equal(calculerEtat({ ...g, prolongation: false }, [1, 2], suite([1, 2, 1, 2, 1, 2, 1])).gagnant, 1);
+  });
+}
 console.log(`\n${ok} tests réussis.`);

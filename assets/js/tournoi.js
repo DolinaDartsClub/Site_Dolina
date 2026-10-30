@@ -96,7 +96,7 @@ async function chargerScoresLive() {
   if (!live.length) return;
   const ids = live.map((m) => m.game_id);
   const [rg, rv] = await Promise.all([
-    supabase.from('games').select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, first_side, status, winner_side, game_sides(side)').in('id', ids),
+    supabase.from('games').select('*, game_sides(side)').in('id', ids),
     supabase.from('visits').select('id, game_id, set_no, leg_no, visit_no, side, score, remaining_before, is_bust, is_checkout, darts_used, darts_at_double').in('game_id', ids),
   ]);
   if (rg.error) return;
@@ -1702,6 +1702,7 @@ function ouvrirLancement(mode = 'tournoi', tour = null) {
       f.elements.legs_n.value = actuel.legs_n;
       f.elements.sets_kind.value = actuel.sets_kind || '';
       f.elements.sets_n.value = actuel.sets_n || 3;
+      f.elements.prolongation.checked = !!actuel.prolongation;
     }
     document.getElementById('t-lancer').textContent = `Format : ${nomTour(nb)}`;
     f.querySelector('[type=submit]').textContent = 'Appliquer à ce tour';
@@ -1737,9 +1738,10 @@ function ouvrirLancement(mode = 'tournoi', tour = null) {
   document.getElementById('erreur-lancer').textContent = '';
   if (estLigue()) {
     majQualifiesLancement();
-    // Matchs de ligue : premier à 3 manches par défaut
+    // Matchs de ligue : premier à 4 manches, 5 si 3-3, par défaut
     f.elements.legs_kind.value = 'first_to';
-    f.elements.legs_n.value = 3;
+    f.elements.legs_n.value = 4;
+    f.elements.prolongation.checked = true;
     majResumeLancement();
   }
   document.getElementById('lancer-intro').textContent = estLigue()
@@ -1776,12 +1778,18 @@ function lireFormat() {
     legs_n: Number(f.legs_n.value),
     sets_kind: f.sets_kind.value || null,
     sets_n: f.sets_kind.value ? Number(f.sets_n.value) : null,
+    // Prolongation (script 067) : à N-1 partout, il faut N+1 manches
+    prolongation: f.legs_kind.value === 'first_to' && Number(f.legs_n.value) >= 2 && f.prolongation.checked,
   };
 }
 
 function majResumeLancement() {
   const f = document.getElementById('form-lancer').elements;
   f.sets_n.hidden = !f.sets_kind.value;
+  const nL = Number(f.legs_n.value);
+  const prolongeable = f.legs_kind.value === 'first_to' && nL >= 2;
+  document.getElementById('lancer-prolongation').hidden = !prolongeable;
+  if (prolongeable) document.getElementById('lancer-prolongation-texte').textContent = `Prolongation : à ${nL - 1}-${nL - 1}, il faut ${nL + 1} manches pour gagner`;
   const format = lireFormat();
   let texte = formatPartie(format);
   if (estLigue() && modeLancement !== 'finale') {

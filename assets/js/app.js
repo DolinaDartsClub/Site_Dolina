@@ -27,7 +27,7 @@ export function dateFr(iso) {
 export function formatPartie(g) {
   const jeu = g.variant === 'libre' ? `Score libre ${g.start_score}` : g.variant;
   const kind = (k) => (k === 'first_to' ? 'premier à' : 'au meilleur de');
-  const legs = `${kind(g.legs_kind)} ${g.legs_n} manche${g.legs_n > 1 ? 's' : ''}`;
+  const legs = `${kind(g.legs_kind)} ${g.legs_n} manche${g.legs_n > 1 ? 's' : ''}${g.prolongation && g.legs_kind === 'first_to' && g.legs_n >= 2 ? ` (${g.legs_n + 1} si ${g.legs_n - 1}-${g.legs_n - 1})` : ''}`;
   const sets = g.sets_n ? `${kind(g.sets_kind)} ${g.sets_n} sets, ` : '';
   const mode = g.mode === 'double' ? ' · double 2v2' : (g.mode === 'bot' ? ' · contre le dartbot' : '');
   return `${jeu}${mode} · ${sets}${legs}`;

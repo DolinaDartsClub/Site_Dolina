@@ -52,6 +52,9 @@ export function calculerEtat(game, sides, visits) {
   const camps = [...sides].sort((a, b) => a - b);
   const n = camps.length;
   const mancheAGagner = aGagner(game.legs_kind, game.legs_n);
+  // Prolongation (script 067) : à (N-1) partout dans un set, il faut N+1 manches (ex. premier à 4, 5 si 3-3)
+  const prolongation = !!game.prolongation && game.legs_kind === 'first_to' && mancheAGagner >= 2;
+  let cibleSet = mancheAGagner;
   const setAGagner = game.sets_n ? aGagner(game.sets_kind, game.sets_n) : 1;
   const premier = camps.includes(game.first_side) ? game.first_side : camps[0];
   const idxPremier = camps.indexOf(premier);
@@ -103,7 +106,10 @@ export function calculerEtat(game, sides, visits) {
       st.finishs += 1;
       st.meilleurFinish = Math.max(st.meilleurFinish, v.remaining_before);
       etat.manches[v.side] += 1;
-      if (etat.manches[v.side] >= mancheAGagner) {
+      if (prolongation && cibleSet === mancheAGagner && camps.every((c) => etat.manches[c] === mancheAGagner - 1)) {
+        cibleSet = mancheAGagner + 1;
+      }
+      if (etat.manches[v.side] >= cibleSet) {
         etat.sets[v.side] += 1;
         if (etat.sets[v.side] >= setAGagner) {
           etat.gagnant = v.side;
@@ -111,6 +117,7 @@ export function calculerEtat(game, sides, visits) {
           etat.set += 1;
           etat.manche = 1;
           etat.manches = zero();
+          cibleSet = mancheAGagner;
         }
       } else {
         etat.manche += 1;
@@ -127,6 +134,7 @@ export function calculerEtat(game, sides, visits) {
   etat.debutManche = debut(etat.set, etat.manche);
   etat.auLancer = etat.gagnant ? null : camps[(camps.indexOf(etat.debutManche) + etat.totalManche) % n];
   if (game.status === 'finished' && game.winner_side) etat.gagnant = game.winner_side;
+  etat.cibleManches = cibleSet;     // manches à gagner dans le set en cours (prolongation comprise)
   return etat;
 }
 
