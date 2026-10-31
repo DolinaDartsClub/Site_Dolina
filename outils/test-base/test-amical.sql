@@ -26,5 +26,5 @@ select 'en ligue : classement ' || _v(:'CL') || ' | stats parties ' || _v(:'ST')
 select _t(:'W', 'Will ne change pas le type d''une partie terminée', $$update games set match_type = 'amical' where id = (select id from g1) returning match_type$$, 'ok');
 select 'type après tentative de Will : ' || match_type from games where id = (select id from g1);
 -- Contrôle des valeurs
-select _t(:'T', 'type inconnu refusé', $$update games set match_type = 'n''importe' where id = (select id from g1)$$, 'violates check');
+select _t(:'T', 'type inconnu refusé', $$insert into games (created_by, variant, start_score, mode, legs_kind, legs_n, match_type) values ('11111111-1111-1111-1111-111111111111', '501', 501, 'single', 'first_to', 1, 'n''importe') returning id$$, 'violates check');
 drop table g1;

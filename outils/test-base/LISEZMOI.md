@@ -3,8 +3,19 @@
 Vérifient les règles écrites dans les scripts `supabase/*.sql` (droits, inscriptions…)
 sur une base Postgres 16 locale, sans toucher à Supabase.
 
+## Tout lancer d'un coup
+
 ```
-M="012_tournois 013_tournois_tirage 014_accueil_tournois 015_guide_finish 016_tournois_matchs 017_tournois_corrections 018_contact 019_stats 020_stats_tournoi 021_classement 022_sans_solo 023_face_a_face 024_sauvegarde 025_photos_profil 026_compte_rgpd 027_suppression_tournoi 028_poules_cibles 029_club_ligue_amical 030_calendrier 031_calendrier_saison 032_records 033_contact_preference"
+bash tout-tester.sh      # 31 groupes, base neuve pour chacun ; total et code de sortie 1 si un échec
+```
+
+État au 31/10/2026 : **649 vérifications réussies, 0 échec**. Ordre imposé : `test-suppression-tournoi`
+après les tests t1 à t4, `test-compte` après `test-t3` (le script s'en charge).
+
+## Lancer un groupe à la main
+
+```
+M=$(ls ../../supabase/ | grep -E '^0(1[2-9]|[2-9][0-9])_.*\.sql$' | sed 's/\.sql$//' | tr '\n' ' ')   # tous les scripts à partir de 012
 # Chaque ligne affiche PASS ou FAIL. Repartir d'une base neuve avant chaque groupe :
 ./reconstruire.sh $M && psql -d dt -f seed.sql -f harness.sql && psql -d dt -f test-t4.sql -f test-t3.sql -f test-grand.sql -f test-t2.sql -f test-t1.sql   # tournois, parties (163)
 ./reconstruire.sh $M && psql -d dt -f seed.sql -f harness.sql && psql -d dt -f test-stats.sql                     # statistiques (9)
