@@ -113,10 +113,10 @@ Règles validées :
 - **Tableau B** pour les non-qualifiés des poules (poule unique ou élimination directe).
 - **Tableau B en double élimination** pour l'élimination directe : chaque éliminé du A rejoint le B au tour
   correspondant ; le B a son propre vainqueur (pas de grande finale), format à part ; pas de match pour la
-  3e place. *(Règle choisie par défaut, à confirmer : le finaliste du A ne descend pas dans le B.)*
+  3e place ; le finaliste du A ne descend pas dans le B (il est 2e du tournoi).
 - Tournois de l'année listés dans « Derniers tournois du club ».
 
-### 6.10 Ligue interne et Masters ✅ (lancement à faire par le club)
+### 6.10 Ligue interne et Masters ✅ (prête à lancer)
 Règles validées :
 - Ligue créée et gérée par l'admin uniquement ; masquée tant qu'elle n'est pas ouverte.
 - Chacun contre chacun dans sa poule ; **2 poules** prévues au départ ; qualifiés par poule pour le **Master**.
@@ -182,13 +182,14 @@ GitHub Pages + Supabase gratuits ✅. ⏳ Passage sur **dolina.mydarts.org** (CN
 | 27/10/2026 | Feuille CPARD : l'équipe qui reçoit est toujours A, à gauche |
 | 27/10/2026 | Tableau B double élimination : le B a son propre vainqueur, format choisi à part |
 | 30/10/2026 | Ligue : 2 poules, premier à 4 manches, 5 si 3-3, puis Masters |
+| 31/10/2026 | Tableau B double élimination : le finaliste du A ne descend pas dans le B |
+| 31/10/2026 | Scripts SQL 001 à 067 exécutés en production |
 
 ## 12. Feuille de route
 
 | Priorité | Sujet | Dépend de |
 |---|---|---|
-| 1 | Exécuter les scripts SQL 042 → 067 en production | Club (Supabase) |
-| 1 | Lancer la ligue interne (niveaux, 2 poules, fin de saison) | Scripts 044-067 |
+| 1 | Lancer la ligue interne (niveaux, 2 poules, fin de saison) | — |
 | 2 | Migration vers dolina.mydarts.org | Accès DNS/FTP (Vince) |
 | 2 | Mentions légales complètes | Infos de l'association |
 | 2 | Emails automatiques (SMTP) | Choix du fournisseur |

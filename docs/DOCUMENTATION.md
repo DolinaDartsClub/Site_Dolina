@@ -262,7 +262,7 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
 - **Tableau B en double élimination** (élimination directe, script 065) : option à la création ; chaque
   éliminé du A rejoint le B au tour qui lui correspond (ordre inversé), exemptions gérées, format du B choisi à
   part au lancement, **le B a son propre vainqueur** (pas de grande finale), pas de match pour la 3e place ;
-  le finaliste du A ne descend pas dans le B.
+  le finaliste du A ne descend pas dans le B (règle confirmée par le club le 31/10/2026).
 - Admin › Tournois : liste et suppression (parties gardées ou supprimées).
 
 ### 6.7 Ligue interne et Masters
@@ -316,9 +316,8 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État connu au 31/10/2026 : les scripts **jusqu'au 041** ont été exécutés en production.
-> **À exécuter : 042 à 067**, dans l'ordre (tant qu'ils manquent, les fonctions correspondantes ne marchent pas).
-> Tenir à jour la colonne « Exécuté » à chaque passage dans Supabase.
+> État au 31/10/2026 : **tous les scripts 001 à 067 sont exécutés en production** (confirmé par le club).
+> Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
 | N° | Objet | Exécuté |
 |---|---|---|
@@ -342,32 +341,32 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 032–034 | Records, préférence de contact, logos adverses | ✅ |
 | 035–038 | Comptes sans email, vice-capitaine, espace capitaine, mot de passe provisoire | ✅ |
 | 039–041 | Jeux du club, reprise, cricket | ✅ |
-| 042 | Plusieurs cibles par poule | ⏳ |
-| 043 | Cibles de la phase finale | ⏳ |
-| 044 | Ligue interne (masquée) | ⏳ |
-| 045 | Classement : seulement ligue et tournois | ⏳ |
-| 046 | Dartbot toujours privé | ⏳ |
-| 047 | Fil du club | ⏳ |
-| 048 | Derniers tournois du club | ⏳ |
-| 049 | Fil du club : doubles | ⏳ |
-| 050 | Ligue : fin de saison, nuls, forfaits | ⏳ |
-| 051 | Ajouter un joueur pendant un tournoi | ⏳ |
-| 052 | Tableau B des non-qualifiés | ⏳ |
-| 053 | Clôturer un match (nul / sans suite) | ⏳ |
-| 054 | Rattacher un invité à un compte | ⏳ |
-| 055 | Logo propre à chaque équipe | ⏳ |
-| 056 | Feuille de match CPARD | ⏳ |
-| 057 | Feuille : compositions masquées jusqu'au lancement | ⏳ |
-| 058 | Équipe de test masquée de l'accueil | ⏳ |
-| 059 | Ligue : ajouter un membre après le lancement | ⏳ |
-| 060 | Niveaux des joueurs (têtes de série) | ⏳ |
-| 061 | Donner un email à un compte sans email | ⏳ |
-| 062 | Niveaux jamais montrés aux joueurs | ⏳ |
-| 063 | Niveaux : admin seulement, ligue seulement | ⏳ |
-| 064 | Feuille : l'équipe qui reçoit est toujours A | ⏳ |
-| 065 | Tableau B en double élimination | ⏳ |
-| 066 | Correctif tableau B (DELETE sans WHERE) | ⏳ |
-| 067 | Prolongation des matchs « premier à N » | ⏳ |
+| 042 | Plusieurs cibles par poule | ✅ |
+| 043 | Cibles de la phase finale | ✅ |
+| 044 | Ligue interne (masquée) | ✅ |
+| 045 | Classement : seulement ligue et tournois | ✅ |
+| 046 | Dartbot toujours privé | ✅ |
+| 047 | Fil du club | ✅ |
+| 048 | Derniers tournois du club | ✅ |
+| 049 | Fil du club : doubles | ✅ |
+| 050 | Ligue : fin de saison, nuls, forfaits | ✅ |
+| 051 | Ajouter un joueur pendant un tournoi | ✅ |
+| 052 | Tableau B des non-qualifiés | ✅ |
+| 053 | Clôturer un match (nul / sans suite) | ✅ |
+| 054 | Rattacher un invité à un compte | ✅ |
+| 055 | Logo propre à chaque équipe | ✅ |
+| 056 | Feuille de match CPARD | ✅ |
+| 057 | Feuille : compositions masquées jusqu'au lancement | ✅ |
+| 058 | Équipe de test masquée de l'accueil | ✅ |
+| 059 | Ligue : ajouter un membre après le lancement | ✅ |
+| 060 | Niveaux des joueurs (têtes de série) | ✅ |
+| 061 | Donner un email à un compte sans email | ✅ |
+| 062 | Niveaux jamais montrés aux joueurs | ✅ |
+| 063 | Niveaux : admin seulement, ligue seulement | ✅ |
+| 064 | Feuille : l'équipe qui reçoit est toujours A | ✅ |
+| 065 | Tableau B en double élimination | ✅ |
+| 066 | Correctif tableau B (DELETE sans WHERE) | ✅ |
+| 067 | Prolongation des matchs « premier à N » | ✅ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
@@ -485,7 +484,6 @@ de Supabase ne sauvegarde pas). Les images ne sont pas dans le fichier (seulemen
 ## 14. Suivi : à faire et en attente
 
 **À faire par le club**
-- Exécuter les scripts **042 à 067** dans Supabase (§ 7.2), puis cocher la colonne « Exécuté ».
 - Noter le niveau des membres de la ligue ; créer et lancer la ligue (2 poules, Master à 8 conseillé).
 - Obtenir les accès FTP / DNS pour la migration (§ 13).
 - Fournir les informations de l'association pour les mentions légales (RGPD).
