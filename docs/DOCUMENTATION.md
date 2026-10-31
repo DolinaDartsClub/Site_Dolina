@@ -169,7 +169,7 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
 
 ### 6.1 Comptes
 
-- Inscription libre → compte **en attente** → validation par un admin (Admin › Membres).
+- Inscription libre → compte **en attente** → validation par un admin (Admin › Inscriptions).
 - **Emails inactifs** (`EMAILS_ACTIFS = false`) : pas de confirmation par email ; « Mot de passe oublié »
   crée une demande traitée par l'admin, qui génère un **mot de passe provisoire** à envoyer (WhatsApp/SMS/email) ;
   le membre est invité à le changer.
@@ -290,8 +290,8 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 - **Actus** (admin) : rédaction, photo, brouillon/publication, article pré-rempli depuis une rencontre ;
   aperçus de partage `a/<id>.html` générés automatiquement.
 - **Nous contacter** : demande enregistrée (anti-abus), moyen de recontact choisi ; traitée dans Admin › Demandes.
-- **Admin** (menu en haut à droite) : Membres (validation, rôles, statut, niveau, email, mot de passe
-  provisoire, invités, parties), Équipes, Demandes (contact, équipe, mot de passe), Actus, Matchs, Tournois,
+- **Admin** (menu en haut à droite) : Inscriptions (valider ou refuser les nouveaux comptes), Membres
+  (rôles, statut, niveau, email, mot de passe provisoire, invités, parties, création d'un membre sans email), Équipes, Demandes (contact, équipe, mot de passe), Actus, Matchs, Tournois,
   Exports CSV, Sauvegarde. Après une modification la page **reste en place** (message en bandeau flottant en bas).
 
 ## 7. Base de données
@@ -421,11 +421,11 @@ Utilisateurs de test : Tony (admin), Will, Franck, Gérald (membres), Paul (en a
 **Exécuter un script SQL** — Supabase › SQL Editor › New query → coller **tout** le fichier → Run → vérifier
 « Success ». Un message d'erreur = ne pas passer au suivant, noter l'erreur.
 
-**Valider un nouveau membre** — Admin › Membres → « En attente » → Valider (et équipe si besoin).
+**Valider un nouveau membre** — Admin › Inscriptions → Valider (puis l'équipe dans Admin › Membres si besoin).
 
 **Mot de passe oublié** — Admin › Demandes (ou fiche du membre) → « Mot de passe provisoire » → envoyer par WhatsApp/SMS.
 
-**Membre sans email** — Admin › Membres › « + Créer un membre sans email » (identifiant + code, ou profil géré).
+**Membre sans email** — Admin › Membres › bouton « + Créer un membre sans email » (en haut de la liste) (identifiant + code, ou profil géré).
 Plus tard : fiche → « Passer à un compte avec email ».
 
 **Rattacher des matchs joués comme invité** — Admin › Membres › fiche → « Matchs joués comme invité ».

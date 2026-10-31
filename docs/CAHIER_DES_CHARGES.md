@@ -62,7 +62,7 @@ l'équipe qui reçoit toujours à gauche. ✅
 - RGPD : « Mes données » (consultation, PDF, export) et suppression de son compte.
 
 ### 6.3 Administration ✅
-Membres (validation, rôles, statut, niveau, email, mot de passe provisoire, parties), équipes (création,
+Inscriptions (validation des comptes), membres (rôles, statut, niveau, email, mot de passe provisoire, parties), équipes (création,
 ordre, capitaine, vice, logo, équipe de test), demandes (contact, équipes, mot de passe), actualités, matchs,
 tournois, exports CSV, sauvegarde mensuelle. La page ne remonte pas après une modification.
 
