@@ -127,6 +127,7 @@ Règles validées :
   utilisés **uniquement** pour équilibrer les poules de la ligue (serpentin).
 - Fin de saison fixée par l'admin (mi-juin), rappels aux joueurs ; Master en fin de saison (ex. jeudi 24 juin 2027).
 - Ajout d'un membre en cours de saison, même ligue complète (il a moins de temps pour jouer).
+- Bouton WhatsApp pour contacter son adversaire ; numéro partagé seulement avec l'accord du joueur, et seulement à ses adversaires de ligue.
 - ⏳ Option aller-retour (proposée, non décidée).
 
 ### 6.11 Nous contacter ✅
@@ -184,6 +185,7 @@ GitHub Pages + Supabase gratuits ✅. ⏳ Passage sur **dolina.mydarts.org** (CN
 | 30/10/2026 | Ligue : 2 poules, premier à 4 manches, 5 si 3-3, puis Masters |
 | 31/10/2026 | Tableau B double élimination : le finaliste du A ne descend pas dans le B |
 | 31/10/2026 | Scripts SQL 001 à 067 exécutés en production |
+| 01/11/2026 | Ligue : contact WhatsApp entre adversaires, numéro partagé avec accord |
 
 ## 12. Feuille de route
 

@@ -41,7 +41,7 @@ async function afficher() {
     supabase.from('teams').select('*').order('sort_order'),
     supabase.from('team_members').select('team_id, status').eq('profile_id', profil.id),
     supabase.from('profiles').select('first_name, last_name, nickname, use_nickname, hand, dart_weight, dart_brand, photo_path, photo_consent, created_at').eq('id', profil.id).maybeSingle(),
-    supabase.from('profile_private').select('phone').eq('id', profil.id).maybeSingle(),
+    supabase.from('profile_private').select('*').eq('id', profil.id).maybeSingle(),
   ]);
   const p = detail || {};
   // Résumé du matériel, ex. « Droitier · Target · 23,5 g »
@@ -229,7 +229,8 @@ async function afficher() {
         <label class="champ">Surnom<input name="nickname" type="text" maxlength="40" value="${esc(p.nickname || '')}"></label>
         <label class="case case--simple"><input type="checkbox" name="use_nickname" ${p.use_nickname ? 'checked' : ''}>Utiliser mon surnom sur l'ensemble du site (matchs, score en direct, classements). Mon nom complet reste visible sur ma fiche.</label>
         <label class="champ">Téléphone<input name="phone" type="tel" maxlength="30" value="${esc(prive?.phone || '')}">
-          <small>Visible uniquement par vous et les admins du club.</small></label>
+          <small>Visible uniquement par vous et les admins du club${'partage_tel_ligue' in (prive || {}) ? ', sauf si vous cochez la case ci-dessous' : ''}.</small></label>
+        ${'partage_tel_ligue' in (prive || {}) ? `<label class="case case--simple"><input type="checkbox" name="partage_tel_ligue" ${prive.partage_tel_ligue ? 'checked' : ''}>Partager mon numéro avec mes adversaires de la ligue interne, pour qu'ils me contactent sur WhatsApp</label>` : ''}
         <div class="deux-colonnes">
           <label class="champ">Main
             <select name="hand">
@@ -420,7 +421,7 @@ function brancherProfil() {
         dart_weight: poids ? Number(poids) : null,
         dart_brand: f.dart_brand.value.trim() || null,
       }).eq('id', profil.id),
-      supabase.from('profile_private').update({ phone: f.phone.value.trim() }).eq('id', profil.id),
+      supabase.from('profile_private').update({ phone: f.phone.value.trim(), ...(f.partage_tel_ligue ? { partage_tel_ligue: f.partage_tel_ligue.checked } : {}) }).eq('id', profil.id),
     ]);
     bouton.disabled = false;
     const erreur = r1.error || r2.error;

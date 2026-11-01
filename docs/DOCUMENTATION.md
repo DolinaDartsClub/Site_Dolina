@@ -276,6 +276,9 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
   confirmé par l'autre ; l'admin tranche si besoin.
 - **Fin de saison** (date réglée par l'admin) ; rappels dans Mon compte et sur l'accueil (urgent : ≤ 30 jours ou réponse attendue).
 - Vue joueur « Mes matchs » (une ligne par adversaire, Jouer, menu ⋯) ; grille complète repliée.
+- **Contacter l'adversaire sur WhatsApp** (script 068) : icône à côté de « Jouer », message pré-rempli. Le
+  téléphone reste privé tant que le joueur n'a pas accepté de le partager (bandeau « Partager » dans Mes matchs,
+  ou case dans Mon compte) ; seuls ses adversaires de ligue le reçoivent.
 - **Ajouter un membre** après le lancement, même ligue complète (une place est créée) ; ses matchs contre sa poule sont créés.
 - Puis **Master** (phase finale) avec les qualifiés.
 
@@ -300,7 +303,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 | Table | Contenu |
 |---|---|
-| `profiles`, `profile_private` | Profil public, coordonnées privées (email, téléphone) |
+| `profiles`, `profile_private` | Profil public, coordonnées privées (email, téléphone, accord de partage du téléphone en ligue) |
 | `teams`, `team_members` | Équipes (capitaine, vice, ordre, logo, accueil) et rattachements |
 | `articles` | Actualités (liées à une équipe possible) |
 | `settings` | Réglages (seuil du classement…) |
@@ -316,7 +319,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État au 31/10/2026 : **tous les scripts 001 à 067 sont exécutés en production** (confirmé par le club).
+> État au 01/11/2026 : scripts **001 à 067 exécutés** en production ; **068 à exécuter**.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
 | N° | Objet | Exécuté |
@@ -367,6 +370,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 065 | Tableau B en double élimination | ✅ |
 | 066 | Correctif tableau B (DELETE sans WHERE) | ✅ |
 | 067 | Prolongation des matchs « premier à N » | ✅ |
+| 068 | Ligue : contacter son adversaire sur WhatsApp (numéro partagé avec accord) | ⏳ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
@@ -378,7 +382,7 @@ Supabase › Authentication › Email Templates le jour où les emails seront ac
 | Comptes / admin | `admin_creer_membre` (035), `admin_changer_code` (035), `admin_mot_de_passe_provisoire` (038), `admin_ajouter_email` (061), `admin_delete_account` (026), `delete_my_account` (026), `mes_donnees` (026), `mot_de_passe_change` (038), `invites_correspondants` / `rattacher_invite` / `annuler_rattachements` (054), `definir_niveau_joueur` (060) |
 | Stats | `stats_joueur` (022), `stats_tournoi` (020), `classement_membres` / `classement_doublettes` (045), `records_club` (032), `face_a_face*` / `liste_doublettes` (023), `fil_du_club` (049) |
 | Tournois | `rejoindre_tournoi` / `apercu_tournoi` (044), `lancer_tournoi` (065), `annuler_lancement` (013), `tournoi_detail` (065), `tournois_en_cours` (044), `lancer_match_tournoi` (067), `valider_match_tournoi` / `forfait_match` / `reinitialiser_match` / `lancer_phase_finale` (016), `corriger_score_match` (017), `definir_format_tour` (065), `definir_cibles_poule` (042), `definir_cibles_finale` (043), `cloturer_match` (053), `ajouter_joueur_en_cours` (059), `creer_tableau_b` (066), `derniers_tournois` (065), `supprimer_tournoi` (027) |
-| Ligue | `definir_visibilite_ligue` / `definir_qualifies` (044), `definir_fin_saison` / `proposer_resultat_ligue` / `repondre_proposition_ligue` / `match_nul_ligue` / `propositions_ligue_en_cours` / `mes_rappels_ligue` (050), `niveaux_tournoi` (063) |
+| Ligue | `definir_visibilite_ligue` / `definir_qualifies` (044), `definir_fin_saison` / `proposer_resultat_ligue` / `repondre_proposition_ligue` / `match_nul_ligue` / `propositions_ligue_en_cours` / `mes_rappels_ligue` (050), `niveaux_tournoi` (063), `contacts_ligue` (068) |
 | Feuille CPARD | `creer_feuille` (064), `feuille_detail` (057), `feuilles_rencontres`, `enregistrer_compo` (057), `lancer_rencontre` / `annuler_lancement_feuille` (057), `definir_cibles_feuille`, `definir_remplacement` (057), `lancer_match_feuille`, `valider_match_feuille`, `saisir_resultat_feuille`, `remettre_match_feuille`, `valider_feuille`, `rouvrir_feuille`, `supprimer_feuille`, `feuille_de_partie` (056) |
 | Divers | `envoyer_demande_contact_v2` (038), `sauvegarde_club` / `espace_utilise` (024), `definir_vice_capitaine` (036), `forme_equipe` (037) |
 

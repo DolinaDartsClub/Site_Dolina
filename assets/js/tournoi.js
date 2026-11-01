@@ -25,7 +25,9 @@ let t = null;
 let inscrits = [];
 let matchs = [];
 let parId = new Map();
-let niveauxInscrits = null;   // entry_id -> { niveau, propre } (organisateur, script 060)
+let niveauxInscrits = null;
+let contactsLigue = new Map();   // entry_id -> téléphone de l'adversaire (script 068, avec son accord)
+let monPartageTel = null;        // ai-je accepté de partager mon numéro (null : inconnu / script absent)   // entry_id -> { niveau, propre } (organisateur, script 060)
 let onglet = null;
 let enCours = false;        // une action est en cours (anti double clic)
 
@@ -70,6 +72,17 @@ async function charger() {
   }
   etiquettes = null;
   statsTournoi = null;
+  // Ligue : numéros WhatsApp des adversaires qui ont accepté de les partager (script 068)
+  contactsLigue = new Map();
+  monPartageTel = null;
+  if (t.est_ligue && t.status === 'running' && moi && (data.inscrits || []).some((e) => e.profile_id === moi.id)) {
+    const [rc, rp] = await Promise.all([
+      supabase.rpc('contacts_ligue', { p_tournoi: id }),
+      supabase.from('profile_private').select('partage_tel_ligue, phone').eq('id', moi.id).maybeSingle(),
+    ]);
+    if (!rc.error) (rc.data || []).forEach((x) => contactsLigue.set(x.entry_id, x.telephone));
+    if (!rp.error && rp.data) monPartageTel = { partage: rp.data.partage_tel_ligue, tel: (rp.data.phone || '').trim() };
+  }
   // Niveaux des inscrits (scripts 060, 063) : rappel pour l'admin, ligue interne pas encore lancée
   niveauxInscrits = null;
   if (moi?.role === 'admin' && t.est_ligue && (t.status === 'draft' || t.status === 'open')) {
@@ -851,12 +864,43 @@ function ligneMonMatch(m, mi) {
     actions = `<button type="button" class="bouton bouton--petit bouton--plein" data-lancer="${m.id}"${occupe ? ' disabled' : ''}>Jouer</button>
       <button type="button" class="bouton bouton--petit bouton--discret lm-plus" data-options-ligue="${m.id}" aria-label="Forfait ou match nul" title="Forfait ou match nul">⋯</button>`;
   }
+  // Contacter l'adversaire sur WhatsApp (match pas encore terminé, numéro partagé)
+  const wa = m.status !== 'done' ? lienWhatsApp(contactsLigue.get(adv), nomEntree(adv)) : '';
   return `
     <li class="lm-ligne lm-ligne--${m.status}${prop?.pour_moi ? ' lm-ligne--urgent' : ''}">
       ${avatarInscrit(adv)}
       <span class="lm-adv"><strong>${nomLien(adv)}</strong>${etat}</span>
-      <span class="lm-actions">${actions}</span>
+      <span class="lm-actions">${wa}${actions}</span>
     </li>`;
+}
+
+// Numéro saisi librement → format international pour wa.me (06… → 336…)
+function numeroWhatsApp(tel) {
+  let n = String(tel || '').trim();
+  const plus = n.startsWith('+');
+  n = n.replace(/\D/g, '');
+  if (!n) return '';
+  if (plus) return n;
+  if (n.startsWith('00')) return n.slice(2);
+  if (n.length === 10 && n.startsWith('0')) return `33${n.slice(1)}`;
+  return n;
+}
+const ICONE_WA = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.5 1 2.7.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>';
+function lienWhatsApp(tel, nom) {
+  const n = numeroWhatsApp(tel);
+  if (!n) return '';
+  const texte = `Salut ${String(nom || '').split(' ')[0]}, c'est ${moi ? nomAffiche(moi) : ''} pour notre match de la ligue Dolina (${t.name}). Quand es-tu dispo ?`;
+  return `<a class="bouton bouton--petit lm-wa" href="https://wa.me/${n}?text=${encodeURIComponent(texte)}" target="_blank" rel="noopener" aria-label="Contacter ${esc(nom || '')} sur WhatsApp" title="Contacter sur WhatsApp">${ICONE_WA}</a>`;
+}
+
+// Bandeau : partager mon numéro avec mes adversaires de ligue (script 068)
+function blocPartageTel() {
+  if (!monPartageTel || monPartageTel.partage) return '';
+  return `
+    <div class="lm-partage">
+      <span>${ICONE_WA}<span><strong>Partagez votre numéro avec vos adversaires de la ligue</strong><small>${monPartageTel.tel ? 'Ils pourront vous contacter sur WhatsApp pour fixer vos matchs. Seuls vos adversaires de ligue le voient.' : 'Ajoutez d\'abord votre téléphone dans « Mon compte », puis activez le partage.'}</small></span></span>
+      ${monPartageTel.tel ? '<button type="button" class="bouton bouton--petit bouton--plein" data-partage-tel>Partager</button>' : '<a class="bouton bouton--petit" href="compte.html">Mon compte</a>'}
+    </div>`;
 }
 
 function blocMesMatchsLigue() {
@@ -870,6 +914,7 @@ function blocMesMatchsLigue() {
   const joues = miens.length - aJouer;
   return `
     <section class="lm">
+      ${blocPartageTel()}
       <header class="lm__haut">
         <h3>Mes matchs</h3>
         <span><b>${aJouer}</b> à jouer · ${joues} joué${joues > 1 ? 's' : ''}</span>
@@ -1435,6 +1480,13 @@ function brancher() {
     if (error) { message(zoneMsg, error.code === 'P0001' ? error.message : erreurFr(error)); return; }
     niveauxInscrits.set(sel.dataset.entree, { niveau: sel.value ? Number(sel.value) : null });
   }));
+  zone.querySelector('[data-partage-tel]')?.addEventListener('click', async () => {
+    const { error } = await supabase.from('profile_private').update({ partage_tel_ligue: true }).eq('id', moi.id);
+    if (error) { message(zoneMsg, erreurFr(error)); return; }
+    monPartageTel.partage = true;
+    message(zoneMsg, 'Numéro partagé : vos adversaires de ligue peuvent vous contacter sur WhatsApp. Vous pouvez arrêter dans « Mon compte ».', 'ok');
+    afficher();
+  });
   zone.querySelectorAll('[data-retirer]').forEach((b) => b.addEventListener('click', () => retirer(b.dataset.retirer, !!b.dataset.moi || parId.get(b.dataset.retirer)?.profile_id === moi?.id)));
   zone.querySelector('[data-action="basculer"]')?.addEventListener('click', basculer);
   zone.querySelector('[data-action="supprimer"]')?.addEventListener('click', supprimer);

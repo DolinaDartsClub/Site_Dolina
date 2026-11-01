@@ -19,3 +19,9 @@ select set_config('t.n', (select id::text from tournaments where name = 'Tournoi
 insert into tournament_entries(tournament_id, guest_name) select current_setting('t.n')::uuid, 'J' || i from generate_series(1, 3) i;
 select _t(:'T', 'lancer le tournoi', $$select lancer_tournoi(current_setting('t.n')::uuid, '{"variant":"501","legs_kind":"first_to","legs_n":2}', 1)::text$$);
 select _t(:'T', 'tournoi normal complet : ajout refusé', $$select ajouter_joueur_en_cours(current_setting('t.n')::uuid, null, 'Retard')::text$$, 'complet');
+-- 068 : contacts WhatsApp entre adversaires de ligue (avec accord)
+update profile_private set phone = '06 12 34 56 78' where id = '22222222-2222-2222-2222-222222222222';
+select _t('11111111-1111-1111-1111-111111111111', 'sans accord : numéro de Will non partagé', $$select count(*)::text from contacts_ligue(current_setting('t.l')::uuid) c join tournament_entries e on e.id = c.entry_id where e.profile_id = '22222222-2222-2222-2222-222222222222'$$);
+select _t(:'W', 'Will active le partage', $$update profile_private set partage_tel_ligue = true where id = '22222222-2222-2222-2222-222222222222' returning partage_tel_ligue::text$$);
+select _t(:'T', 'adversaire : reçoit le numéro de Will', $$select c.telephone from contacts_ligue(current_setting('t.l')::uuid) c join tournament_entries e on e.id = c.entry_id where e.profile_id = '22222222-2222-2222-2222-222222222222'$$);
+select _t('55555555-5555-5555-5555-555555555555', 'hors ligue : rien', $$select count(*)::text from contacts_ligue(current_setting('t.l')::uuid)$$);
