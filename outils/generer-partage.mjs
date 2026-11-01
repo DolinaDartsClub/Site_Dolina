@@ -17,7 +17,7 @@ import { join } from 'node:path';
 const RACINE = process.cwd();
 const SORTIE = join(RACINE, '_site');
 const SITE_URL = (process.env.SITE_URL || 'https://dolinadartsclub.github.io/Site_Dolina/').replace(/\/?$/, '/');
-const EXCLUS = new Set(['.git', '.github', '_site', 'outils', 'supabase', 'README.md', 'node_modules']);
+const EXCLUS = new Set(['.git', '.github', '_site', 'outils', 'supabase', 'docs', 'README.md', 'node_modules', '.env', '.env.example', '.gitignore']);
 
 // Adresse et clé publique lues dans config.js (une seule source de vérité)
 const config = await readFile(join(RACINE, 'assets/js/config.js'), 'utf8');
