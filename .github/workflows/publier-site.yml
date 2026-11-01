@@ -49,6 +49,24 @@ jobs:
         run: node outils/generer-partage.mjs
         env:
           EVENEMENT: ${{ github.event_name }}
+          # Adresse publique (variable du dépôt SITE_URL ; sinon l'adresse GitHub Pages)
+          SITE_URL: ${{ vars.SITE_URL }}
+
+      # Copie du site sur l'hébergement dolina.mydarts.org (FTPS), seulement si les
+      # secrets FTP existent (Settings › Secrets and variables › Actions)
+      - name: Envoyer sur dolina.mydarts.org (FTP)
+        if: steps.preparer.outputs.publier == 'true' && env.FTP_SERVEUR != ''
+        env:
+          FTP_SERVEUR: ${{ secrets.FTP_SERVEUR }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVEUR }}
+          username: ${{ secrets.FTP_UTILISATEUR }}
+          password: ${{ secrets.FTP_MOT_DE_PASSE }}
+          server-dir: ${{ secrets.FTP_DOSSIER }}
+          local-dir: ./_site/
+          protocol: ftps
+          security: loose
 
       - name: Configurer GitHub Pages
         if: steps.preparer.outputs.publier == 'true'
