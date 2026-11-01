@@ -406,6 +406,13 @@ Fichier `.github/workflows/publier-site.yml` (« Publier le site ») :
 + ajout dans `sw.js`. Une évolution de base : **nouveau script numéroté** (ne jamais modifier un script déjà
 exécuté en production, sauf correctif identique repris dans un nouveau script).
 
+### Variables d'environnement
+
+Le site est statique : il ne lit **aucun** fichier `.env` (sa configuration publique est `assets/js/config.js`).
+Le modèle `.env.example` (sans secret) liste les variables utiles aux outils : `SITE_URL` et les variables
+d'Actions pour `outils/generer-partage.mjs`, `PG*` pour la base de test locale, et les noms des secrets FTP
+(à créer uniquement dans GitHub). Copie locale : `cp .env.example .env` (le `.env` est ignoré par Git).
+
 ## 9. Tests automatiques
 
 | Commande | Ce qu'elle vérifie | État au 31/10/2026 |
