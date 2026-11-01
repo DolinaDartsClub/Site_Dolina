@@ -319,7 +319,8 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État au 01/11/2026 : scripts **001 à 067 exécutés** en production ; **068 à exécuter**.
+> État au 01/11/2026 : **tous les scripts 001 à 068 sont exécutés en production** (confirmé par le club).
+> Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
 | N° | Objet | Exécuté |
@@ -370,7 +371,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 065 | Tableau B en double élimination | ✅ |
 | 066 | Correctif tableau B (DELETE sans WHERE) | ✅ |
 | 067 | Prolongation des matchs « premier à N » | ✅ |
-| 068 | Ligue : contacter son adversaire sur WhatsApp (numéro partagé avec accord) | ⏳ |
+| 068 | Ligue : contacter son adversaire sur WhatsApp (numéro partagé avec accord) | ✅ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
