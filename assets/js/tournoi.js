@@ -27,7 +27,7 @@ let matchs = [];
 let parId = new Map();
 let niveauxInscrits = null;
 let contactsLigue = new Map();   // entry_id -> téléphone de l'adversaire (script 068, avec son accord)
-let monPartageTel = null;        // ai-je accepté de partager mon numéro (null : inconnu / script absent)   // entry_id -> { niveau, propre } (organisateur, script 060)
+let monPartageTel = null;        // ai-je accepté de partager mon numéro (null : inconnu / script absent)
 let onglet = null;
 let enCours = false;        // une action est en cours (anti double clic)
 
@@ -887,15 +887,20 @@ function numeroWhatsApp(tel) {
 }
 const ICONE_WA = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.5 1 2.7.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>';
 function lienWhatsApp(tel, nom) {
+  if (!monPartageTel) return '';
   const n = numeroWhatsApp(tel);
-  if (!n) return '';
+  // Adversaire qui n'a pas encore partagé son numéro : icône grisée, explication au toucher
+  if (!n) return `<button type="button" class="bouton bouton--petit lm-wa lm-wa--off" data-wa-absent="${esc(nom || '')}" aria-label="${esc(nom || '')} n'a pas encore partagé son numéro" title="Numéro pas encore partagé">${ICONE_WA}</button>`;
   const texte = `Salut ${String(nom || '').split(' ')[0]}, c'est ${moi ? nomAffiche(moi) : ''} pour notre match de la ligue Dolina (${t.name}). Quand es-tu dispo ?`;
   return `<a class="bouton bouton--petit lm-wa" href="https://wa.me/${n}?text=${encodeURIComponent(texte)}" target="_blank" rel="noopener" aria-label="Contacter ${esc(nom || '')} sur WhatsApp" title="Contacter sur WhatsApp">${ICONE_WA}</a>`;
 }
 
 // Bandeau : partager mon numéro avec mes adversaires de ligue (script 068)
 function blocPartageTel() {
-  if (!monPartageTel || monPartageTel.partage) return '';
+  if (!monPartageTel) return '';
+  if (monPartageTel.partage) {
+    return `<p class="lm-partage-ok">${ICONE_WA}<span>Votre numéro est partagé avec vos adversaires de ligue${monPartageTel.tel ? '' : ' (mais aucun téléphone n\'est renseigné dans « Mon compte »)'}. <button type="button" class="lien-bouton" data-partage-tel="0">Arrêter le partage</button></span></p>`;
+  }
   return `
     <div class="lm-partage">
       <span>${ICONE_WA}<span><strong>Partagez votre numéro avec vos adversaires de la ligue</strong><small>${monPartageTel.tel ? 'Ils pourront vous contacter sur WhatsApp pour fixer vos matchs. Seuls vos adversaires de ligue le voient.' : 'Ajoutez d\'abord votre téléphone dans « Mon compte », puis activez le partage.'}</small></span></span>
@@ -1480,13 +1485,16 @@ function brancher() {
     if (error) { message(zoneMsg, error.code === 'P0001' ? error.message : erreurFr(error)); return; }
     niveauxInscrits.set(sel.dataset.entree, { niveau: sel.value ? Number(sel.value) : null });
   }));
-  zone.querySelector('[data-partage-tel]')?.addEventListener('click', async () => {
-    const { error } = await supabase.from('profile_private').update({ partage_tel_ligue: true }).eq('id', moi.id);
+  zone.querySelector('[data-partage-tel]')?.addEventListener('click', async (e) => {
+    const oui = e.currentTarget.dataset.partageTel !== '0';
+    const { error } = await supabase.from('profile_private').update({ partage_tel_ligue: oui }).eq('id', moi.id);
     if (error) { message(zoneMsg, erreurFr(error)); return; }
-    monPartageTel.partage = true;
-    message(zoneMsg, 'Numéro partagé : vos adversaires de ligue peuvent vous contacter sur WhatsApp. Vous pouvez arrêter dans « Mon compte ».', 'ok');
+    monPartageTel.partage = oui;
     afficher();
   });
+  zone.querySelectorAll('[data-wa-absent]').forEach((b) => b.addEventListener('click', () => {
+    alert(`${b.dataset.waAbsent} n'a pas encore partagé son numéro sur le site.\n\nDès qu'il aura appuyé sur « Partager » dans ses matchs, cette icône ouvrira WhatsApp directement.`);
+  }));
   zone.querySelectorAll('[data-retirer]').forEach((b) => b.addEventListener('click', () => retirer(b.dataset.retirer, !!b.dataset.moi || parId.get(b.dataset.retirer)?.profile_id === moi?.id)));
   zone.querySelector('[data-action="basculer"]')?.addEventListener('click', basculer);
   zone.querySelector('[data-action="supprimer"]')?.addEventListener('click', supprimer);

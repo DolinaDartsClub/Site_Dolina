@@ -2731,3 +2731,7 @@ select.t-niveau { min-height: 34px; padding: 0 8px; border-radius: 8px; backgrou
 .lm-partage svg { width: 22px; height: 22px; color: #25d366; flex: none; margin-top: 2px; }
 .lm-partage strong { display: block; font-size: 14px; }
 .lm-partage small { display: block; font-size: 12px; color: var(--gris-clair); }
+.lm-wa--off { color: var(--gris); border-color: var(--bord-fort); opacity: .55; }
+.lm-partage-ok { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; color: var(--gris-clair); }
+.lm-partage-ok svg { width: 18px; height: 18px; color: #25d366; flex: none; }
+.lm-partage-ok .lien-bouton { font-size: 13px; color: var(--gris-clair); }
