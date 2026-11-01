@@ -1,7 +1,7 @@
 # Audit technique et UX — Dolina Darts Club
-**Date :** 1er novembre 2026  
-**Base auditée :** `main`, commit `c705550f26197f061864ec82b0c65ef49f0caed6`  
-**Branche dédiée :** `chore/fullstack-audit-optimization`  
+**Date :** 1er novembre 2026
+**Base auditée :** `main`, commit `c705550f26197f061864ec82b0c65ef49f0caed6`
+**Branche dédiée :** `chore/fullstack-audit-optimization`
 **Règle de travail :** pas de changement des règles sportives, scoring, droits, états métiers ou données sans accord explicite.
 
 ## 1. Périmètre et limites
@@ -82,6 +82,6 @@ Les constats issus de SQL du dépôt ne prouvent pas que la production exécute 
 | P2 — PWA et publication | Pré-cache cohérent, scope de suppression de cache, isolation des aperçus sociaux | Installation/mise à jour et déploiement de test vérifiés |
 | P2 — Backend évolutif | ACL fonctions, policies, index, performance et auth admin | Tests en environnement isolé, revue avant toute migration |
 
-**Règle de merge :** modifications dans `chore/fullstack-audit-optimization`, revue du diff, tests complets, validation fonctionnelle ; ne jamais fusionner automatiquement dans `main`. 
+**Règle de merge :** modifications dans `chore/fullstack-audit-optimization`, revue du diff, tests complets, validation fonctionnelle ; ne jamais fusionner automatiquement dans `main`.
 
 **État à la rédaction :** audit documentaire uniquement ; aucune logique applicative ou migration SQL modifiée, aucune donnée client manipulée.
