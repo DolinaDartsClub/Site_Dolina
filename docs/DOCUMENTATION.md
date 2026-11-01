@@ -280,7 +280,9 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
   téléphone reste privé tant que le joueur n'a pas accepté de le partager (bandeau « Partager » dans Mes matchs,
   ou case dans Mon compte) ; seuls ses adversaires de ligue le reçoivent.
 - **Ajouter un membre** après le lancement, même ligue complète (une place est créée) ; ses matchs contre sa poule sont créés.
-- Puis **Master** (phase finale) avec les qualifiés.
+- Puis **Master** (phase finale) avec les qualifiés. Têtes de série avec 2 poules : 1A, 1B, 2A, 2B, 3A, 3B…
+  (script 069) ; arbre à la puissance de 2 supérieure, exemptions pour les mieux classés. Exemple 5 qualifiés
+  par poule (10 joueurs, arbre de 16) : barrages 4B-5A et 4A-5B ; quarts 1A-(4B/5A), 2B-3A, 1B-(4A/5B), 2A-3B.
 
 ### 6.8 Jeux du club et entraînement
 
@@ -319,7 +321,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État au 01/11/2026 : **tous les scripts 001 à 068 sont exécutés en production** (confirmé par le club).
+> État au 01/11/2026 : scripts **001 à 068 exécutés** en production ; **069 à exécuter**.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
@@ -372,6 +374,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 066 | Correctif tableau B (DELETE sans WHERE) | ✅ |
 | 067 | Prolongation des matchs « premier à N » | ✅ |
 | 068 | Ligue : contacter son adversaire sur WhatsApp (numéro partagé avec accord) | ✅ |
+| 069 | Master / phase finale : têtes de série croisées avec 2 poules (1A, 1B, 2A, 2B…) | ⏳ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
