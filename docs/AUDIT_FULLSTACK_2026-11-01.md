@@ -85,3 +85,10 @@ Les constats issus de SQL du dépôt ne prouvent pas que la production exécute 
 **Règle de merge :** modifications dans `chore/fullstack-audit-optimization`, revue du diff, tests complets, validation fonctionnelle ; ne jamais fusionner automatiquement dans `main`.
 
 **État à la rédaction :** audit documentaire uniquement ; aucune logique applicative ou migration SQL modifiée, aucune donnée client manipulée.
+
+## Mise à jour — 2 novembre 2026
+
+- Rapport intégré à `main` au commit `144ff9d` après synchronisation avec `a1061f8` ; le déploiement GitHub Pages associé a réussi, l'étape FTPS a été ignorée.
+- **P1 CI (amélioration du pipeline)** : remplacement du contrôle limité à X01 par la vérification syntaxique des modules JavaScript et l'exécution de toutes les suites `outils/test-*.mjs` avant génération/publication. Les 5 suites passent localement (172 cas), ainsi que les 56 fichiers JavaScript vérifiés avec `node --check`.
+- **Non couvert par cette étape** : tests SQL d'intégration, tests E2E navigateur avec connexion, vérification réelle des permissions RLS Supabase, tests automatiques d'accessibilité, de performance et de sécurité.
+- Aucun changement de gameplay, de règle métier, de schéma SQL ou de données pendant cette mise à jour.

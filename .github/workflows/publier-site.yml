@@ -41,8 +41,18 @@ jobs:
         with:
           node-version: 22
 
-      - name: Vérifier les règles du scorer (tests automatiques)
-        run: node outils/test-x01.mjs
+      - name: Vérifier la syntaxe JavaScript
+        run: |
+          find assets/js -type f -name '*.js' -print0 | xargs -0 -n 1 node --check
+
+      - name: Exécuter les cinq suites de tests JavaScript
+        run: |
+          set -e
+          for test in outils/test-*.mjs; do
+            echo "::group::$test"
+            node "$test"
+            echo "::endgroup::"
+          done
 
       - name: Préparer le site et les aperçus de partage
         id: preparer
