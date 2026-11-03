@@ -92,3 +92,22 @@ Les constats issus de SQL du dépôt ne prouvent pas que la production exécute 
 - **P1 CI (amélioration du pipeline)** : remplacement du contrôle limité à X01 par la vérification syntaxique des modules JavaScript et l'exécution de toutes les suites `outils/test-*.mjs` avant génération/publication. Les 5 suites passent localement (172 cas), ainsi que les 56 fichiers JavaScript vérifiés avec `node --check`.
 - **Non couvert par cette étape** : tests SQL d'intégration, tests E2E navigateur avec connexion, vérification réelle des permissions RLS Supabase, tests automatiques d'accessibilité, de performance et de sécurité.
 - Aucun changement de gameplay, de règle métier, de schéma SQL ou de données pendant cette mise à jour.
+
+
+## Lot UX 01 — 3 novembre 2026 — branche uniquement
+
+**Périmètre** : recherche et navigation dans le classement, tolérance de la recherche des membres en administration. Aucun changement sur `main`, les libellés sportifs existants, les calculs officiels, les requêtes Supabase, les profils, le contenu éditorial ou les migrations.
+
+- Ajout de `assets/js/recherche.js` : correspondance insensible aux accents, majuscules, tirets, apostrophes et ordre des mots. Tests unitaires dans `outils/test-recherche.mjs`.
+- `classement.html` et `assets/js/classement.js` : recherche locale joueur/doublette/équipe sur l'ensemble des classements déjà reçus, résultat compté et bouton Effacer ; les rangs officiels et les critères de tri ne sont pas recalculés.
+- `assets/js/admin.js` : même correspondance pour la recherche des membres existante, sans modifier les actions administrateur.
+- `assets/css/style.css` : contrôle discret, responsive et accessible au clavier. `sw.js` précache le nouveau module.
+- Vérifications locales : les cinq tests existants (172 cas) et les 20 nouveaux tests recherche passent ; les 57 modules JavaScript passent la vérification syntaxique. Contrôle visuel et interactions sur une simulation locale isolée à données fictives en 390 px et 1440 px : aucune largeur de document excessive, réduction de 4 à 2 lignes, conservation des rangs 1 et 3, réinitialisation restaurée et recherche doublettes vérifiée. **La simulation ne démontre pas l'accès authentifié réel à la production.**
+- La base SQL n'a pas pu être testée ici : pas de `psql` local, pas de WSL configuré, et le projet Supabase Dolina n'est pas connecté. Les 34 fichiers de scénarios SQL restent à lancer sur un Postgres de test isolé ; aucun test SQL n'a été exécuté pendant ce lot.
+
+### Prochain ordre de travail
+
+1. Valider en compte de test : classement (joueurs/doublettes), recherche admin, mobilité clavier et navigation.
+2. Vérifier les écrans `mes-parties`, `tournois`, `equipes` puis `admin` : pertinence des filtres, recherche, pagination, états chargement/vide/erreur, accessibilité et mobile.
+3. Auditer les requêtes Supabase et RLS sur le vrai projet en lecture seule avant toute proposition de correction backend ; conserver inchangées les règles du club.
+4. Implémenter par petits lots testables, uniquement sur `chore/fullstack-audit-optimization`, sans PR ni merge automatique vers `main`.

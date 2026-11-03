@@ -1,0 +1,35 @@
+# Contrôles de la branche de travail. Ce workflow ne publie pas le site.
+name: Valider la branche de travail
+
+on:
+  push:
+    branches:
+      - chore/fullstack-audit-optimization
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v6
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Vérifier la syntaxe des modules JavaScript
+        run: find assets/js -type f -name '*.js' -print0 | xargs -0 -n 1 node --check
+
+      - name: Exécuter tous les tests JavaScript
+        run: |
+          set -e
+          for test in outils/test-*.mjs; do
+            echo "::group::$test"
+            node "$test"
+            echo "::endgroup::"
+          done

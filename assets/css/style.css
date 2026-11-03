@@ -1008,6 +1008,18 @@ a.ta-carte--ouvert:hover { border-left-color: #7fdc9a; }
 .aj-bilan { display: grid; gap: 4px; font-size: 14px; }
 .aj-ok { margin: 0; color: #7fdc9a; font-weight: 600; }
 .aj-refus { margin: 0; padding-left: 18px; color: var(--erreur); }
+/* Classement : recherche locale dans les résultats déjà chargés */
+.cl-recherche { display: grid; gap: 7px; max-width: 520px; margin: 0 0 16px; }
+.cl-recherche__label { font-size: 13px; font-weight: 700; color: var(--gris-clair); }
+.cl-recherche__ligne { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cl-recherche input {
+  flex: 1 1 240px; min-width: 0; min-height: 46px; padding: 0 12px;
+  border: 1px solid var(--bord-fort); border-radius: 10px;
+  background: var(--carte); color: var(--blanc); font: inherit; font-size: 16px;
+}
+.cl-recherche input:focus-visible { outline: 2px solid var(--orange); outline-offset: 1px; }
+.cl-recherche__resultats { margin: 0; color: var(--gris-clair); font-size: 13px; }
+.cl-recherche__resultats:empty { display: none; }
 /* Classement */
 .cl-tableau td.cl-rang { font-family: var(--police-titre); font-size: 18px; font-weight: 700; color: var(--gris-clair); }
 .cl-podium--1 .cl-rang { color: var(--orange); }

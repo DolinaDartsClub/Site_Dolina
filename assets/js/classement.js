@@ -5,9 +5,13 @@
 // =====================================================================
 
 import { supabase, esc, profilConnecte, message, erreurFr, avatar } from './app.js?v=__VERSION__';
+import { correspondRecherche } from './recherche.js?v=__VERSION__';
 
 const zone = document.getElementById('classement');
 const zoneMsg = document.getElementById('message');
+const champRecherche = document.getElementById('cl-recherche');
+const btnEffacerRecherche = document.getElementById('cl-recherche-effacer');
+const retourRecherche = document.getElementById('cl-recherche-resultats');
 const filtres = { periode: 'saison', jeu: '', equipe: '' };
 let vue = 'joueurs';
 let moi = null;
@@ -48,6 +52,8 @@ async function init() {
 }
 
 async function charger() {
+  donnees = null;
+  retourRecherche.textContent = '';
   zone.innerHTML = '<p class="vide">Calcul du classement…</p>';
   const debut = bornes();
   const params = { p_debut: debut ? debut.toISOString() : null, p_fin: null, p_variant: filtres.jeu || null };
@@ -152,12 +158,22 @@ function tableau(liste) {
 }
 
 function afficher() {
-  const { seuil, classes, autres } = donnees;
+  if (!donnees) return;
+  const { seuil, classes: classesTotales, autres: autresTotaux } = donnees;
   const nom = vue === 'joueurs' ? 'joueur' : 'doublette';
+  const q = champRecherche.value.trim();
+  const filtrer = (liste) => q ? liste.filter((l) => correspondRecherche(q, l.nom, l.equipes)) : liste;
+  const classes = filtrer(classesTotales);
+  const autres = filtrer(autresTotaux);
+  const trouves = classes.length + autres.length;
+  const total = classesTotales.length + autresTotaux.length;
+  btnEffacerRecherche.hidden = !q;
+  retourRecherche.textContent = q ? `${trouves} résultat${trouves > 1 ? 's' : ''} sur ${total}` : '';
   zone.innerHTML = `
     <p class="t-legende">Ordre du classement : matchs gagnés, puis manches gagnées, puis réussite au double, puis moyenne. Touchez un titre de colonne pour trier autrement.
       Pour être classé : au moins <strong>${seuil} manche${seuil > 1 ? 's' : ''}</strong> jouée${seuil > 1 ? 's' : ''} sur la période${moi.role === 'admin' ? ' <button type="button" class="a-tour__modifier" id="btn-seuil">Modifier le seuil</button>' : ''}.</p>
-    ${classes.length ? tableau(classes) : `<p class="vide">Aucun${vue === 'joueurs' ? '' : 'e'} ${nom} classé${vue === 'joueurs' ? '' : 'e'} sur cette période.</p>`}
+    ${classes.length ? tableau(classes) : (q ? '' : `<p class="vide">Aucun${vue === 'joueurs' ? '' : 'e'} ${nom} classé${vue === 'joueurs' ? '' : 'e'} sur cette période.</p>`)}
+    ${q && !trouves ? '<p class="vide">Aucun résultat avec cette recherche. Essayez un autre nom ou effacez le champ.</p>' : ''}
     ${autres.length ? `
       <section class="section cl-autres">
         <h2 class="section__titre">Pas encore classé${vue === 'joueurs' ? 's' : 'es'} <small class="t-petit">(moins de ${seuil} manches jouées)</small></h2>
@@ -184,6 +200,7 @@ async function modifierSeuil() {
 }
 
 function choisirVue(v) {
+  if (vue !== v) champRecherche.value = '';
   vue = v;
   tri = { cle: 'rang', sens: 1 };
   document.querySelectorAll('[data-vue]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.vue === v)));
@@ -191,6 +208,13 @@ function choisirVue(v) {
   history.replaceState(null, '', v === 'doublettes' ? '#doublettes' : location.pathname);
   charger();
 }
+
+champRecherche.addEventListener('input', afficher);
+btnEffacerRecherche.addEventListener('click', () => {
+  champRecherche.value = '';
+  afficher();
+  champRecherche.focus();
+});
 
 document.querySelectorAll('[data-vue]').forEach((b) => b.addEventListener('click', () => choisirVue(b.dataset.vue)));
 document.querySelectorAll('[data-filtre]').forEach((groupe) => {

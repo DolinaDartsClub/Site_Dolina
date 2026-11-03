@@ -7,6 +7,7 @@
 // =====================================================================
 
 import { supabase, esc, message, erreurFr, profilConnecte, dateFr, nomComplet as nomCompletJoueur, avatar, DOSSIER_PHOTOS, formatPartie, identifiantDe, surPlace } from './app.js?v=__VERSION__';
+import { correspondRecherche } from './recherche.js?v=__VERSION__';
 import { initSansEmail } from './admin-sans-email.js?v=__VERSION__';
 import { initRattachementInvites } from './admin-invites.js?v=__VERSION__';
 import { initActus } from './admin-actus.js?v=__VERSION__';
@@ -148,11 +149,10 @@ function afficherRecap() {
 }
 
 function afficherMembres() {
-  const q = recherche.value.trim().toLowerCase();
+  const q = recherche.value;
   const liste = profils.filter((p) => {
-    if (!q) return true;
     const c = prive(p);
-    return [p.first_name, p.last_name, p.nickname, c.email].some((v) => (v || '').toLowerCase().includes(q));
+    return correspondRecherche(q, p.first_name, p.last_name, p.nickname, c.email);
   });
 
   if (!liste.length) {

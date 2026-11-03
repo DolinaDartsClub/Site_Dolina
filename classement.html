@@ -59,6 +59,14 @@
         <button type="button" data-valeur="" aria-pressed="true">Toutes les équipes</button>
       </div>
     </div>
+    <div class="cl-recherche" role="search">
+      <label for="cl-recherche" class="cl-recherche__label">Rechercher dans le classement</label>
+      <div class="cl-recherche__ligne">
+        <input type="search" id="cl-recherche" placeholder="Joueur, doublette ou équipe" autocomplete="off" maxlength="80" aria-controls="classement">
+        <button type="button" class="bouton bouton--petit" id="cl-recherche-effacer" hidden>Effacer</button>
+      </div>
+      <p id="cl-recherche-resultats" class="cl-recherche__resultats" role="status" aria-live="polite"></p>
+    </div>
     <div id="classement" aria-live="polite"><p class="vide">Chargement…</p></div>
   </div>
 </main>

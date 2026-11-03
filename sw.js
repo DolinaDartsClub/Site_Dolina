@@ -41,6 +41,7 @@ const FICHIERS = [
   'assets/css/style.css',
   'assets/js/app.js',
   'assets/js/config.js',
+  'assets/js/recherche.js',
   'assets/js/accueil.js',
   'assets/js/live.js',
   'assets/js/inscription.js',
