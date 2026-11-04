@@ -2618,68 +2618,31 @@ button.pd-fleche:hover { background: rgba(245,122,0,.22); }
 .fm-resultat { margin: 0; text-align: center; font-family: var(--police-titre); font-size: 22px; text-transform: uppercase; color: var(--orange); }
 .fm-signatures { display: grid; gap: 12px; }
 @media (min-width: 720px) { .fm-signatures { grid-template-columns: 1fr 1fr; } }
-.fm-signature { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.fm-signature { display: flex; flex-direction: column; gap: 6px; font-size: 14px; padding: 10px; border: 1px solid var(--bord); border-radius: 10px; }
 .fm-signature small { color: var(--gris); }
 .fm-signature canvas { user-select: none; -webkit-user-select: none; width: 100%; aspect-ratio: 3 / 1; background: #fff; border-radius: 10px; touch-action: none; cursor: crosshair; }
 .fm-signature .lien-bouton { align-self: flex-end; font-size: 13px; }
 .fm-case { display: flex; gap: 8px; align-items: center; }
 
-/* Version imprimable (PDF) : mise en page de la feuille FFD */
-.fm-pdf { display: none; }
-@media print {
-  @page { size: A4 portrait; margin: 8mm; }
-  html, body { background: #fff !important; color: #000 !important; padding: 0 !important; }
-  html::before, html::after, body::before, body::after { display: none !important; }
-  .fm-pdf { background: #fff; }
-  body > *:not(#impression) { display: none !important; }
-  .fm-pdf { display: block !important; }
-  .pdf { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #000; }
-  .pdf h1 { margin: 0; text-align: center; font-size: 17px; line-height: 1.25; }
-  .pdf-haut { display: grid; grid-template-columns: 130px 1fr 130px; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .pdf-logos { display: flex; align-items: center; gap: 8px; }
-  .pdf-site { font-size: 8px; text-align: right; align-self: end; white-space: nowrap; }
-  .pdf-logo { width: 46px; height: auto; display: block; }
-  .pdf-logo--cpard { width: 62px; }
-  .pdf b { font-weight: 700; }
-  .pdf-info { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-bottom: 6px; font-size: 11px; }
-  .pdf-equipes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .pdf-eq { margin: 0 0 3px; font-size: 12px; }
-  .pdf-sous { margin: 4px 0 1px; font-size: 9px; }
-  .pdf-t { width: 100%; border-collapse: collapse; }
-  .pdf-t th, .pdf-t td { border: 1px solid #999; padding: 2px 5px; text-align: left; height: 15px; }
-  .pdf-t th { width: 26px; }
-  .pdf-rempl { margin: 2px 0 0; font-size: 9px; }
-  .pdf-regle { margin: 6px 0; font-size: 9px; }
-  .pdf-corps { display: grid; grid-template-columns: 1fr 120px; gap: 8px; }
-  .pdf-grille { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; align-content: start; }
-  .pdf-m { border: 1px solid #777; padding: 3px 4px; break-inside: avoid; }
-  .pdf-m--d { border: 2px solid #000; }
-  .pdf-m__t { text-align: center; font-size: 9px; margin-bottom: 2px; }
-  .pdf-m__l { display: grid; grid-template-columns: 12px 1fr 18px; align-items: center; gap: 2px; padding: 2px 0; font-size: 12px; }
-  .pdf-m__l i { font-style: normal; border: 1px solid #999; text-align: center; font-weight: 700; }
-  .pdf-score { width: 100%; border-collapse: collapse; font-size: 9px; }
-  .pdf-score th, .pdf-score td { border: 1px solid #999; padding: 1px 3px; text-align: center; }
-  .pdf-score tfoot td { font-size: 12px; font-weight: 700; }
-  .pdf-bas { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; margin-top: 10px; align-items: start; }
-  .pdf-final { display: grid; gap: 8px; }
-  .pdf-totaux { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  .pdf-totaux th, .pdf-totaux td { border: 2px solid #000; padding: 4px 8px; text-align: center; }
-  .pdf-totaux thead th { font-size: 10px; font-weight: 700; }
-  .pdf-totaux tbody th { font-size: 12px; text-align: left; width: 28%; }
-  .pdf-totaux td { font-size: 24px; font-weight: 700; }
-  .pdf-resultat { border: 2px solid #000; padding: 8px 10px; }
-  .pdf-resultat > span { display: block; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
-  .pdf-resultat p { margin: 2px 0; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 18px; }
-  .pdf-resultat i { font-style: normal; font-size: 26px; font-weight: 700; }
-  .pdf-resultat .pdf-bat { font-size: 11px; font-weight: 700; justify-content: flex-start; }
-  .pdf-sig { display: grid; gap: 4px; }
-  .pdf-sig > div { border: 1px solid #999; padding: 3px 6px; min-height: 70px; font-size: 9px; }
-  .pdf-sig img { display: block; height: 40px; width: auto; }
-  .pdf-envoi { margin: 8px 0 0; text-align: center; font-size: 11px; }
-  /* Une seule page A4 */
-  .pdf { break-inside: avoid; page-break-inside: avoid; }
-  .fm-pdf { max-height: 281mm; overflow: hidden; }
-}
+/* Signatures */
+.fm-sig-titre { margin: 6px 0 0; font-size: 16px; }
+.fm-signature--ok { border-color: rgba(123, 216, 143, .4); }
+.fm-sig-img { width: 100%; max-width: 300px; aspect-ratio: 3 / 1; object-fit: contain; background: #fff; border-radius: 8px; }
+.fm-sig-etat { color: #7bd88f; font-size: 14px; }
+.fm-sig-etat--attente { color: var(--gris); font-weight: 400; font-style: italic; }
+.fm-sig-bouton { min-height: 56px; font-size: 17px; }
+.fm-fen-sig { padding: 8px; z-index: 70; }
+.fm-sig-boite { width: 100%; max-width: 900px; max-height: 100%; display: flex; flex-direction: column; gap: 8px; }
+.fm-sig-zone { position: relative; width: 100%; height: min(52vh, 420px); background: #fff; border-radius: 12px; overflow: hidden; }
+@media (orientation: landscape) and (max-height: 500px) { .fm-sig-zone { height: calc(100vh - 150px); } .fm-sig-boite h2 { display: none; } }
+.fm-sig-zone canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: crosshair; z-index: 1; }
+.fm-sig-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 22px; pointer-events: none; }
+.fm-sig-ligne { position: absolute; left: 8%; right: 8%; bottom: 26%; border-bottom: 2px dashed #ccc; pointer-events: none; }
+body.sans-defilement { overflow: hidden; }
+.fm-live { display: inline-flex; align-items: center; gap: 6px; color: #ff5a4f; font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: .06em; }
+.fm-live::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: fm-pulse 1.4s ease-in-out infinite; }
+@keyframes fm-pulse { 50% { opacity: .25; } }
+#fm-lien-public { width: 100%; min-height: 44px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--bord-fort); background: var(--carte); color: var(--blanc); font: inherit; font-size: 16px; }
 .fm-compo input, .fm-compo select, .fm-rempl select, #fm-lien {
   width: 100%; min-height: 44px; padding: 0 10px; border-radius: 8px;
   border: 1px solid var(--bord-fort); background: var(--carte); color: var(--blanc);

@@ -109,12 +109,12 @@ async function charger() {
 
 // Suivi en direct des autres cibles, sans toucher aux compositions en cours de saisie
 async function actualiser() {
-  if (document.hidden || occupe || !fenScore.hidden) return;
+  if (document.hidden || occupe || !fenScore.hidden || !document.getElementById('fen-signature').hidden) return;
   const { data } = await supabase.rpc('feuille_detail', code ? { p_code: code } : { p_feuille: f().id });
   if (!data || JSON.stringify(data) === JSON.stringify(d)) return;
   const cle = (x) => JSON.stringify([x.compo_a, x.compo_e, x.statut, x.rempl_a, x.rempl_e, x.lancee_le, x.pret_a, x.pret_e]);
   const compoChangee = cle(data.feuille) !== cle(d.feuille);
-  const saisieEnCours = sale.A || sale.E || zone.querySelector('.fm-compo :focus, .fm-signature canvas.fm-signe');
+  const saisieEnCours = sale.A || sale.E || zone.querySelector('.fm-compo :focus');
   d = data;
   if (compoChangee && !saisieEnCours) afficher();
   else { afficherMatchs(); afficherBandeau(); }
@@ -331,6 +331,7 @@ function afficher() {
     </section>
 
     ${peutGerer() && f().code ? blocLien() : ''}
+    ${['gerer', 'joueur'].includes(d.role) ? blocSpectateurs() : ''}
 
     <details class="carte-info fm-section" id="fm-compos"${lancee() && commence() ? '' : ' open'}>
       <summary><h2>Compositions</h2></summary>
@@ -371,13 +372,13 @@ function afficherBandeau() {
     const lui = d.role === 'adverse' ? (f().notre_camp === 'A' ? 'E' : 'A') : f().notre_camp;
     ban.innerHTML = `
       <div class="fm-etats">${etat('A')}${etat('E')}</div>
-      <p class="match__format" style="margin:0;text-align:center">Les compositions restent masquées l'une de l'autre jusqu'au lancement de la rencontre.</p>
+      <p class="match__format" style="margin:0;text-align:center">${d.role === 'spectateur' || d.role === 'membre' ? 'Les compositions seront affichées au lancement de la rencontre.' : 'Les compositions restent masquées l\'une de l\'autre jusqu\'au lancement de la rencontre.'}</p>
       ${peutGerer() ? (pret('A') && pret('E')
     ? '<div class="actions" style="justify-content:center"><button type="button" class="bouton bouton--plein" id="fm-lancer">Lancer la rencontre</button></div>'
     : '<p class="fm-alerte">Le lancement sera possible quand les deux équipes seront complètes.</p>')
     : (pret(lui) ? '<p class="fm-alerte">Votre équipe est envoyée. Le capitaine qui reçoit lancera la rencontre.</p>' : '')}`;
   } else {
-    ban.innerHTML = `<p class="match__format" style="text-align:center;margin:0">${t.faits} match${t.faits > 1 ? 's' : ''} joué${t.faits > 1 ? 's' : ''} sur 20</p>
+    ban.innerHTML = `<p class="match__format" style="text-align:center;margin:0">${t.faits < 20 ? '<span class="fm-live">En direct</span> · ' : ''}${t.faits} match${t.faits > 1 ? 's' : ''} joué${t.faits > 1 ? 's' : ''} sur 20</p>
       ${peutGerer() && !commence() ? '<p class="match__format" style="text-align:center;margin:0"><button type="button" class="lien-bouton" id="fm-annuler-lancement">Annuler le lancement</button></p>' : ''}`;
   }
   document.getElementById('fm-lancer')?.addEventListener('click', async () => {
@@ -403,6 +404,23 @@ function blocLien() {
         ${navigator.share ? '<button type="button" class="bouton bouton--petit bouton--plein" id="fm-partager">Partager…</button>' : ''}
         <a class="bouton bouton--petit" href="https://wa.me/?text=${encodeURIComponent(`${texte} : ${url}`)}" target="_blank" rel="noopener">WhatsApp</a>
         <button type="button" class="bouton bouton--petit" id="fm-copier">Copier le lien</button>
+      </div>
+    </details>`;
+}
+
+// Lien public pour suivre le score en direct (script 070)
+function blocSpectateurs() {
+  const url = `${BASE_URL}feuille.html?id=${f().id}`;
+  const texte = `Suivez en direct ${nomEquipe('A')} – ${nomEquipe('E')}`;
+  return `
+    <details class="carte-info fm-section">
+      <summary><h2>Lien spectateurs · score en direct</h2></summary>
+      <p class="intro" style="margin:0">Pour le public, les joueurs ou les supporters : pas besoin de compte. Ils voient le score se mettre à jour tout seul et peuvent suivre chaque match en cours. Ils ne peuvent rien modifier. Les compositions apparaissent au lancement de la rencontre.</p>
+      <input type="text" readonly value="${esc(url)}" id="fm-lien-public" aria-label="Lien spectateurs">
+      <div class="actions">
+        ${navigator.share ? '<button type="button" class="bouton bouton--petit bouton--plein" data-partager-public>Partager…</button>' : ''}
+        <a class="bouton bouton--petit" href="https://wa.me/?text=${encodeURIComponent(`${texte} : ${url}`)}" target="_blank" rel="noopener">WhatsApp</a>
+        <button type="button" class="bouton bouton--petit" data-copier-public>Copier le lien</button>
       </div>
     </details>`;
 }
@@ -509,6 +527,14 @@ function brancherCompos() {
     const champ = document.getElementById('fm-lien');
     try { await navigator.clipboard.writeText(champ.value); } catch { champ.select(); document.execCommand('copy'); }
     message(zoneMsg, 'Lien copié.', 'ok');
+  });
+  zone.querySelector('[data-copier-public]')?.addEventListener('click', async () => {
+    const champ = document.getElementById('fm-lien-public');
+    try { await navigator.clipboard.writeText(champ.value); } catch { champ.select(); document.execCommand('copy'); }
+    message(zoneMsg, 'Lien spectateurs copié.', 'ok');
+  });
+  zone.querySelector('[data-partager-public]')?.addEventListener('click', () => {
+    navigator.share({ title: 'Score en direct', text: `Suivez en direct ${nomEquipe('A')} – ${nomEquipe('E')}`, url: document.getElementById('fm-lien-public').value }).catch(() => {});
   });
   document.getElementById('fm-partager')?.addEventListener('click', () => {
     navigator.share({ title: 'Feuille de match', text: `Feuille de match ${nomEquipe('A')} – ${nomEquipe('E')} : saisissez la composition de votre équipe`, url: document.getElementById('fm-lien').value }).catch(() => {});
@@ -700,36 +726,24 @@ function afficherFin() {
       <tbody><tr><th>Points</th><td>${t.pa}</td><td>${t.pe}</td></tr><tr><th>Manches</th><td>${t.ma}</td><td>${t.me}</td></tr></tbody>
     </table>
     ${resultat ? `<p class="fm-resultat">${resultat}</p>` : `<p class="match__format" style="margin:0">${20 - t.faits} match${20 - t.faits > 1 ? 's' : ''} encore à jouer.</p>`}
-    ${peutGerer() && !validee && t.faits === 20 ? `
-      <div class="fm-signatures">
-        ${['A', 'E'].map((c) => `
-        <div class="fm-signature">
-          <span>Signature du capitaine de l'équipe ${c} <small>(${esc(nomEquipe(c))})</small></span>
-          <canvas width="600" height="200" data-signature="${c}" aria-label="Zone de signature, équipe ${c}"></canvas>
-          <button type="button" class="lien-bouton" data-effacer="${c}">Effacer</button>
-        </div>`).join('')}
-      </div>
-      <label class="fm-case"><input type="checkbox" id="fm-article" checked> Publier un article avec le résultat sur le site</label>
-      <div class="actions"><button type="button" class="bouton bouton--plein" id="fm-valider">Valider la feuille</button></div>
-      <p class="match__format" style="margin:0">Le score est reporté dans le calendrier de l'équipe. Ensuite : export PDF à envoyer au CPARD.</p>` : ''}
+    ${!validee && t.faits === 20 ? blocSignatures() : ''}
     ${validee ? `
-      <div class="actions">
+      ${peutPdf() ? `<div class="actions">
         <button type="button" class="bouton bouton--plein" id="fm-pdf">Télécharger le PDF</button>
-        <a class="bouton" href="mailto:${EMAIL_CPARD}?subject=${encodeURIComponent(sujetMail())}&body=${encodeURIComponent(`Bonjour,\n\nVeuillez trouver ci-joint la feuille de match ${nomEquipe('A')} – ${nomEquipe('E')} (${t.pa}-${t.pe}).\n\nSportivement,\n${d.equipe.name}`)}">Envoyer au CPARD</a>
+        ${peutGerer() ? `<a class="bouton" href="mailto:${EMAIL_CPARD}?subject=${encodeURIComponent(sujetMail())}&body=${encodeURIComponent(`Bonjour,\n\nVeuillez trouver ci-joint la feuille de match ${nomEquipe('A')} – ${nomEquipe('E')} (${t.pa}-${t.pe}).\n\nSportivement,\n${d.equipe.name}`)}">Envoyer au CPARD</a>` : ''}
         ${f().article_id ? `<a class="bouton" href="article.html?id=${f().article_id}">Voir l'article</a>` : ''}
       </div>
-      <p class="match__format" style="margin:0">« Télécharger le PDF » ouvre l'impression : choisissez « Enregistrer au format PDF », puis joignez le fichier au mail du CPARD (${EMAIL_CPARD}).</p>
+      ${peutGerer() ? `<p class="match__format" style="margin:0">Le PDF tient sur une page A4. Sur téléphone, choisissez « Mail » dans le menu de partage pour l'envoyer directement au CPARD (${EMAIL_CPARD}), ou « Enregistrer dans Fichiers ».</p>` : ''}` : ''}
       ${peutGerer() ? '<p class="match__format"><button type="button" class="lien-bouton" id="fm-rouvrir">Rouvrir la feuille pour corriger</button></p>' : ''}` : ''}
     ${!validee && peutGerer() ? '<p class="match__format" style="margin:0"><button type="button" class="lien-bouton" id="fm-apercu">Aperçu du PDF</button></p>' : ''}`;
-  el.querySelectorAll('canvas[data-signature]').forEach(brancherSignature);
-  el.querySelectorAll('[data-effacer]').forEach((b) => b.addEventListener('click', () => {
-    const cv = el.querySelector(`canvas[data-signature="${b.dataset.effacer}"]`);
-    cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
-    cv.classList.remove('fm-signe');
+  el.querySelectorAll('[data-signer]').forEach((b) => b.addEventListener('click', () => ouvrirSignature(b.dataset.signer)));
+  el.querySelectorAll('[data-effacer-sig]').forEach((b) => b.addEventListener('click', async () => {
+    if (!confirm('Effacer cette signature ?')) return;
+    if (await appel('signer_feuille', argsSignature(b.dataset.effacerSig, ''))) await actualiserFin();
   }));
   document.getElementById('fm-valider')?.addEventListener('click', valider);
-  document.getElementById('fm-pdf')?.addEventListener('click', imprimer);
-  document.getElementById('fm-apercu')?.addEventListener('click', imprimer);
+  document.getElementById('fm-pdf')?.addEventListener('click', (e) => telechargerPdf(e.currentTarget));
+  document.getElementById('fm-apercu')?.addEventListener('click', (e) => telechargerPdf(e.currentTarget));
   document.getElementById('fm-rouvrir')?.addEventListener('click', async () => {
     if (!confirm('Rouvrir la feuille ? Les signatures seront effacées : il faudra la valider et la signer à nouveau. L\'article déjà publié reste en ligne.')) return;
     if (await appel('rouvrir_feuille', { p_feuille: f().id }, 'Feuille rouverte.')) await charger();
@@ -741,96 +755,349 @@ const sujetMail = () => {
   return `Feuille de match ${[r.division && `D${r.division}`, r.poule && `P${r.poule}`, r.journee].filter(Boolean).join(' ')} – ${nomEquipe('A')} / ${nomEquipe('E')}`;
 };
 
-function brancherSignature(cv) {
-  const ctx = cv.getContext('2d');
-  ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#111';
-  let trace = false;
-  const pos = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * (cv.width / r.width), (e.clientY - r.top) * (cv.height / r.height)]; };
-  cv.addEventListener('pointerdown', (e) => { trace = true; cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...pos(e)); e.preventDefault(); });
-  cv.addEventListener('pointermove', (e) => { if (!trace) return; ctx.lineTo(...pos(e)); ctx.stroke(); cv.classList.add('fm-signe'); });
-  ['pointerup', 'pointercancel'].forEach((t) => cv.addEventListener(t, () => { trace = false; }));
+// ----- Signatures (script 070) -----
+// Chaque capitaine signe en plein écran, sur le téléphone du capitaine qui reçoit
+// ou sur le sien (le capitaine adverse par son lien). Le capitaine valide ensuite.
+
+const peutPdf = () => ['gerer', 'joueur', 'membre'].includes(d.role);
+const peutSigner = (camp) => peutGerer() || (d.role === 'adverse' && camp !== f().notre_camp);
+const signe = (camp) => f()[`signe_${camp.toLowerCase()}`];
+const argsSignature = (camp, sig) => (code ? { p_code: code, p_camp: camp, p_signature: sig } : { p_feuille: f().id, p_camp: camp, p_signature: sig });
+
+function blocSignatures() {
+  const deux = signe('A') && signe('E');
+  const carte = (c) => {
+    const img = f()[`signature_${c.toLowerCase()}`];
+    return `
+      <div class="fm-signature${signe(c) ? ' fm-signature--ok' : ''}">
+        <span>Capitaine de l'équipe ${c} <small>(${esc(nomEquipe(c))})</small></span>
+        ${signe(c)
+    ? `${img ? `<img class="fm-sig-img" src="${img}" alt="Signature du capitaine ${c}">` : ''}<b class="fm-sig-etat">✓ Signé</b>
+           ${peutSigner(c) ? `<div class="actions"><button type="button" class="bouton bouton--petit" data-signer="${c}">Refaire</button><button type="button" class="lien-bouton" data-effacer-sig="${c}">Effacer</button></div>` : ''}`
+    : (peutSigner(c) ? `<button type="button" class="bouton bouton--plein fm-sig-bouton" data-signer="${c}">✍️ Signer</button>` : '<span class="fm-sig-etat fm-sig-etat--attente">En attente de signature</span>')}
+      </div>`;
+  };
+  let aide = '';
+  if (peutGerer()) {
+    aide = deux ? '' : '<p class="match__format" style="margin:0">Chaque capitaine signe avec le doigt, en plein écran. Le capitaine adverse peut signer ici sur votre téléphone, ou sur le sien depuis son lien.</p>';
+  } else if (d.role === 'adverse') {
+    aide = `<p class="match__format" style="margin:0">${signe(f().notre_camp === 'A' ? 'E' : 'A') ? 'Merci ! Le capitaine qui reçoit va valider la feuille.' : 'Les 20 matchs sont terminés : signez la feuille pour votre équipe.'}</p>`;
+  }
+  return `
+    <h3 class="fm-sig-titre">Signatures</h3>
+    <div class="fm-signatures">${['A', 'E'].map(carte).join('')}</div>
+    ${aide}
+    ${peutGerer() ? `
+      <label class="fm-case"><input type="checkbox" id="fm-article" checked> Publier un article avec le résultat sur le site</label>
+      <div class="actions"><button type="button" class="bouton bouton--plein" id="fm-valider"${deux ? '' : ' disabled'}>Valider la feuille</button></div>
+      <p class="match__format" style="margin:0">${deux ? 'Le score sera reporté dans le calendrier de l\'équipe, puis vous pourrez télécharger le PDF pour le CPARD.' : 'La validation sera possible quand les deux capitaines auront signé.'}</p>` : ''}`;
 }
 
-async function valider() {
-  const sig = (c) => {
-    const cv = zone.querySelector(`canvas[data-signature="${c}"]`);
-    return cv.classList.contains('fm-signe') ? cv.toDataURL('image/png') : '';
+async function actualiserFin() {
+  const y = window.scrollY;
+  const { data } = await supabase.rpc('feuille_detail', code ? { p_code: code } : { p_feuille: f().id });
+  if (data) { d = data; afficherBandeau(); }
+  window.scrollTo(0, y);
+}
+
+// Fenêtre de signature en plein écran
+const fenSig = document.getElementById('fen-signature');
+const cvSig = document.getElementById('sig-canvas');
+let traits = null;   // boîte englobante du tracé (null = vide)
+
+function ouvrirSignature(camp) {
+  fenSig.dataset.camp = camp;
+  document.getElementById('t-signature').textContent = `Signature du capitaine · équipe ${camp}`;
+  document.getElementById('sig-equipe').textContent = nomEquipe(camp);
+  document.getElementById('erreur-sig').textContent = '';
+  fenSig.hidden = false;
+  document.body.classList.add('sans-defilement');
+  requestAnimationFrame(preparerToile);
+}
+function fermerSignature() {
+  fenSig.hidden = true;
+  document.body.classList.remove('sans-defilement');
+}
+function preparerToile() {
+  const r = cvSig.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  cvSig.width = Math.round(r.width * dpr);
+  cvSig.height = Math.round(r.height * dpr);
+  const ctx = cvSig.getContext('2d');
+  ctx.lineWidth = 3.2 * dpr; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#111';
+  traits = null;
+  document.getElementById('sig-placeholder').hidden = false;
+}
+(function brancherToile() {
+  if (!cvSig) return;
+  let trace = false;
+  let dernier = null;
+  const pos = (e) => { const r = cvSig.getBoundingClientRect(); return [(e.clientX - r.left) * (cvSig.width / r.width), (e.clientY - r.top) * (cvSig.height / r.height)]; };
+  const etendre = ([x, y]) => {
+    traits = traits ? { x0: Math.min(traits.x0, x), y0: Math.min(traits.y0, y), x1: Math.max(traits.x1, x), y1: Math.max(traits.y1, y) } : { x0: x, y0: y, x1: x, y1: y };
   };
-  const sa = sig('A'); const se = sig('E');
-  if (!sa || !se) { message(zoneMsg, 'Les deux capitaines doivent signer avant de valider.'); return; }
-  const res = await appel('valider_feuille', { p_feuille: f().id, p_signature_a: sa, p_signature_e: se, p_article: document.getElementById('fm-article').checked },
+  cvSig.addEventListener('pointerdown', (e) => {
+    trace = true; cvSig.setPointerCapture(e.pointerId);
+    const ctx = cvSig.getContext('2d');
+    dernier = pos(e); etendre(dernier);
+    ctx.beginPath(); ctx.arc(dernier[0], dernier[1], ctx.lineWidth / 2, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
+    document.getElementById('sig-placeholder').hidden = true;
+    e.preventDefault();
+  });
+  cvSig.addEventListener('pointermove', (e) => {
+    if (!trace) return;
+    const ctx = cvSig.getContext('2d');
+    const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(...dernier); ctx.lineTo(...p); ctx.stroke();
+    dernier = p; etendre(p);
+    e.preventDefault();
+  });
+  ['pointerup', 'pointercancel'].forEach((t) => cvSig.addEventListener(t, () => { trace = false; }));
+  window.addEventListener('resize', () => { if (!fenSig.hidden && !traits) preparerToile(); });
+}());
+
+// Signature recadrée sur le tracé, réduite à 600 × 200 (fond transparent)
+function imageSignature() {
+  if (!traits) return '';
+  const marge = 12 * (cvSig.width / cvSig.getBoundingClientRect().width || 1);
+  const x0 = Math.max(0, traits.x0 - marge); const y0 = Math.max(0, traits.y0 - marge);
+  const w = Math.min(cvSig.width, traits.x1 + marge) - x0; const h = Math.min(cvSig.height, traits.y1 + marge) - y0;
+  const out = document.createElement('canvas');
+  out.width = 600; out.height = 200;
+  const k = Math.min(600 / w, 200 / h);
+  out.getContext('2d').drawImage(cvSig, x0, y0, w, h, (600 - w * k) / 2, (200 - h * k) / 2, w * k, h * k);
+  return out.toDataURL('image/png');
+}
+
+fenSig?.addEventListener('click', async (e) => {
+  if (e.target.closest('[data-sig-annuler]')) return fermerSignature();
+  if (e.target.closest('[data-sig-effacer]')) return preparerToile();
+  if (!e.target.closest('[data-sig-ok]')) return;
+  const sig = imageSignature();
+  const erreur = document.getElementById('erreur-sig');
+  if (!sig || !traits || (traits.x1 - traits.x0) + (traits.y1 - traits.y0) < 30) { erreur.textContent = 'Signez dans le cadre avec le doigt.'; return; }
+  const ok = await appelSurPlace('signer_feuille', argsSignature(fenSig.dataset.camp, sig), erreur);
+  if (!ok) return;
+  fermerSignature();
+  await actualiserFin();
+});
+
+async function valider() {
+  if (!signe('A') || !signe('E')) { message(zoneMsg, 'Les deux capitaines doivent signer avant de valider.'); return; }
+  const res = await appel('valider_feuille', { p_feuille: f().id, p_signature_a: '', p_signature_e: '', p_article: document.getElementById('fm-article').checked },
     'Feuille validée : le score est reporté dans le calendrier.');
   if (res) await charger();
 }
 
-// Feuille au format FFD, imprimée (ou enregistrée en PDF) depuis le navigateur
-function imprimer() {
+// ----- PDF : un vrai fichier, toujours sur une seule page A4 -----
+
+// Dessinée directement avec jsPDF (texte net, fichier léger, une seule page garantie)
+const LIB_PDF = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+const chargerScript = (src) => new Promise((ok, ko) => {
+  if (window.jspdf) { ok(); return; }
+  const sc = document.createElement('script');
+  sc.src = src; sc.async = true; sc.onload = ok;
+  sc.onerror = () => { sc.remove(); ko(new Error('script')); };
+  document.head.appendChild(sc);
+});
+const nomFichierPdf = () => `${sujetMail().replace(/[\\/:*?"<>|]+/g, '-').replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim()}.pdf`;
+// Image du site en data URL (logos) ; null si indisponible
+async function imageData(url) {
+  try {
+    const rep = await fetch(url);
+    if (!rep.ok) return null;
+    const blob = await rep.blob();
+    return await new Promise((ok) => { const lr = new FileReader(); lr.onload = () => ok(lr.result); lr.onerror = () => ok(null); lr.readAsDataURL(blob); });
+  } catch { return null; }
+}
+// Les polices standard du PDF ne connaissent pas certains signes typographiques
+const txt = (x) => String(x ?? '').replace(/[–—]/g, '-').replace(/[’]/g, "'").replace(/ | /g, ' ');
+
+async function fabriquerPdf() {
+  await chargerScript(LIB_PDF);
+  const [ffd, cpard] = await Promise.all([imageData('assets/img/ffd.jpg'), imageData('assets/img/cpard.jpg')]);
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
   const r = d.rencontre;
   const t = totaux();
-  const dt = new Date(`${r.date_match}T12:00:00`).toLocaleDateString('fr-FR');
-  const ligneJoueurs = (camp) => POSTES[camp].map((p) => `<tr><th>${p}</th><td>${esc(nomPoste(camp, p))}</td></tr>`).join('');
-  const lignePaires = (camp) => PAIRES[camp].map((p) => `<tr><th>${p}</th><td>${esc((compo(camp)[p] || []).map((l) => nomPoste(camp, l)).join(' / '))}</td></tr>`).join('');
-  const blocRempl = (camp) => {
-    const rp = rempl(camp);
-    return `<table class="pdf-t"><tr><th>${REMPL[camp]}</th><td>${esc(nomPoste(camp, REMPL[camp]))}</td></tr></table>
-      <p class="pdf-rempl">remplace le joueur # <b>${rp ? rp.joueur : ''}</b> après le match # <b>${rp ? rp.apres : ''}</b></p>`;
+  const G = 8; const D = 202;   // marges gauche / droite
+  const police = (taille, gras = false) => { pdf.setFont('helvetica', gras ? 'bold' : 'normal'); pdf.setFontSize(taille); };
+  const trait = (e = 0.25, gris = 0) => { pdf.setLineWidth(e); pdf.setDrawColor(gris); };
+  const ecrire = (texte, x, y, o = {}) => pdf.text(txt(texte), x, y, o);
+  // Texte qui tient dans une largeur (réduit si trop long)
+  const ecrireDans = (texte, x, y, largeur, taille, gras = false) => {
+    let tl = taille; police(tl, gras);
+    while (tl > 5 && pdf.getTextWidth(txt(texte)) > largeur) { tl -= 0.5; police(tl, gras); }
+    ecrire(texte, x, y);
   };
-  const caseMatch = (n) => {
-    const o = ORDRE[n - 1]; const m = d.matchs[n - 1]; const fini = m.statut === 'termine';
-    return `<div class="pdf-m${o.a.length === 2 ? ' pdf-m--d' : ''}">
-      <div class="pdf-m__t">MATCH #${n}</div>
-      <div class="pdf-m__l"><span>${o.premier === 'A' ? '⊙' : ''}</span><b>${o.a}</b><i>${fini ? m.manches_a : ''}</i></div>
-      <div class="pdf-m__l"><span>${o.premier === 'E' ? '⊙' : ''}</span><b>${o.e}</b><i>${fini ? m.manches_e : ''}</i></div>
-    </div>`;
+  // Signe ⊙ (camp qui commence)
+  const premier = (x, y) => { trait(0.3); pdf.circle(x, y, 1.3); pdf.setFillColor(0); pdf.circle(x, y, 0.35, 'F'); };
+
+  // --- En-tête : logos FFD et CPARD côte à côte, titre, site
+  if (ffd) pdf.addImage(ffd, 'JPEG', G, 8, 13.2, 18);
+  if (cpard) pdf.addImage(cpard, 'JPEG', G + 15, 8, 17.75, 18);
+  police(13, true);
+  ecrire('FÉDÉRATION FRANÇAISE DE DARTS', 112, 15, { align: 'center' });
+  ecrire('CHAMPIONNAT PAR ÉQUIPES', 112, 21, { align: 'center' });
+  police(6.5); ecrire('https://www.ffdarts.fr', D, 25.5, { align: 'right' });
+
+  // --- Date, lieu, division, poule, journée
+  let x = G; const yInfo = 33;
+  [['DATE', new Date(`${r.date_match}T12:00:00`).toLocaleDateString('fr-FR')], ['LIEU', r.salle?.nom || ''], ['DIVISION', r.division || ''],
+    ['POULE', r.poule || ''], ['JOURNÉE', String(r.journee || '').replace(/^J/i, '')]].forEach(([l, v]) => {
+    police(9); ecrire(`${l} : `, x, yInfo); x += pdf.getTextWidth(txt(`${l} : `));
+    police(9, true); ecrire(v, x, yInfo); x += pdf.getTextWidth(txt(v)) + 7;
+  });
+
+  // --- Compositions
+  const ligne = (x0, y, larg, lettre, nom, haut = 5.5) => {
+    trait(0.2, 120);
+    pdf.rect(x0, y, 8, haut); pdf.rect(x0 + 8, y, larg - 8, haut);
+    police(8.5, true); ecrire(lettre, x0 + 1.5, y + haut - 1.7);
+    ecrireDans(nom, x0 + 10, y + haut - 1.7, larg - 12, 9);
   };
-  const scoreCol = d.matchs.map((m) => `<tr><td>${m.statut === 'termine' ? (m.manches_a > m.manches_e ? 1 : 0) : ''}</td><th>#${m.numero}</th><td>${m.statut === 'termine' ? (m.manches_e > m.manches_a ? 1 : 0) : ''}</td></tr>`).join('');
-  const vainqueur = t.pa >= t.pe ? 'A' : 'E';
-  document.getElementById('impression').innerHTML = `
-    <div class="pdf">
-      <div class="pdf-haut">
-        <span class="pdf-logos"><img class="pdf-logo" src="assets/img/ffd.jpg" alt="FFD"><img class="pdf-logo pdf-logo--cpard" src="assets/img/cpard.jpg" alt="CPARD"></span>
-        <h1>FÉDÉRATION FRANÇAISE DE DARTS<br>CHAMPIONNAT PAR ÉQUIPES</h1>
-        <span class="pdf-site">https://www.ffdarts.fr</span>
-      </div>
-      <div class="pdf-info">
-        <span>DATE : <b>${esc(dt)}</b></span><span>LIEU : <b>${esc(r.salle?.nom || '')}</b></span>
-        <span>DIVISION : <b>${esc(r.division || '')}</b></span><span>POULE : <b>${esc(r.poule || '')}</b></span><span>JOURNÉE : <b>${esc(String(r.journee || '').replace(/^J/i, ''))}</b></span>
-      </div>
-      <div class="pdf-equipes">
-        ${['A', 'E'].map((c) => `<div>
-          <p class="pdf-eq">ÉQUIPE ${c} : <b>${esc(nomEquipe(c))}</b></p>
-          <p class="pdf-sous">SIMPLES</p><table class="pdf-t">${ligneJoueurs(c)}</table>
-          <p class="pdf-sous">DOUBLES</p><table class="pdf-t">${lignePaires(c)}</table>
-          <p class="pdf-sous">REMPLAÇANT</p>${blocRempl(c)}
-        </div>`).join('')}
-      </div>
-      <p class="pdf-regle">Tous les matchs se jouent au meilleur des 3 manches de 501 points, départ direct, finish double. L'ordre de lancer est déterminé par le signe ⊙. Dans la colonne [SCORE], « 1 » pour un match gagné et « 0 » pour un match perdu.</p>
-      <div class="pdf-corps">
-        <div class="pdf-grille">${ORDRE.map((o) => caseMatch(o.n)).join('')}</div>
-        <table class="pdf-score"><thead><tr><th>A</th><th>SCORE</th><th>E</th></tr></thead><tbody>${scoreCol}</tbody></table>
-      </div>
-      <div class="pdf-bas">
-        <div class="pdf-final">
-          <table class="pdf-totaux">
-            <thead><tr><th></th><th>A · ${esc(nomEquipe('A'))}</th><th>E · ${esc(nomEquipe('E'))}</th></tr></thead>
-            <tbody><tr><th>TOTAL</th><td>${t.pa}</td><td>${t.pe}</td></tr><tr><th>MANCHES</th><td>${t.ma}</td><td>${t.me}</td></tr></tbody>
-          </table>
-          <div class="pdf-resultat"><span>RÉSULTAT</span>
-            <p><b>${esc(nomEquipe(vainqueur))}</b> <i>${Math.max(t.pa, t.pe)}</i></p>
-            <p class="pdf-bat">${t.pa === t.pe ? 'MATCH NUL AVEC' : 'BAT'}</p>
-            <p><b>${esc(nomEquipe(vainqueur === 'A' ? 'E' : 'A'))}</b> <i>${Math.min(t.pa, t.pe)}</i></p>
-          </div>
-        </div>
-        <div class="pdf-sig">${['A', 'E'].map((c) => `<div>signature cap équipe ${c}${f()[`signature_${c.toLowerCase()}`] ? `<img src="${f()[`signature_${c.toLowerCase()}`]}" alt="">` : ''}</div>`).join('')}</div>
-      </div>
-      <p class="pdf-envoi">Envoyer à : ${EMAIL_CPARD}</p>
-    </div>`;
-  const titre = document.title;
-  document.title = sujetMail();
-  // Les logos doivent être chargés avant l'impression
-  const images = [...document.querySelectorAll('#impression img')];
-  Promise.all(images.map((im) => (im.complete ? null : new Promise((ok) => { im.onload = ok; im.onerror = ok; }))))
-    .then(() => setTimeout(() => { window.print(); document.title = titre; }, 50));
+  ['A', 'E'].forEach((c, i) => {
+    const x0 = i ? 108 : G; const larg = 94;
+    let y = 41;
+    police(10); ecrire(`ÉQUIPE ${c} : `, x0, y);
+    const w = pdf.getTextWidth(txt(`ÉQUIPE ${c} : `));
+    ecrireDans(nomEquipe(c), x0 + w, y, larg - w, 10, true);
+    police(7); ecrire('SIMPLES', x0, y + 4.5);
+    y += 5.5;
+    POSTES[c].forEach((p) => { ligne(x0, y, larg, p, nomPoste(c, p)); y += 5.5; });
+    police(7); ecrire('DOUBLES', x0, y + 3.5); y += 4.5;
+    PAIRES[c].forEach((p) => { ligne(x0, y, larg, p, (compo(c)[p] || []).map((l) => nomPoste(c, l)).join(' / ')); y += 5.5; });
+    police(7); ecrire('REMPLAÇANT', x0, y + 3.5); y += 4.5;
+    ligne(x0, y, larg, REMPL[c], nomPoste(c, REMPL[c])); y += 5.5;
+    const rp = rempl(c);
+    police(7.5); ecrire('remplace le joueur # ', x0, y + 4);
+    let xx = x0 + pdf.getTextWidth('remplace le joueur # ');
+    police(7.5, true); ecrire(rp ? rp.joueur : '____', xx, y + 4); xx += pdf.getTextWidth(rp ? rp.joueur : '____');
+    police(7.5); ecrire('  après le match # ', xx, y + 4); xx += pdf.getTextWidth(txt('  après le match # '));
+    police(7.5, true); ecrire(rp ? String(rp.apres) : '____', xx, y + 4);
+  });
+
+  // --- Règle
+  police(7);
+  const regle = pdf.splitTextToSize(txt("Tous les matchs se jouent au meilleur des 3 manches de 501 points, départ direct, finish double. L'ordre de lancer est déterminé par le signe ⊙ (rond pointé). Dans la colonne [SCORE], « 1 » pour un match gagné et « 0 » pour un match perdu.").replace('⊙ ', ''), D - G);
+  pdf.text(regle, G, 103.5);
+
+  // --- Grille des 20 matchs (5 colonnes) et colonne SCORE
+  const yG = 111; const wM = 30.4; const hM = 17; const ecart = 2;
+  ORDRE.forEach((o) => {
+    const m = d.matchs[o.n - 1]; const fini = m.statut === 'termine';
+    const col = (o.n - 1) % 5; const rang = Math.floor((o.n - 1) / 5);
+    const x0 = G + col * (wM + ecart); const y0 = yG + rang * (hM + ecart);
+    const dbl = o.a.length === 2;
+    trait(dbl ? 0.6 : 0.25, dbl ? 0 : 100); pdf.rect(x0, y0, wM, hM);
+    police(6.5); ecrire(`MATCH #${o.n}`, x0 + wM / 2, y0 + 3.3, { align: 'center' });
+    [['A', o.a, m.manches_a], ['E', o.e, m.manches_e]].forEach(([camp, poste, manches], k) => {
+      const yl = y0 + 8.3 + k * 6;
+      if (o.premier === camp) premier(x0 + 3, yl - 1.2);
+      police(10, true); ecrire(poste, x0 + 6, yl);
+      trait(0.2, 120); pdf.rect(x0 + wM - 7, yl - 4, 5.5, 5.2);
+      if (fini) { police(10, true); ecrire(String(manches), x0 + wM - 4.25, yl, { align: 'center' }); }
+    });
+  });
+  const xS = 170; const wS = D - xS; const hS = 3.6;
+  trait(0.2, 120); police(6.5, true);
+  pdf.rect(xS, yG, 7, hS); pdf.rect(xS + 7, yG, wS - 14, hS); pdf.rect(D - 7, yG, 7, hS);
+  ecrire('A', xS + 3.5, yG + 2.6, { align: 'center' }); ecrire('SCORE', xS + wS / 2, yG + 2.6, { align: 'center' }); ecrire('E', D - 3.5, yG + 2.6, { align: 'center' });
+  d.matchs.forEach((m, i) => {
+    const y = yG + hS * (i + 1); const fini = m.statut === 'termine';
+    pdf.rect(xS, y, 7, hS); pdf.rect(xS + 7, y, wS - 14, hS); pdf.rect(D - 7, y, 7, hS);
+    police(6.5); ecrire(`#${m.numero}`, xS + wS / 2, y + 2.6, { align: 'center' });
+    if (fini) {
+      police(7, true);
+      ecrire(m.manches_a > m.manches_e ? '1' : '0', xS + 3.5, y + 2.6, { align: 'center' });
+      ecrire(m.manches_e > m.manches_a ? '1' : '0', D - 3.5, y + 2.6, { align: 'center' });
+    }
+  });
+
+  // --- Bas de page : TOTAL / MANCHES, RÉSULTAT (à gauche), signatures (à droite)
+  const yB = 190; const xT = G; const wT = 118;
+  const c1 = 30; const c2 = (wT - c1) / 2;
+  trait(0.6, 0);
+  pdf.rect(xT, yB, c1, 7); pdf.rect(xT + c1, yB, c2, 7); pdf.rect(xT + c1 + c2, yB, c2, 7);
+  ecrireDans(`A - ${nomEquipe('A')}`, xT + c1 + 2, yB + 4.8, c2 - 4, 8, true);
+  ecrireDans(`E - ${nomEquipe('E')}`, xT + c1 + c2 + 2, yB + 4.8, c2 - 4, 8, true);
+  [['TOTAL', t.pa, t.pe], ['MANCHES', t.ma, t.me]].forEach(([l, a, e], k) => {
+    const y = yB + 7 + k * 12;
+    pdf.rect(xT, y, c1, 12); pdf.rect(xT + c1, y, c2, 12); pdf.rect(xT + c1 + c2, y, c2, 12);
+    police(10, true); ecrire(l, xT + 2.5, y + 7.5);
+    police(20, true); ecrire(String(a), xT + c1 + c2 / 2, y + 8.8, { align: 'center' }); ecrire(String(e), xT + c1 + c2 * 1.5, y + 8.8, { align: 'center' });
+  });
+  const yR = yB + 36; const hR = 34;
+  pdf.rect(xT, yR, wT, hR);
+  police(8, true); ecrire('RÉSULTAT', xT + 3, yR + 5);
+  if (t.faits === 20) {
+    const v = t.pa >= t.pe ? 'A' : 'E'; const p = v === 'A' ? 'E' : 'A';
+    ecrireDans(nomEquipe(v), xT + 3, yR + 14, wT - 25, 14, true);
+    police(22, true); ecrire(String(Math.max(t.pa, t.pe)), xT + wT - 4, yR + 14.5, { align: 'right' });
+    police(9, true); ecrire(t.pa === t.pe ? 'MATCH NUL AVEC' : 'BAT', xT + 3, yR + 20.5);
+    ecrireDans(nomEquipe(p), xT + 3, yR + 29, wT - 25, 14, true);
+    police(22, true); ecrire(String(Math.min(t.pa, t.pe)), xT + wT - 4, yR + 29.5, { align: 'right' });
+  }
+  const xSig = 132; const wSig = D - xSig; const hSig = 34;
+  ['A', 'E'].forEach((c, k) => {
+    const y = yB + k * (hSig + 2);
+    trait(0.25, 100); pdf.rect(xSig, y, wSig, hSig);
+    police(7); ecrire(`signature cap équipe ${c} (${nomEquipe(c)})`.slice(0, 60), xSig + 2, y + 3.8);
+    const sig = f()[`signature_${c.toLowerCase()}`];
+    if (sig) { try { pdf.addImage(sig, 'PNG', xSig + 4, y + 6, wSig - 8, (wSig - 8) / 3); } catch { /* signature illisible */ } }
+  });
+
+  police(9); ecrire(`Envoyer à : ${EMAIL_CPARD}`, 105, 270, { align: 'center' });
+  police(6.5); pdf.setTextColor(120); ecrire(`Feuille générée par le site du Dolina Darts Club le ${new Date().toLocaleDateString('fr-FR')}`, 105, 288, { align: 'center' }); pdf.setTextColor(0);
+  pdf.setProperties({ title: txt(sujetMail()) });
+  return pdf.output('blob');
 }
+
+let pdfPret = null;   // { fichier, url }
+async function telechargerPdf(bouton) {
+  if (bouton.disabled) return;
+  const texte = bouton.textContent;
+  bouton.disabled = true;
+  bouton.textContent = 'Préparation du PDF…';
+  try {
+    const blob = await fabriquerPdf();
+    if (pdfPret) URL.revokeObjectURL(pdfPret.url);
+    const nom = nomFichierPdf();
+    let fichier = null;
+    try { fichier = new File([blob], nom, { type: 'application/pdf' }); } catch { /* très vieux navigateur */ }
+    pdfPret = { fichier, url: URL.createObjectURL(blob), nom };
+    const tactile = window.matchMedia?.('(pointer: coarse)').matches;
+    if (tactile) {
+      // Téléphone / tablette : une fenêtre pour partager (Mail, WhatsApp, Fichiers) ou ouvrir le PDF
+      const fen = document.getElementById('fen-pdf');
+      document.getElementById('pdf-partager').hidden = !(fichier && navigator.canShare?.({ files: [fichier] }));
+      const lien = document.getElementById('pdf-ouvrir');
+      lien.href = pdfPret.url; lien.download = nom;
+      fen.hidden = false;
+    } else {
+      enregistrerPdf();
+      message(zoneMsg, `PDF téléchargé : ${nom}`, 'ok');
+    }
+  } catch (err) {
+    console.error(err);
+    message(zoneMsg, 'Impossible de préparer le PDF (connexion internet ?). Réessayez dans un instant.');
+  } finally {
+    bouton.disabled = false;
+    bouton.textContent = texte;
+  }
+}
+function enregistrerPdf() {
+  const a = document.createElement('a');
+  a.href = pdfPret.url; a.download = pdfPret.nom;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => a.remove(), 1000);
+}
+document.getElementById('fen-pdf')?.addEventListener('click', async (e) => {
+  const fen = e.currentTarget;
+  if (e.target === fen || e.target.closest('[data-fermer]')) { fen.hidden = true; return; }
+  if (e.target.closest('#pdf-partager')) {
+    try { await navigator.share({ files: [pdfPret.fichier], title: sujetMail() }); fen.hidden = true; } catch (err) { if (err?.name !== 'AbortError') enregistrerPdf(); }
+  }
+});
 
 demarrer();

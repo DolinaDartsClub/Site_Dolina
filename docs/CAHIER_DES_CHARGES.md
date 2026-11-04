@@ -87,8 +87,12 @@ Règles validées :
   ou saisi en manches seulement (sans stats).
 - Un remplacement par équipe : les matchs suivants basculent sur le remplaçant.
 - 1 point par match gagné ; totaux points et manches automatiques.
-- Validation signée par les deux capitaines ; score reporté au calendrier ; **PDF au format FFD** (logos FFD
-  et CPARD, une page A4) à envoyer à dscpard@gmail.com ; article automatique (option).
+- Signature au doigt en plein écran ; chaque capitaine peut signer sur son propre téléphone (l'adverse par son lien).
+- Validation par le capitaine qui gère, une fois les deux signatures faites ; score reporté au calendrier ;
+  **vrai fichier PDF au format FFD, toujours sur une seule page A4** (logos FFD et CPARD) à envoyer à
+  dscpard@gmail.com (partage direct par Mail sur téléphone) ; article automatique (option).
+- **Lien spectateurs** : tout le monde, même sans compte, suit le score en direct (rien de modifiable ;
+  compositions visibles après le lancement).
 - Création d'une rencontre directement depuis la feuille ; feuille possible aussi sur une rencontre déjà jouée.
 
 ### 6.7 Scorer X01 ✅
@@ -186,6 +190,7 @@ GitHub Pages + Supabase gratuits ✅. ⏳ Passage sur **dolina.mydarts.org** (CN
 | 31/10/2026 | Tableau B double élimination : le finaliste du A ne descend pas dans le B |
 | 31/10/2026 | Scripts SQL 001 à 067 exécutés en production |
 | 01/11/2026 | Ligue : contact WhatsApp entre adversaires, numéro partagé avec accord |
+| 04/11/2026 | Feuille CPARD : PDF d'une page en vrai fichier, signature à distance, lien spectateurs public |
 
 ## 12. Feuille de route
 

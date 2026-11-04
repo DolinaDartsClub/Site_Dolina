@@ -46,8 +46,37 @@
   </div>
 </div>
 
-<!-- Version imprimable (PDF) au format de la feuille FFD -->
-<div id="impression" class="fm-pdf" aria-hidden="true"></div>
+<!-- Signature d'un capitaine, en plein écran -->
+<div class="fenetre fm-fen-sig" id="fen-signature" role="dialog" aria-modal="true" aria-labelledby="t-signature" hidden>
+  <div class="fenetre__boite fm-sig-boite">
+    <h2 id="t-signature">Signature</h2>
+    <p class="match__format" style="margin:0"><strong id="sig-equipe"></strong> · signez avec le doigt dans le cadre blanc. Astuce : tournez le téléphone pour avoir plus de place.</p>
+    <div class="fm-sig-zone">
+      <canvas id="sig-canvas" aria-label="Zone de signature"></canvas>
+      <span class="fm-sig-placeholder" id="sig-placeholder">Signez ici</span>
+      <span class="fm-sig-ligne" aria-hidden="true"></span>
+    </div>
+    <p class="t-erreur" id="erreur-sig" role="alert"></p>
+    <div class="actions">
+      <button type="button" class="bouton" data-sig-annuler>Annuler</button>
+      <button type="button" class="bouton" data-sig-effacer>Recommencer</button>
+      <button type="button" class="bouton bouton--plein" data-sig-ok>Enregistrer la signature</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF prêt (téléphone / tablette) -->
+<div class="fenetre" id="fen-pdf" role="dialog" aria-modal="true" aria-labelledby="t-pdf" hidden>
+  <div class="fenetre__boite">
+    <h2 id="t-pdf">PDF prêt</h2>
+    <p class="match__format" style="margin:0">La feuille tient sur une page A4. Partagez-la (Mail pour le CPARD, WhatsApp, Enregistrer dans Fichiers…) ou ouvrez-la.</p>
+    <div class="actions">
+      <button type="button" class="bouton bouton--plein" id="pdf-partager">Partager / enregistrer</button>
+      <a class="bouton" id="pdf-ouvrir" href="#" target="_blank" rel="noopener">Ouvrir le PDF</a>
+      <button type="button" class="bouton" data-fermer>Fermer</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

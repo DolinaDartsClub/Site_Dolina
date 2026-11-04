@@ -493,7 +493,7 @@ const CLE_VISITEUR = 'dolina-visiteur';
 const PAGES_SANS_ACCUEIL = /(connexion|inscription|mot-de-passe[\w-]*|live|article|scorer|mentions-legales|contact|bientot|mes-donnees)\.html$/;
 async function accueilVisiteur() {
   const page = location.pathname;
-  if (PAGES_SANS_ACCUEIL.test(page) || /feuille\.html$/.test(page) && new URLSearchParams(location.search).has('code')) return;
+  if (PAGES_SANS_ACCUEIL.test(page) || /feuille\.html$/.test(page) && /[?&](code|id)=/.test(location.search)) return;
   try {
     const t = Number(localStorage.getItem(CLE_VISITEUR) || 0);
     if (Date.now() - t < 7 * 86400000) return;

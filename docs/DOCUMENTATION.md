@@ -125,7 +125,7 @@ pour les non-admins tant que l'admin ne l'a pas ouverte.
 | `face-a-face.html` | Face-à-face entre deux membres ou deux doublettes | membres |
 | `equipes.html` | Équipes : calendrier, résultats, effectif, salles ; onglet **Fil du club** | tous (effectif et fil : membres) |
 | `capitaine.html` | Espace capitaine | capitaines, vice, admin |
-| `feuille.html` | **Feuille de match CPARD** (liste, création, feuille, lien adverse `?code=`) | membres d'équipe ; capitaine adverse par le lien |
+| `feuille.html` | **Feuille de match CPARD** (liste, création, feuille, lien adverse `?code=`, lien spectateurs `?id=`) | membres d'équipe ; capitaine adverse par le lien ; tout le monde en spectateur |
 | `tournois.html` | Mes tournois, rejoindre avec un code, derniers tournois du club | membres |
 | `tournoi-creer.html` | Créer / modifier un tournoi | membres |
 | `tournoi.html` | Page d'un tournoi ou de la ligue : participants, poules, arbre(s), matchs, stats, gestion | participants, organisateur, spectateurs si public |
@@ -135,7 +135,7 @@ pour les non-admins tant que l'admin ne l'a pas ouverte.
 | `bientot.html` | Page d'attente des rubriques pas encore ouvertes | tous |
 
 **Fenêtre de bienvenue** : un visiteur non connecté voit d'abord « Se connecter / Créer mon compte joueur /
-Continuer en tant que visiteur » (pas sur connexion, inscription, live, article, contact, lien adverse de feuille…).
+Continuer en tant que visiteur » (pas sur connexion, inscription, live, article, contact, liens de feuille `?code=` et `?id=`…).
 
 ## 5. Modules JavaScript
 
@@ -216,7 +216,7 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
 - **Équipe de test** (case dans Admin › Équipes, script 058) : absente de l'accueil, garde sa page.
 - Admin › Équipes : créer, renommer, ordonner, supprimer, capitaine, vice-capitaine, logo, équipe de test.
 
-### 6.5 Feuille de match CPARD (`feuille.html`, scripts 056, 057, 064)
+### 6.5 Feuille de match CPARD (`feuille.html`, scripts 056, 057, 064, 070)
 
 1. **Liste** par équipe (onglets), séparée Domicile / Extérieur ; bouton « + Nouvelle rencontre » (crée la
    rencontre au calendrier et ouvre sa feuille) ; « Feuille de match » aussi sur chaque rencontre de la page Équipes, même déjà jouée.
@@ -244,9 +244,18 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
 6. Chaque match : **au scorer** (501, meilleur des 3 manches, stats dans le compte des joueurs, type « ligue »)
    ou **score saisi** (2-0, 2-1, 1-2, 0-2, sans stats). « Corriger » remet un match à jouer. La page reste en place après une saisie.
 7. **Remplacement** : un par équipe, « Y remplace D après le match 10 » → les matchs suivants (doubles compris) passent au remplaçant.
-8. **Validation** : 20 matchs terminés + **signatures des deux capitaines au doigt** → score reporté au
-   calendrier, article publié (option), **PDF au format FFD** (logos FFD et CPARD, une page A4) et mail
-   préparé pour dscpard@gmail.com (le PDF est à joindre). « Rouvrir » efface les signatures.
+8. **Signatures** (070) : quand les 20 matchs sont terminés, chaque capitaine appuie sur « ✍️ Signer » et signe
+   au doigt **en plein écran** (téléphone tourné possible). Le capitaine adverse peut signer sur son propre
+   téléphone par son lien, ou sur celui du capitaine qui reçoit. Corriger un match efface les signatures.
+9. **Validation** (capitaine qui gère, les deux signatures présentes) → score reporté au calendrier, article
+   publié (option). « Rouvrir » efface les signatures.
+10. **PDF** (070) : un **vrai fichier PDF d'une seule page A4** au format FFD (logos FFD et CPARD côte à côte,
+    compositions, 20 matchs, colonne SCORE, TOTAL / MANCHES / RÉSULTAT, signatures), dessiné dans le navigateur
+    avec jsPDF (chargé à la demande depuis jsdelivr). Ordinateur : téléchargement direct. Téléphone : fenêtre
+    « PDF prêt » → Partager / enregistrer (Mail pour dscpard@gmail.com, WhatsApp, Fichiers) ou Ouvrir le PDF.
+11. **Spectateurs** (070) : lien public `feuille.html?id=…` (bloc « Lien spectateurs » pour le capitaine et les
+    joueurs) : sans compte, score mis à jour toutes les 8 secondes, « Suivre » sur chaque match en cours au
+    scorer, compositions visibles seulement après le lancement, rien de modifiable, signatures non affichées.
 
 ### 6.6 Tournois
 
@@ -321,7 +330,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État au 01/11/2026 : scripts **001 à 068 exécutés** en production ; **069 à exécuter**.
+> État au 01/11/2026 : scripts **001 à 068 exécutés** en production ; **069 et 070 à exécuter**.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
@@ -375,6 +384,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 067 | Prolongation des matchs « premier à N » | ✅ |
 | 068 | Ligue : contacter son adversaire sur WhatsApp (numéro partagé avec accord) | ✅ |
 | 069 | Master / phase finale : têtes de série croisées avec 2 poules (1A, 1B, 2A, 2B…) | ⏳ |
+| 070 | Feuille CPARD : spectateurs en direct, signature à distance (`signer_feuille`) | ⏳ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
@@ -387,7 +397,7 @@ Supabase › Authentication › Email Templates le jour où les emails seront ac
 | Stats | `stats_joueur` (022), `stats_tournoi` (020), `classement_membres` / `classement_doublettes` (045), `records_club` (032), `face_a_face*` / `liste_doublettes` (023), `fil_du_club` (049) |
 | Tournois | `rejoindre_tournoi` / `apercu_tournoi` (044), `lancer_tournoi` (065), `annuler_lancement` (013), `tournoi_detail` (065), `tournois_en_cours` (044), `lancer_match_tournoi` (067), `valider_match_tournoi` / `forfait_match` / `reinitialiser_match` / `lancer_phase_finale` (016), `corriger_score_match` (017), `definir_format_tour` (065), `definir_cibles_poule` (042), `definir_cibles_finale` (043), `cloturer_match` (053), `ajouter_joueur_en_cours` (059), `creer_tableau_b` (066), `derniers_tournois` (065), `supprimer_tournoi` (027) |
 | Ligue | `definir_visibilite_ligue` / `definir_qualifies` (044), `definir_fin_saison` / `proposer_resultat_ligue` / `repondre_proposition_ligue` / `match_nul_ligue` / `propositions_ligue_en_cours` / `mes_rappels_ligue` (050), `niveaux_tournoi` (063), `contacts_ligue` (068) |
-| Feuille CPARD | `creer_feuille` (064), `feuille_detail` (057), `feuilles_rencontres`, `enregistrer_compo` (057), `lancer_rencontre` / `annuler_lancement_feuille` (057), `definir_cibles_feuille`, `definir_remplacement` (057), `lancer_match_feuille`, `valider_match_feuille`, `saisir_resultat_feuille`, `remettre_match_feuille`, `valider_feuille`, `rouvrir_feuille`, `supprimer_feuille`, `feuille_de_partie` (056) |
+| Feuille CPARD | `creer_feuille` (064), `feuille_detail` (070), `feuilles_rencontres`, `enregistrer_compo` (057), `lancer_rencontre` / `annuler_lancement_feuille` (057), `definir_cibles_feuille`, `definir_remplacement` (057), `lancer_match_feuille`, `valider_match_feuille`, `saisir_resultat_feuille`, `remettre_match_feuille`, `signer_feuille` (070), `valider_feuille` (070), `rouvrir_feuille`, `supprimer_feuille`, `feuille_de_partie` (056) |
 | Divers | `envoyer_demande_contact_v2` (038), `sauvegarde_club` / `espace_utilise` (024), `definir_vice_capitaine` (036), `forme_equipe` (037) |
 
 Les fonctions internes (non appelables depuis le site) gèrent les arbres (`creer_arbre`, `faire_avancer`,
@@ -425,7 +435,7 @@ d'Actions pour `outils/generer-partage.mjs`, `PG*` pour la base de test locale, 
 | `node outils/test-compter.mjs` | Compter une manche | 25 réussis |
 | `node outils/test-pentadarts.mjs` | Pentadarts, Capital, Cricket | 64 réussis |
 | `node outils/test-echauffement.mjs` | Échauffement | 20 réussis |
-| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **649 réussis, 0 échec** |
+| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **672 réussis, 0 échec** |
 
 La base de test est un Postgres 16 local qui imite Supabase (`stub.sql`) : voir `outils/test-base/LISEZMOI.md`.
 Utilisateurs de test : Tony (admin), Will, Franck, Gérald (membres), Paul (en attente).
@@ -525,5 +535,6 @@ aller-retour pour la ligue.
 | 27/10/2026 | Niveaux réservés à l'admin et à la ligue, PDF CPARD (totaux, logos, une page), équipe qui reçoit = A, fenêtre de bienvenue, **tableau B en double élimination**, correctif tableau B |
 | 30/10/2026 | Bouton « Accepter » corrigé, feuille sur rencontres jouées, admin sans remontée de page, niveaux sur la page de la ligue, **prolongation** |
 | 31/10/2026 | Relecture complète, tests remis à jour (`tout-tester.sh`), documentation et cahier des charges v2 |
+| 04/11/2026 | Feuille CPARD : vrai PDF d'une page (téléchargement réparé), signature plein écran et à distance, lien spectateurs en direct |
 
 Le détail de chaque changement est dans l'historique Git (`git log`).

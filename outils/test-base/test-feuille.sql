@@ -27,7 +27,8 @@ select _v('20 matchs créés', $$select count(*)::text from feuille_matchs where
 select _t(:'G', 'membre hors équipe : lecture seule', $$select feuille_detail(current_setting('t.f')::uuid) ->> 'role'$$);
 select _t(:'G', 'membre hors équipe : pas le code', $$select (1 / ((feuille_detail(current_setting('t.f')::uuid) -> 'feuille' ->> 'code') is null)::int)::text$$);
 select case when _anon(format('select feuille_detail(null, %L) ->> ''role''', lower(current_setting('t.c')))) = 'adverse' then 'PASS  adverse : ouvre par le lien' else 'FAIL  adverse lien' end;
-select case when _anon(format('select feuille_detail(%L)', current_setting('t.f'))) like 'ERREUR%réservée%' then 'PASS  visiteur sans lien : refusé' else 'FAIL  visiteur sans lien' end;
+select case when _anon(format('select feuille_detail(%L) ->> ''role''', current_setting('t.f'))) = 'spectateur' then 'PASS  visiteur : spectateur (070)' else 'FAIL  visiteur spectateur' end;
+select case when _anon(format('select feuille_detail(%L) -> ''feuille'' ->> ''code''', current_setting('t.f'))) is null then 'PASS  spectateur : pas le code' else 'FAIL  spectateur voit le code' end;
 
 -- Compositions
 select _t(:'W', 'compo E (membres + invités)', format($$select enregistrer_compo(%L, 'E', '{"E":{"p":"%s"},"F":{"p":"%s"},"G":{"n":"  Invité   G "},"H":{"n":"Invité H"},"Z":{"n":"Rempl Z"},"E1":["F","H"],"E2":["E","G"]}')::text$$, current_setting('t.f'), :'W', :'F'));
@@ -44,6 +45,7 @@ select case when _anon(format('select feuille_detail(null, %L) -> ''feuille'' ->
 select _t(:'F', 'match avant lancement : refusé', $$select lancer_match_feuille(current_setting('t.f')::uuid, 1)::text$$, 'pas encore lancée');
 select _t(:'W', 'remplacement avant lancement : refusé', $$select definir_remplacement(current_setting('t.f')::uuid, 'E', null, null)::text$$, 'Lancez d''abord');
 select _t(:'F', 'joueur : ne lance pas la rencontre', $$select lancer_rencontre(current_setting('t.f')::uuid)::text$$, 'Seul le capitaine');
+select case when _anon(format('select (feuille_detail(%L) -> ''feuille'' ->> ''compo_e'') || (feuille_detail(%L) -> ''feuille'' ->> ''compo_a'')', current_setting('t.f'), current_setting('t.f'))) = '{}{}' then 'PASS  spectateur : compos masquées avant lancement' else 'FAIL  spectateur voit les compos' end;
 select _t(:'W', 'lancer la rencontre', $$select lancer_rencontre(current_setting('t.f')::uuid)::text$$);
 select _t(:'W', 'annuler le lancement (rien joué)', $$select annuler_lancement_feuille(current_setting('t.f')::uuid)::text$$);
 select _t(:'W', 'relancer', $$select lancer_rencontre(current_setting('t.f')::uuid)::text$$);
@@ -104,8 +106,26 @@ do $$ declare n int; begin
     perform saisir_resultat_feuille(current_setting('t.f')::uuid, n, case when n % 3 = 0 then 2 else 0 end, case when n % 3 = 0 then 1 else 2 end);
   end loop; end $$;
 select _t(:'F', 'joueur : ne valide pas la feuille', $$select valider_feuille(current_setting('t.f')::uuid, 's', 's')::text$$, 'Seul le capitaine');
-select _t(:'W', 'sans signature : refusé', $$select valider_feuille(current_setting('t.f')::uuid, 'data:a', '')::text$$, 'doivent signer');
-select _t(:'W', 'valide : score de la rencontre', $$select valider_feuille(current_setting('t.f')::uuid, 'data:a', 'data:e') ->> 'score_nous'$$);
+select _t(:'W', 'sans signature : refusé', $$select valider_feuille(current_setting('t.f')::uuid, '', '')::text$$, 'doivent signer');
+-- 070 : signatures à distance
+select case when _anon(format('select feuille_detail(%L) -> ''feuille'' -> ''compo_a'' -> ''A'' ->> ''n''', current_setting('t.f'))) = 'Adrien' then 'PASS  spectateur : compos visibles après lancement' else 'FAIL  spectateur compos après lancement' end;
+select case when _anon(format($q$select signer_feuille(null, 'E', 'data:image/png;base64,xx', %L)$q$, current_setting('t.c'))) like 'ERREUR%votre équipe%' then 'PASS  adverse : ne signe pas pour nous' else 'FAIL  adverse signe E' end;
+select case when _anon(format($q$select signer_feuille(null, 'A', 'pas une image', %L)$q$, current_setting('t.c'))) like 'ERREUR%illisible%' then 'PASS  signature invalide refusée' else 'FAIL  signature invalide' end;
+select case when _anon(format($q$select signer_feuille(null, 'A', 'data:image/png;base64,AA', %L) ->> 'signe'$q$, current_setting('t.c'))) = 'true' then 'PASS  adverse : signe sur son téléphone' else 'FAIL  adverse signe A' end;
+select case when _anon(format($q$select signer_feuille(%L, 'A', 'data:image/png;base64,AA')$q$, current_setting('t.f'))) like 'ERREUR%' then 'PASS  spectateur : ne signe pas' else 'FAIL  spectateur signe' end;
+select case when _anon(format('select (feuille_detail(%L) -> ''feuille'' ->> ''signe_a'') || coalesce(feuille_detail(%L) -> ''feuille'' ->> ''signature_a'', ''-cachée'')', current_setting('t.f'), current_setting('t.f'))) = 'true-cachée' then 'PASS  spectateur : sait qui a signé, sans voir la signature' else 'FAIL  spectateur signature' end;
+select case when _anon(format('select feuille_detail(null, %L) -> ''feuille'' ->> ''signature_a''', current_setting('t.c'))) = 'data:image/png;base64,AA' then 'PASS  adverse : revoit sa signature' else 'FAIL  adverse sa signature' end;
+select _t(:'F', 'joueur : ne signe pas', $$select signer_feuille(current_setting('t.f')::uuid, 'E', 'data:image/png;base64,BB')::text$$, 'Seuls les capitaines');
+select _t(:'W', 'capitaine : signe E', $$select signer_feuille(current_setting('t.f')::uuid, 'E', 'data:image/png;base64,EE') ->> 'signe'$$);
+select _t(:'W', 'correction d''un match : signatures effacées', $$select remettre_match_feuille(current_setting('t.f')::uuid, 9)::text$$);
+select _v('plus aucune signature', $$select coalesce(signature_a, 'vide') || ' ' || coalesce(signature_e, 'vide') from feuilles_match$$, 'vide vide');
+select _t(:'W', 'signer avant la fin : refusé', $$select signer_feuille(current_setting('t.f')::uuid, 'E', 'data:image/png;base64,EE')::text$$, '20 matchs sont terminés');
+select _t(:'W', 'match 9 ressaisi', $$select saisir_resultat_feuille(current_setting('t.f')::uuid, 9, 0, 2)::text$$);
+select case when _anon(format($q$select signer_feuille(null, 'A', 'data:image/png;base64,AA', %L) ->> 'signe'$q$, current_setting('t.c'))) = 'true' then 'PASS  adverse : resigne' else 'FAIL  adverse resigne' end;
+select _t(:'W', 'capitaine : resigne E', $$select signer_feuille(current_setting('t.f')::uuid, 'E', 'data:image/png;base64,EE') ->> 'signe'$$);
+select _t(:'W', 'valide avec les signatures enregistrées', $$select valider_feuille(current_setting('t.f')::uuid, '', '') ->> 'score_nous'$$);
+select _v('signatures gardées à la validation', $$select signature_a || ' ' || signature_e from feuilles_match$$, 'data:image/png;base64,AA data:image/png;base64,EE');
+select case when _anon(format($q$select signer_feuille(null, 'A', '', %L)$q$, current_setting('t.c'))) like 'ERREUR%déjà validée%' then 'PASS  validée : signature figée' else 'FAIL  signature après validation' end;
 select _v('calendrier : score reporté', $$select score_nous || '-' || score_eux from rencontres where id = current_setting('t.r')::uuid$$, (select count(*) filter (where manches_e > manches_a) || '-' || count(*) filter (where manches_a > manches_e) from feuille_matchs));
 select _v('article publié, lié à l''équipe', $$select (published and team_id = (select team_id from feuilles_match))::text from articles a where id = (select article_id from feuilles_match)$$, 'true');
 select title from articles where id = (select article_id from feuilles_match);
