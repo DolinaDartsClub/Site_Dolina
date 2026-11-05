@@ -300,6 +300,9 @@ async function chargerTournois() {
     return;
   }
   bloc.hidden = false;
+  // Tournois que je peux ouvrir même non publics : organisateur, participant ou admin (la base filtre)
+  const { data: accessibles } = await supabase.from('tournaments').select('id').in('id', data.map((t) => t.id));
+  const miens = new Set((accessibles || []).map((x) => x.id));
   const nomsTours = { 1: 'Finale', 2: 'Demi-finales', 3: 'Quarts de finale', 4: 'Huitièmes de finale', 5: 'Seizièmes de finale' };
   zone.innerHTML = data.map((t) => {
     const ouvert = (t.status || 'running') === 'open';
@@ -310,13 +313,13 @@ async function chargerTournois() {
     const avancement = ouvert
       ? `${t.inscrits}${t.max_participants ? ` / ${t.max_participants}` : ''} inscrit${t.inscrits > 1 ? 's' : ''} · rejoindre avec le code de l'organisateur`
       : `${t.inscrits} ${t.team_mode === 'double' ? 'doublettes' : 'joueurs'} · ${t.matchs_joues} / ${t.matchs_total} matchs joués`;
-    const lien = ouvert ? 'tournois.html#code' : (t.public_matches ? `tournoi.html?id=${encodeURIComponent(t.id)}` : null);
+    const lien = (ouvert && !miens.has(t.id)) ? 'tournois.html#code' : ((t.public_matches || miens.has(t.id)) ? `tournoi.html?id=${encodeURIComponent(t.id)}` : null);
     const contenu = `
       <span class="ta-carte__haut"><span class="ta-carte__phase${ouvert ? ' ta-carte__phase--ouvert' : ''}">${esc(phase)}</span>${t.matchs_en_cours ? `<span class="m-statut m-statut--live">${t.matchs_en_cours} match${t.matchs_en_cours > 1 ? 's' : ''} en cours</span>` : ''}</span>
       <strong class="ta-carte__nom">${esc(t.name)}</strong>
       <span class="ta-carte__info">${esc(type)}</span>
       <span class="ta-carte__info">${esc(avancement)}</span>
-      ${lien ? `<span class="match__lien">${ouvert ? 'Rejoindre (membres du club) →' : 'Voir le tournoi →'}</span>` : '<span class="ta-carte__prive">Suivi réservé aux participants</span>'}`;
+      ${lien ? `<span class="match__lien">${ouvert && !miens.has(t.id) ? 'Rejoindre (membres du club) →' : 'Voir le tournoi →'}</span>` : '<span class="ta-carte__prive">Suivi réservé aux participants</span>'}`;
     return lien
       ? `<a class="ta-carte${ouvert ? ' ta-carte--ouvert' : ''}" href="${lien}">${contenu}</a>`
       : `<div class="ta-carte">${contenu}</div>`;
