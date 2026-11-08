@@ -132,7 +132,7 @@ Règles validées :
 - Fin de saison fixée par l'admin (mi-juin), rappels aux joueurs ; Master en fin de saison (ex. jeudi 24 juin 2027).
 - Ajout d'un membre en cours de saison, même ligue complète (il a moins de temps pour jouer).
 - Bouton WhatsApp pour contacter son adversaire ; numéro partagé seulement avec l'accord du joueur, et seulement à ses adversaires de ligue.
-- **Match à distance avec caméra** : chacun chez soi, son téléphone filme sa cible ; chacun saisit ses propres
+- ⏸ **Match à distance avec caméra** (prêt, en pause, pas en ligne) : chacun chez soi, son téléphone filme sa cible ; chacun saisit ses propres
   volées, l'adversaire les voit en direct ; validation par l'un des deux, mêmes règles de points (litige : l'admin).
 - ⏳ Option aller-retour (proposée, non décidée).
 

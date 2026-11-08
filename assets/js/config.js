@@ -15,6 +15,10 @@ export const EMAILS_ACTIFS = false;
 // Adresse de contact du club
 export const EMAIL_CLUB = 'dolinadartsclub@gmail.com';
 
+// Match à distance (caméra, script 071) : option EN PAUSE. Passer à true pour l'afficher
+// dans la ligue (et exécuter d'abord le script 071 dans Supabase).
+export const MATCH_DISTANCE_ACTIF = false;
+
 // Match à distance (caméra, script 071) : serveurs de relais vidéo (TURN) en plus des
 // serveurs STUN gratuits. Vide = connexion directe seulement (suffit dans la plupart des cas).
 // Exemple : [{ urls: 'turn:…', username: '…', credential: '…' }]

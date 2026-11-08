@@ -5,6 +5,7 @@
 //  organisateur, participant, ou spectateur (tournoi lancé à matchs publics).
 // =====================================================================
 
+import { MATCH_DISTANCE_ACTIF } from './config.js?v=__VERSION__';
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie, avatar, etatPartie, lienJoueur } from './app.js?v=__VERSION__';
 import { chargerMembres } from './tournoi-commun.js?v=__VERSION__';
 import qrcode from './vendor/qrcode.js?v=__VERSION__';
@@ -1967,7 +1968,7 @@ function ouvrirBull(idMatch) {
     .map(([cote, idE]) => `<button type="button" class="bouton bouton--plein bouton--large" data-premier="${cote}">${esc(nomEntree(idE))}</button>`).join('');
   document.getElementById('erreur-bull').textContent = '';
   // Ligue : option « à distance » (script 071), en individuel, si les deux joueurs ont un compte
-  const possible = estLigue() && t.team_mode !== 'double'
+  const possible = MATCH_DISTANCE_ACTIF && estLigue() && t.team_mode !== 'double'
     && [matchChoisi.entry_a, matchChoisi.entry_b].every((idE) => parId.get(idE)?.profile_id);
   document.getElementById('bull-distance-bloc').hidden = !possible;
   document.getElementById('bull-distance').checked = false;

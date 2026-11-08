@@ -288,7 +288,7 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
 - **Contacter l'adversaire sur WhatsApp** (script 068) : icône à côté de « Jouer », message pré-rempli. Le
   téléphone reste privé tant que le joueur n'a pas accepté de le partager (bandeau « Partager » dans Mes matchs,
   ou case dans Mon compte) ; seuls ses adversaires de ligue le reçoivent.
-- **Match à distance, avec caméra** (script 071) : au lancement d'un match (tirage au bull), case « 📹 Match à
+- **Match à distance, avec caméra** (script 071) — ⏸ **en pause, non visible sur le site** (`MATCH_DISTANCE_ACTIF = false` dans `config.js` ; ne pas exécuter le script 071 avant de l'activer) : au lancement d'un match (tirage au bull), case « 📹 Match à
   distance ». Réservé à la ligue, en individuel, entre deux joueurs ayant un compte ; lancé par l'un des deux
   joueurs (ou l'organisateur). L'adversaire clique « Rejoindre » dans Mes matchs. Les deux téléphones partagent la
   partie : **chacun saisit uniquement ses volées** (contrôlé par la base), l'autre les reçoit aussitôt (canal
@@ -340,7 +340,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État au 01/11/2026 : scripts **001 à 068 exécutés** en production ; **069, 070 et 071 à exécuter**.
+> État au 01/11/2026 : scripts **001 à 068 exécutés** en production ; **069 et 070 à exécuter** (071 en pause).
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
@@ -395,7 +395,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 068 | Ligue : contacter son adversaire sur WhatsApp (numéro partagé avec accord) | ✅ |
 | 069 | Master / phase finale : têtes de série croisées avec 2 poules (1A, 1B, 2A, 2B…) | ⏳ |
 | 070 | Feuille CPARD : spectateurs en direct, signature à distance (`signer_feuille`) | ⏳ |
-| 071 | Ligue : match à distance avec caméra (`games.a_distance`, `camp_distance`, `statut_partie_distance`) | ⏳ |
+| 071 | Ligue : match à distance avec caméra (`games.a_distance`, `camp_distance`, `statut_partie_distance`) | ⏸ en pause (ne pas exécuter) |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
