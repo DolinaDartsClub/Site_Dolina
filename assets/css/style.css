@@ -2733,3 +2733,15 @@ select.t-niveau { min-height: 34px; padding: 0 8px; border-radius: 8px; backgrou
 .t-distance label { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; }
 .t-distance input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--orange); }
 .t-badge-distance { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--orange); text-transform: uppercase; letter-spacing: .04em; }
+
+/* Espace capitaine : bilan CPARD des joueurs (script 072) */
+.cs-cpard-defile { overflow-x: auto; margin: 0 -2px; }
+.cs-cpard { width: 100%; border-collapse: collapse; font-size: 14px; }
+.cs-cpard th, .cs-cpard td { padding: 8px 6px; border-bottom: 1px solid var(--bord); text-align: center; vertical-align: middle; white-space: nowrap; }
+.cs-cpard thead th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); font-weight: 700; }
+.cs-cpard tbody th { text-align: left; font-weight: 600; white-space: normal; }
+.cs-cpard tbody th a { color: var(--blanc); text-decoration: none; }
+.cs-cpard small { display: block; font-size: 11px; color: var(--gris); font-weight: 500; }
+.cs-cpard td b { font-family: var(--police-titre); font-size: 18px; color: var(--blanc); }
+.cs-cpard td i { font-style: normal; color: var(--gris); margin: 0 2px; }
+.cs-cpard__fort b { color: var(--orange) !important; font-size: 20px !important; }

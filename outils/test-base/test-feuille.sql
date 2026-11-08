@@ -1,6 +1,14 @@
 -- Script 056 : feuille de match CPARD
 \pset tuples_only on
 \pset format unaligned
+create or replace function stats_cpard_equipe_test() returns json language plpgsql as $f$ begin
+  perform set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
+  perform set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+  return stats_cpard_equipe((select team_id from feuilles_match where id = current_setting('t.f')::uuid)) -> 'joueurs'; end $f$;
+create or replace function stats_cpard_equipe_test_debut(d date) returns json language plpgsql as $f$ begin
+  perform set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
+  perform set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+  return stats_cpard_equipe((select team_id from feuilles_match where id = current_setting('t.f')::uuid), d); end $f$;
 \set T '11111111-1111-1111-1111-111111111111'
 \set W '22222222-2222-2222-2222-222222222222'
 \set F '33333333-3333-3333-3333-333333333333'
@@ -124,6 +132,17 @@ select _t(:'W', 'match 9 ressaisi', $$select saisir_resultat_feuille(current_set
 select case when _anon(format($q$select signer_feuille(null, 'A', 'data:image/png;base64,AA', %L) ->> 'signe'$q$, current_setting('t.c'))) = 'true' then 'PASS  adverse : resigne' else 'FAIL  adverse resigne' end;
 select _t(:'W', 'capitaine : resigne E', $$select signer_feuille(current_setting('t.f')::uuid, 'E', 'data:image/png;base64,EE') ->> 'signe'$$);
 select _t(:'W', 'valide avec les signatures enregistrées', $$select valider_feuille(current_setting('t.f')::uuid, '', '') ->> 'score_nous'$$);
+-- 072 : bilan CPARD des joueurs (espace capitaine)
+select null from set_config('t.team', (select team_id::text from feuilles_match where id = current_setting('t.f')::uuid), false);
+select _t(:'F', 'bilan CPARD : réservé au capitaine', $$select stats_cpard_equipe(current_setting('t.team')::uuid)::text$$, 'Réservé au capitaine');
+select _t(:'W', 'bilan CPARD : 1 feuille validée', $$select stats_cpard_equipe(current_setting('t.team')::uuid) ->> 'feuilles'$$);
+select _v('bilan CPARD : 16 simples comptés', $$select sum((j ->> 'simples_g')::int + (j ->> 'simples_p')::int)::text from json_array_elements(stats_cpard_equipe_test()) j$$, '16');
+select _v('bilan CPARD : 4 doubles × 2 joueurs', $$select sum((j ->> 'doubles_g')::int + (j ->> 'doubles_p')::int)::text from json_array_elements(stats_cpard_equipe_test()) j$$, '8');
+select _v('bilan CPARD : manches = celles de la feuille', $$select (select sum((j ->> 'manches_g')::int) from json_array_elements(stats_cpard_equipe_test()) j)::text
+  || ' / ' || (select sum(case when o.poste_e ~ '\d' then 2 else 1 end * m.manches_e)::text from feuille_matchs m join feuille_ordre() o on o.numero = m.numero)$$,
+  (select sum(case when o.poste_e ~ '\d' then 2 else 1 end * m.manches_e)::text || ' / ' || sum(case when o.poste_e ~ '\d' then 2 else 1 end * m.manches_e)::text from feuille_matchs m join feuille_ordre() o on o.numero = m.numero));
+select _v('bilan CPARD : invité compté par son nom', $$select count(*)::text from json_array_elements(stats_cpard_equipe_test()) j where j ->> 'nom' = 'Invité G' and j ->> 'profile_id' is null$$, '1');
+select _v('bilan CPARD : saison suivante vide', $$select (stats_cpard_equipe_test_debut(current_date + 1) -> 'joueurs')::text$$, '[]');
 select _v('signatures gardées à la validation', $$select signature_a || ' ' || signature_e from feuilles_match$$, 'data:image/png;base64,AA data:image/png;base64,EE');
 select case when _anon(format($q$select signer_feuille(null, 'A', '', %L)$q$, current_setting('t.c'))) like 'ERREUR%déjà validée%' then 'PASS  validée : signature figée' else 'FAIL  signature après validation' end;
 select _v('calendrier : score reporté', $$select score_nous || '-' || score_eux from rencontres where id = current_setting('t.r')::uuid$$, (select count(*) filter (where manches_e > manches_a) || '-' || count(*) filter (where manches_a > manches_e) from feuille_matchs));

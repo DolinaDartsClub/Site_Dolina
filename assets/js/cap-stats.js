@@ -113,10 +113,45 @@ async function blocJoueurs(zone, t, effectif) {
     <p class="match__format cs-note">Parties de 301 et 501 contre un adversaire, hors matchs amicaux et dartbot (parties de club comprises, comme « Mes stats »). Forme : 5 dernières parties, la plus récente à gauche.</p>`;
 }
 
+// Bilan CPARD (script 072) : cumul des feuilles de match validées, joueurs réellement alignés
+async function blocCpard(zone, t) {
+  zone.innerHTML = '<p class="vide">Chargement…</p>';
+  const b = bornes();
+  const debut = b.p_debut ? new Date(b.p_debut).toLocaleDateString('fr-CA') : null;
+  const { data, error } = await supabase.rpc('stats_cpard_equipe', { p_team: t.id, p_debut: debut });
+  if (error) {
+    zone.innerHTML = `<p class="vide">${/stats_cpard_equipe|schema cache|function/i.test(error.message) ? 'Bilan CPARD bientôt disponible (script 072 à exécuter dans Supabase).' : esc(error.message)}</p>`;
+    return;
+  }
+  const j = data?.joueurs || [];
+  if (!j.length) { zone.innerHTML = `<p class="vide">Aucune feuille de match validée sur la période.</p>`; return; }
+  const gp = (g, p) => `<b>${g}</b><i>–</i>${p}`;
+  const pct = (g, p) => (g + p ? `${Math.round((g / (g + p)) * 100)} %` : '–');
+  zone.innerHTML = `
+    <p class="match__format cs-resume">${data.feuilles} feuille${data.feuilles > 1 ? 's' : ''} de match validée${data.feuilles > 1 ? 's' : ''} · gagnés–perdus</p>
+    <div class="cs-cpard-defile"><table class="cs-cpard">
+      <thead><tr><th>Joueur</th><th>Matchs</th><th>Simples</th><th>Doubles</th><th>Manches</th></tr></thead>
+      <tbody>${j.map((x) => {
+    const mg = x.simples_g + x.doubles_g; const mp = x.simples_p + x.doubles_p;
+    const nom = x.profile_id ? `<a href="profil.html?id=${encodeURIComponent(x.profile_id)}">${esc(x.nom)}</a>` : `${esc(x.nom)} <small>invité</small>`;
+    return `<tr>
+          <th scope="row">${nom}<small>${x.rencontres} rencontre${x.rencontres > 1 ? 's' : ''}</small></th>
+          <td class="cs-cpard__fort">${gp(mg, mp)}<small>${pct(mg, mp)}</small></td>
+          <td>${gp(x.simples_g, x.simples_p)}</td>
+          <td>${gp(x.doubles_g, x.doubles_p)}</td>
+          <td>${gp(x.manches_g, x.manches_p)}<small>${x.manches_g - x.manches_p > 0 ? '+' : ''}${x.manches_g - x.manches_p}</small></td>
+        </tr>`;
+  }).join('')}</tbody>
+    </table></div>
+    <p class="match__format cs-note">Matchs de championnat saisis sur les feuilles de match CPARD validées (remplacements compris). Un double compte pour les deux joueurs de la paire.</p>`;
+}
+
 export async function afficherStatsEquipe(conteneur, t, effectif) {
   conteneur.innerHTML = `
     <h2 class="section__titre">Statistiques <span class="section__aide">${esc(nomSaison())}</span></h2>
     <div id="cs-bilan"><p class="vide">Chargement…</p></div>
+    <h3 class="cs-sous-titre">Championnat CPARD</h3>
+    <div id="cs-cpard"></div>
     <h3 class="cs-sous-titre">Joueurs</h3>
     <div class="cs-filtres">
       <label class="champ">Période<select data-cs="periode">${Object.entries(PERIODES).map(([v, l]) => `<option value="${v}" ${reglages.periode === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
@@ -128,6 +163,9 @@ export async function afficherStatsEquipe(conteneur, t, effectif) {
   conteneur.querySelectorAll('[data-cs]').forEach((s) => s.addEventListener('change', () => {
     reglages[s.dataset.cs] = s.value;
     blocJoueurs(zone, t, effectif);
+    if (s.dataset.cs === 'periode') blocCpard(zoneCpard, t);
   }));
+  const zoneCpard = conteneur.querySelector('#cs-cpard');
+  blocCpard(zoneCpard, t);
   await blocJoueurs(zone, t, effectif);
 }

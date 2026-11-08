@@ -91,6 +91,8 @@ Règles validées :
 - Validation par le capitaine qui gère, une fois les deux signatures faites ; score reporté au calendrier ;
   **vrai fichier PDF au format FFD, toujours sur une seule page A4** (logos FFD et CPARD) à envoyer à
   dscpard@gmail.com (partage direct par Mail sur téléphone) ; article automatique (option).
+- **Bilan CPARD des joueurs** dans l'espace capitaine : cumul des feuilles validées (matchs et manches gagnés/perdus,
+  simples et doubles).
 - **Lien spectateurs** : tout le monde, même sans compte, suit le score en direct (rien de modifiable ;
   compositions visibles après le lancement).
 - Création d'une rencontre directement depuis la feuille ; feuille possible aussi sur une rencontre déjà jouée.
