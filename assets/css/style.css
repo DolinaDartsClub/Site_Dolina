@@ -2698,3 +2698,38 @@ select.t-niveau { min-height: 34px; padding: 0 8px; border-radius: 8px; backgrou
 .lm-partage-ok { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; color: var(--gris-clair); }
 .lm-partage-ok svg { width: 18px; height: 18px; color: #25d366; flex: none; }
 .lm-partage-ok .lien-bouton { font-size: 13px; color: var(--gris-clair); }
+
+/* =====================================================================
+   Match à distance (script 071) : caméras au-dessus des scores
+   ===================================================================== */
+.scorer--distance .scorer { grid-template-areas: "barre" "video" "camps" "infos" "saisie"; grid-template-rows: auto auto auto auto 1fr; }
+.scorer__video { grid-area: video; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.dv-ecran { position: relative; width: 100%; height: 24vh; min-height: 150px; border-radius: 14px; overflow: hidden; background: #000; border: 2px solid var(--bord); }
+.scorer--video-grande .dv-ecran { height: 52vh; }
+.dv-adverse { width: 100%; height: 100%; object-fit: contain; background: #000; display: block; }
+.dv-moi { position: absolute; right: 8px; bottom: 8px; width: 26%; max-width: 160px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; border: 2px solid rgba(255, 255, 255, .7); background: #222; z-index: 2; }
+.dv-moi--coupe { opacity: .25; }
+.dv-vide { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px; text-align: center; color: var(--gris); font-size: 14px; }
+.dv-vide strong { color: var(--blanc); font-family: var(--police-titre); font-size: 18px; text-transform: uppercase; }
+.dv-vide[hidden] { display: none; }
+.dv-son { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 3; padding: 10px 16px; border-radius: 10px; border: 0; background: var(--orange); color: #111; font: inherit; font-weight: 700; }
+.dv-barre { display: flex; flex-wrap: wrap; gap: 6px; }
+.dv-barre .bouton { flex: 1 1 auto; min-height: 36px; padding: 4px 8px; font-size: 13px; }
+@media (orientation: portrait) {
+  .scorer--distance .scorer { gap: 8px; padding: 8px; }
+  .scorer--distance .camp { padding: 8px 10px; }
+  .scorer--distance .camp__reste { font-size: 48px; line-height: 1; }
+  .scorer--distance .dv-ecran { height: 21vh; min-height: 140px; }
+  .scorer--distance.scorer--video-grande .dv-ecran { height: 48vh; }
+  .scorer--distance .bouton-annuler { min-height: 46px; }
+}
+@media (orientation: landscape) and (min-width: 700px) {
+  .scorer--distance .scorer { grid-template-areas: "barre barre" "video saisie" "camps saisie" "infos saisie"; grid-template-rows: auto auto 1fr auto; }
+  .scorer--distance .dv-ecran { height: 38vh; }
+  .scorer--distance.scorer--video-grande .dv-ecran { height: 60vh; }
+  .scorer--distance .camp__reste { font-size: clamp(56px, 8vw, 120px); }
+}
+.t-distance { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--bord); background: var(--carte); }
+.t-distance label { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; }
+.t-distance input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--orange); }
+.t-badge-distance { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--orange); text-transform: uppercase; letter-spacing: .04em; }

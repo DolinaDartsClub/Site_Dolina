@@ -288,6 +288,16 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
 - **Contacter l'adversaire sur WhatsApp** (script 068) : icône à côté de « Jouer », message pré-rempli. Le
   téléphone reste privé tant que le joueur n'a pas accepté de le partager (bandeau « Partager » dans Mes matchs,
   ou case dans Mon compte) ; seuls ses adversaires de ligue le reçoivent.
+- **Match à distance, avec caméra** (script 071) : au lancement d'un match (tirage au bull), case « 📹 Match à
+  distance ». Réservé à la ligue, en individuel, entre deux joueurs ayant un compte ; lancé par l'un des deux
+  joueurs (ou l'organisateur). L'adversaire clique « Rejoindre » dans Mes matchs. Les deux téléphones partagent la
+  partie : **chacun saisit uniquement ses volées** (contrôlé par la base), l'autre les reçoit aussitôt (canal
+  Supabase Realtime + vérification toutes les 5 s). Chacun n'annule que sa propre dernière volée ; seul celui qui a
+  lancé peut abandonner. Vidéo : caméra arrière qui filme la cible, image de l'adversaire en haut du scorer, micro,
+  « Agrandir » ; **WebRTC de téléphone à téléphone, rien n'est enregistré**. Mise en relation par des serveurs
+  STUN gratuits ; si la vidéo ne passe pas entre deux réseaux, on peut ajouter un relais TURN dans
+  `config.js` (`SERVEURS_TURN`), les scores fonctionnent de toute façon. Un match à distance n'occupe pas de cible
+  du club. Validation par l'un ou l'autre joueur ; règles de points inchangées.
 - **Ajouter un membre** après le lancement, même ligue complète (une place est créée) ; ses matchs contre sa poule sont créés.
 - Puis **Master** (phase finale) avec les qualifiés. Têtes de série avec 2 poules : 1A, 1B, 2A, 2B, 3A, 3B…
   (script 069) ; arbre à la puissance de 2 supérieure, exemptions pour les mieux classés. Exemple 5 qualifiés
@@ -330,7 +340,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État au 01/11/2026 : scripts **001 à 068 exécutés** en production ; **069 et 070 à exécuter**.
+> État au 01/11/2026 : scripts **001 à 068 exécutés** en production ; **069, 070 et 071 à exécuter**.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
@@ -385,6 +395,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 068 | Ligue : contacter son adversaire sur WhatsApp (numéro partagé avec accord) | ✅ |
 | 069 | Master / phase finale : têtes de série croisées avec 2 poules (1A, 1B, 2A, 2B…) | ⏳ |
 | 070 | Feuille CPARD : spectateurs en direct, signature à distance (`signer_feuille`) | ⏳ |
+| 071 | Ligue : match à distance avec caméra (`games.a_distance`, `camp_distance`, `statut_partie_distance`) | ⏳ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
@@ -395,7 +406,7 @@ Supabase › Authentication › Email Templates le jour où les emails seront ac
 |---|---|
 | Comptes / admin | `admin_creer_membre` (035), `admin_changer_code` (035), `admin_mot_de_passe_provisoire` (038), `admin_ajouter_email` (061), `admin_delete_account` (026), `delete_my_account` (026), `mes_donnees` (026), `mot_de_passe_change` (038), `invites_correspondants` / `rattacher_invite` / `annuler_rattachements` (054), `definir_niveau_joueur` (060) |
 | Stats | `stats_joueur` (022), `stats_tournoi` (020), `classement_membres` / `classement_doublettes` (045), `records_club` (032), `face_a_face*` / `liste_doublettes` (023), `fil_du_club` (049) |
-| Tournois | `rejoindre_tournoi` / `apercu_tournoi` (044), `lancer_tournoi` (065), `annuler_lancement` (013), `tournoi_detail` (065), `tournois_en_cours` (044), `lancer_match_tournoi` (067), `valider_match_tournoi` / `forfait_match` / `reinitialiser_match` / `lancer_phase_finale` (016), `corriger_score_match` (017), `definir_format_tour` (065), `definir_cibles_poule` (042), `definir_cibles_finale` (043), `cloturer_match` (053), `ajouter_joueur_en_cours` (059), `creer_tableau_b` (066), `derniers_tournois` (065), `supprimer_tournoi` (027) |
+| Tournois | `rejoindre_tournoi` / `apercu_tournoi` (044), `lancer_tournoi` (065), `annuler_lancement` (013), `tournoi_detail` (065), `tournois_en_cours` (044), `lancer_match_tournoi` (071, option à distance), `valider_match_tournoi` (071) / `forfait_match` / `reinitialiser_match` / `lancer_phase_finale` (016), `statut_partie_distance` (071), `corriger_score_match` (017), `definir_format_tour` (065), `definir_cibles_poule` (042), `definir_cibles_finale` (043), `cloturer_match` (053), `ajouter_joueur_en_cours` (059), `creer_tableau_b` (066), `derniers_tournois` (065), `supprimer_tournoi` (027) |
 | Ligue | `definir_visibilite_ligue` / `definir_qualifies` (044), `definir_fin_saison` / `proposer_resultat_ligue` / `repondre_proposition_ligue` / `match_nul_ligue` / `propositions_ligue_en_cours` / `mes_rappels_ligue` (050), `niveaux_tournoi` (063), `contacts_ligue` (068) |
 | Feuille CPARD | `creer_feuille` (064), `feuille_detail` (070), `feuilles_rencontres`, `enregistrer_compo` (057), `lancer_rencontre` / `annuler_lancement_feuille` (057), `definir_cibles_feuille`, `definir_remplacement` (057), `lancer_match_feuille`, `valider_match_feuille`, `saisir_resultat_feuille`, `remettre_match_feuille`, `signer_feuille` (070), `valider_feuille` (070), `rouvrir_feuille`, `supprimer_feuille`, `feuille_de_partie` (056) |
 | Divers | `envoyer_demande_contact_v2` (038), `sauvegarde_club` / `espace_utilise` (024), `definir_vice_capitaine` (036), `forme_equipe` (037) |
@@ -435,7 +446,7 @@ d'Actions pour `outils/generer-partage.mjs`, `PG*` pour la base de test locale, 
 | `node outils/test-compter.mjs` | Compter une manche | 25 réussis |
 | `node outils/test-pentadarts.mjs` | Pentadarts, Capital, Cricket | 64 réussis |
 | `node outils/test-echauffement.mjs` | Échauffement | 20 réussis |
-| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **672 réussis, 0 échec** |
+| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **705 réussis, 0 échec** |
 
 La base de test est un Postgres 16 local qui imite Supabase (`stub.sql`) : voir `outils/test-base/LISEZMOI.md`.
 Utilisateurs de test : Tony (admin), Will, Franck, Gérald (membres), Paul (en attente).
@@ -536,5 +547,6 @@ aller-retour pour la ligue.
 | 30/10/2026 | Bouton « Accepter » corrigé, feuille sur rencontres jouées, admin sans remontée de page, niveaux sur la page de la ligue, **prolongation** |
 | 31/10/2026 | Relecture complète, tests remis à jour (`tout-tester.sh`), documentation et cahier des charges v2 |
 | 04/11/2026 | Feuille CPARD : vrai PDF d'une page (téléchargement réparé), signature plein écran et à distance, lien spectateurs en direct |
+| 08/11/2026 | Ligue : match à distance avec caméra (script 071) ; accueil : tournoi privé cliquable pour ses participants |
 
 Le détail de chaque changement est dans l'historique Git (`git log`).

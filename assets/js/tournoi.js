@@ -34,6 +34,7 @@ let enCours = false;        // une action est en cours (anti double clic)
 let photosMembres = new Map();
 let scoresLive = new Map();  // match en cours -> { a: { manches, sets, reste }, b: {…}, lance: 'a' | 'b' | null, sets }
 let propositions = [];       // ligue : forfaits / nuls proposés entre joueurs, en attente (script 050)
+let partiesDistance = new Set();  // parties en cours jouées à distance, avec caméra (script 071)
 
 async function init() {
   moi = await profilConnecte();
@@ -65,6 +66,12 @@ async function charger() {
   inscrits = data.inscrits || [];
   matchs = data.matchs || [];
   parId = new Map(inscrits.map((e) => [e.id, e]));
+  partiesDistance = new Set();
+  const enCoursIds = matchs.filter((m) => m.status === 'live' && m.game_id).map((m) => m.game_id);
+  if (t.est_ligue && moi && enCoursIds.length) {
+    const r = await supabase.from('games').select('id').in('id', enCoursIds).eq('a_distance', true);
+    if (!r.error) partiesDistance = new Set((r.data || []).map((g) => g.id));
+  }
   propositions = [];
   if (t.est_ligue && t.status === 'running' && moi) {
     const r = await supabase.rpc('propositions_ligue_en_cours', { p_tournoi: id });
@@ -159,6 +166,9 @@ const poulesTerminees = () => t.format === 'pools' && t.status === 'running' && 
 const avantLancement = () => t.status === 'draft' || t.status === 'open';
 const monInscription = () => (moi ? inscrits.find((e) => estMoi(e, moi.id)) : null);
 const estMonMatch = (m) => { const mi = monInscription(); return !!mi && (m.entry_a === mi.id || m.entry_b === mi.id); };
+// Match à distance (script 071) : chacun des deux joueurs tient son propre scorer
+const aDistance = (m) => !!m.game_id && partiesDistance.has(m.game_id);
+const jeJoueADistance = (m) => aDistance(m) && estMonMatch(m);
 
 // ---------- Affichage général ----------
 
@@ -613,7 +623,7 @@ function resumeFinale(e) {
 function boutonMatch(m) {
   const orga = role === 'organisateur';
   const autorise = orga || role === 'participant';
-  const jeTiensLeScore = moi && m.game_created_by === moi.id;
+  const jeTiensLeScore = (moi && m.game_created_by === moi.id) || jeJoueADistance(m);
   const boutons = [];
   if (m.status === 'ready' && autorise && m.phase === 'pool' && estLigue() && propositionDe(m)) {
     // Ligue : forfait ou nul proposé, en attente de réponse : on ne lance pas le match
@@ -645,7 +655,7 @@ function boutonMatch(m) {
       boutons.push(`<button type="button" class="bouton bouton--petit bouton--plein" data-valider="${m.game_id}">Valider le résultat</button>`);
     }
     if (jeTiensLeScore || (moi?.role === 'admin')) {
-      boutons.push(`<a class="bouton bouton--petit${m.game_status === 'finished' ? '' : ' bouton--plein'}" href="scorer.html?id=${encodeURIComponent(m.game_id)}">${m.game_status === 'finished' ? 'Ouvrir le scorer' : 'Reprendre le scorer'}</a>`);
+      boutons.push(`<a class="bouton bouton--petit${m.game_status === 'finished' ? '' : ' bouton--plein'}" href="scorer.html?id=${encodeURIComponent(m.game_id)}">${m.game_status === 'finished' ? 'Ouvrir le scorer' : (jeJoueADistance(m) ? 'Rejoindre le match (caméra)' : 'Reprendre le scorer')}</a>`);
     } else {
       boutons.push(`<a class="bouton bouton--petit" href="live.html?id=${encodeURIComponent(m.game_id)}">${m.game_status === 'finished' ? 'Voir le score' : 'Suivre en direct'}</a>`);
     }
@@ -691,6 +701,7 @@ function formatMatch(m) {
 
 function etatPartieMatch(m) {
   const notes = [];
+  if (m.status === 'live' && aDistance(m)) notes.push('<p class="m-carte__note"><span class="t-badge-distance">📹 À distance</span> chacun chez soi, avec caméra.</p>');
   if (m.status === 'live' && m.game_status === 'finished') notes.push('<p class="m-carte__note">Partie terminée : résultat à valider.</p>');
   const prop = estLigue() ? propositionDe(m) : null;
   if (prop && m.status === 'ready') notes.push(`<p class="m-carte__note m-carte__note--proposition">${texteProposition(prop)}${prop.pour_moi ? ' Confirmez-vous ?' : ''}</p>`);
@@ -847,10 +858,11 @@ function ligneMonMatch(m, mi) {
     etat = sl
       ? `<span class="lm-res lm-res--live">● ${sl[moiCote].manches}–${sl[autreCote].manches} · reste ${sl[moiCote].reste} / ${sl[autreCote].reste}</span>`
       : '<span class="lm-res lm-res--live">● En cours</span>';
-    const jeTiens = moi && m.game_created_by === moi.id;
+    if (aDistance(m)) etat += ' <span class="t-badge-distance">📹 À distance</span>';
+    const jeTiens = (moi && m.game_created_by === moi.id) || jeJoueADistance(m);
     actions = m.game_status === 'finished' && jeTiens
       ? `<button type="button" class="bouton bouton--petit bouton--plein" data-valider="${m.game_id}">Valider</button>`
-      : `<a class="bouton bouton--petit${jeTiens ? ' bouton--plein' : ''}" href="${jeTiens ? 'scorer' : 'live'}.html?id=${encodeURIComponent(m.game_id)}">${jeTiens ? 'Reprendre' : 'Suivre'}</a>`;
+      : `<a class="bouton bouton--petit${jeTiens ? ' bouton--plein' : ''}" href="${jeTiens ? 'scorer' : 'live'}.html?id=${encodeURIComponent(m.game_id)}">${jeTiens ? (jeJoueADistance(m) && m.game_created_by !== moi.id ? 'Rejoindre' : 'Reprendre') : 'Suivre'}</a>`;
   } else if (prop?.pour_moi) {
     etat = `<span class="lm-res lm-res--prop">${prop.type === 'nul' ? 'Propose un nul' : (prop.perdant === mi.id ? 'Vous demande de déclarer forfait' : 'Déclare forfait')}</span>`;
     actions = `<button type="button" class="bouton bouton--petit bouton--plein" data-repondre="${prop.id}" data-reponse="accepter">Accepter</button>
@@ -1954,15 +1966,31 @@ function ouvrirBull(idMatch) {
   document.getElementById('bull-choix').innerHTML = [['1', matchChoisi.entry_a], ['2', matchChoisi.entry_b]]
     .map(([cote, idE]) => `<button type="button" class="bouton bouton--plein bouton--large" data-premier="${cote}">${esc(nomEntree(idE))}</button>`).join('');
   document.getElementById('erreur-bull').textContent = '';
+  // Ligue : option « à distance » (script 071), en individuel, si les deux joueurs ont un compte
+  const possible = estLigue() && t.team_mode !== 'double'
+    && [matchChoisi.entry_a, matchChoisi.entry_b].every((idE) => parId.get(idE)?.profile_id);
+  document.getElementById('bull-distance-bloc').hidden = !possible;
+  document.getElementById('bull-distance').checked = false;
+  majTexteBull();
   fenBull.hidden = false;
 }
+function majTexteBull() {
+  const dist = document.getElementById('bull-distance').checked;
+  document.getElementById('bull-texte').textContent = dist
+    ? 'À distance : chacun lance une fléchette au bull devant sa caméra, ou mettez-vous d\'accord. Qui commence la première manche ?'
+    : 'Chacun lance une fléchette. Qui est le plus proche du bull ? Il commencera la première manche.';
+}
+document.getElementById('bull-distance').addEventListener('change', majTexteBull);
 
 document.getElementById('bull-choix').addEventListener('click', (e) => {
   const b = e.target.closest('[data-premier]');
   if (!b || !matchChoisi) return;
   action(async () => {
     fenBull.querySelectorAll('button').forEach((x) => { x.disabled = true; });
-    const { data, error } = await supabase.rpc('lancer_match_tournoi', { p_match: matchChoisi.id, p_premier: Number(b.dataset.premier) });
+    const distance = !document.getElementById('bull-distance-bloc').hidden && document.getElementById('bull-distance').checked;
+    const { data, error } = await supabase.rpc('lancer_match_tournoi', distance
+      ? { p_match: matchChoisi.id, p_premier: Number(b.dataset.premier), p_distance: true }
+      : { p_match: matchChoisi.id, p_premier: Number(b.dataset.premier) });
     fenBull.querySelectorAll('button').forEach((x) => { x.disabled = false; });
     if (error) {
       document.getElementById('erreur-bull').textContent = erreurFr(error);

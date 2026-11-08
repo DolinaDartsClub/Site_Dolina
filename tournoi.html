@@ -72,7 +72,11 @@
   <div class="fenetre__boite">
     <h2 id="t-bull">Tirage au bull</h2>
     <p class="match__format" id="bull-match" style="margin:0"></p>
-    <p style="margin:0">Chacun lance une fléchette. Qui est le plus proche du bull ? Il commencera la première manche.</p>
+    <div class="t-distance" id="bull-distance-bloc" hidden>
+      <label><input type="checkbox" id="bull-distance"> <span>📹 Match à distance, avec caméra</span></label>
+      <span class="match__format">Chacun joue chez lui : son téléphone filme sa cible et il saisit ses propres volées. L'adversaire rejoint le match depuis la page de la ligue.</span>
+    </div>
+    <p style="margin:0" id="bull-texte">Chacun lance une fléchette. Qui est le plus proche du bull ? Il commencera la première manche.</p>
     <div class="t-choix-bull" id="bull-choix"></div>
     <p class="t-erreur" id="erreur-bull" role="alert"></p>
     <button type="button" class="bouton" data-fermer>Annuler</button>

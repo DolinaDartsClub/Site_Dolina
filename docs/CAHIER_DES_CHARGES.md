@@ -132,6 +132,8 @@ Règles validées :
 - Fin de saison fixée par l'admin (mi-juin), rappels aux joueurs ; Master en fin de saison (ex. jeudi 24 juin 2027).
 - Ajout d'un membre en cours de saison, même ligue complète (il a moins de temps pour jouer).
 - Bouton WhatsApp pour contacter son adversaire ; numéro partagé seulement avec l'accord du joueur, et seulement à ses adversaires de ligue.
+- **Match à distance avec caméra** : chacun chez soi, son téléphone filme sa cible ; chacun saisit ses propres
+  volées, l'adversaire les voit en direct ; validation par l'un des deux, mêmes règles de points (litige : l'admin).
 - ⏳ Option aller-retour (proposée, non décidée).
 
 ### 6.11 Nous contacter ✅
@@ -191,6 +193,7 @@ GitHub Pages + Supabase gratuits ✅. ⏳ Passage sur **dolina.mydarts.org** (CN
 | 31/10/2026 | Scripts SQL 001 à 067 exécutés en production |
 | 01/11/2026 | Ligue : contact WhatsApp entre adversaires, numéro partagé avec accord |
 | 04/11/2026 | Feuille CPARD : PDF d'une page en vrai fichier, signature à distance, lien spectateurs public |
+| 08/11/2026 | Ligue : match à distance avec caméra ; chacun saisit ses volées ; mêmes règles de validation |
 
 ## 12. Feuille de route
 

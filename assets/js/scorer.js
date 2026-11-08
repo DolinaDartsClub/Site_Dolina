@@ -10,6 +10,7 @@ import { voleeBot, lireReglageBot } from './dartbot.js?v=__VERSION__';
 import { valeurFleche, cheminConseille } from './compter-calcul.js?v=__VERSION__';
 import { reglageVoix, definirVoix, voixDisponible, annoncerVolee, dire } from './voix.js?v=__VERSION__';
 import { supabase, esc, message, erreurFr, profilConnecte, formatPartie, supprimerPartie } from './app.js?v=__VERSION__';
+import { brancherVideo } from './distance.js?v=__VERSION__';
 import {
   calculerEtat, nouvelleVolee, verifierVolee, natureVolee, finissable, suggestionFinish, moyenne,
 } from './x01.js?v=__VERSION__';
@@ -33,6 +34,12 @@ let enAttente = null;     // volée en cours de confirmation (questions finish /
 let file = Promise.resolve();
 let prochainIdLocal = 1;
 let tournoi = null;        // match de tournoi : { match_no, status, tournament_id, nom }
+// Match à distance (script 071) : chaque joueur saisit ses volées sur son téléphone
+let monCamp = null;        // mon camp dans une partie à distance (null sinon)
+let canal = null;          // canal temps réel partagé avec l'autre téléphone
+let video = null;
+const tourAdverse = () => !!(monCamp && etat?.auLancer && !etat.gagnant && etat.auLancer !== monCamp);
+const bloque = () => tourDuBot() || tourAdverse();
 
 // ---------- Chargement ----------
 
@@ -48,7 +55,8 @@ async function init() {
     $('titre-format').textContent = 'Partie introuvable';
     return message(zoneMsg, 'Cette partie n\'existe pas ou vous n\'y avez pas accès.');
   }
-  if (data.created_by !== moi.id && moi.role !== 'admin') {
+  if (data.a_distance) monCamp = data.game_players.find((p) => p.profile_id === moi.id)?.side || null;
+  if (data.created_by !== moi.id && moi.role !== 'admin' && !monCamp) {
     // Seul le créateur de la partie saisit les scores : les autres la suivent en direct
     return location.replace(`live.html?id=${encodeURIComponent(id)}`);
   }
@@ -88,6 +96,7 @@ async function init() {
     $('scorer').classList.add('scorer--fige');
   }
   garderEcranAllume();
+  if (game.a_distance) demarrerDistance();
 }
 
 // ---------- Affichage ----------
@@ -103,9 +112,11 @@ function rafraichir() {
   // Guide de finish : de préférence sur D20, D16, D10, D8, D12, D18, D6 ou D4 (meilleure descente)
   const sugg = reste !== null ? cheminConseille(reste)?.chemin : null;
   $('finish').textContent = sugg ? sugg.join(' · ') : (reste === null ? '—' : (reste > 170 ? 'Pas encore' : 'Pas de finish en une volée'));
-  $('qui').textContent = etat.auLancer ? (tourDuBot() ? 'Le dartbot lance…' : `Volée de ${nomsCamps[etat.auLancer]}`) : 'Partie terminée';
+  $('qui').textContent = etat.auLancer
+    ? (tourDuBot() ? 'Le dartbot lance…' : (tourAdverse() ? `${nomsCamps[etat.auLancer]} lance et saisit sa volée…` : `Volée de ${nomsCamps[etat.auLancer]}`))
+    : 'Partie terminée';
   $('saisie').textContent = saisie || '0';
-  document.body.classList.toggle('scorer--tour-bot', tourDuBot());
+  document.body.classList.toggle('scorer--tour-bot', bloque());
   planifierBot();
 
   if (etat.gagnant && game.status !== 'abandoned') afficherFin();
@@ -243,6 +254,7 @@ $('fin-valider').addEventListener('click', async () => {
   bouton.disabled = false;
   if (error) return message(zoneMsg, `Le résultat n'a pas été validé : ${erreurFr(error)}`);
   resultatValide();
+  prevenirAdversaire();
 });
 
 function afficherFin() {
@@ -321,7 +333,7 @@ function saisir(c) {
 
 document.querySelector('.scorer__saisie').addEventListener('click', (e) => {
   const b = e.target.closest('button');
-  if (!b || !etat || etat.gagnant || game.status === 'abandoned' || tourDuBot()) return;
+  if (!b || !etat || etat.gagnant || game.status === 'abandoned' || bloque()) return;
   if (b.dataset.chiffre) saisir(b.dataset.chiffre);
   else if ('effacer' in b.dataset) { saisie = ''; $('saisie').textContent = '0'; erreurSaisie(''); }
   else if ('valider' in b.dataset) { if (appuiLongFait) { appuiLongFait = false; return; } validerSaisie(); }
@@ -334,7 +346,7 @@ let minuterieAppui = null;
 let appuiLongFait = false;
 document.querySelector('.scorer__saisie').addEventListener('pointerdown', (e) => {
   const b = e.target.closest('[data-valider]');
-  if (!b || !etat || etat.gagnant || tourDuBot() || saisie === '') return;
+  if (!b || !etat || etat.gagnant || bloque() || saisie === '') return;
   appuiLongFait = false;
   b.classList.add('touche--appui');
   clearTimeout(minuterieAppui);
@@ -353,7 +365,7 @@ document.querySelector('.scorer__saisie').addEventListener('contextmenu', (e) =>
 
 // Clavier (ordinateur) : chiffres, Entrée, Retour arrière
 document.addEventListener('keydown', (e) => {
-  if (!etat || etat.gagnant || tourDuBot() || e.target.closest('input, textarea')) return;
+  if (!etat || etat.gagnant || bloque() || e.target.closest('input, textarea')) return;
   if (!document.querySelectorAll('.fenetre:not([hidden])').length) {
     if (/^[0-9]$/.test(e.key)) saisir(e.key);
     else if (e.key === 'Enter') validerSaisie();
@@ -461,9 +473,12 @@ function enregistrer() {
     v.id = data.id;
     delete v.local;
     if (finDePartie) {
-      const r = await supabase.from('games').update({ status: 'finished', winner_side: gagnant, finished_at: new Date().toISOString() }).eq('id', id);
+      const r = game.a_distance
+        ? await supabase.rpc('statut_partie_distance', { p_game: id, p_fini: true, p_gagnant: gagnant })
+        : await supabase.from('games').update({ status: 'finished', winner_side: gagnant, finished_at: new Date().toISOString() }).eq('id', id);
       if (!r.error) game.status = 'finished';
     }
+    prevenirAdversaire();
   });
   void avant;
 }
@@ -536,11 +551,15 @@ async function annuler() {
   }
   const v = aRetirer.at(-1);
   if (!v) return;
+  if (monCamp && v.side !== monCamp) {
+    return message(zoneMsg, `La dernière volée est celle de ${nomsCamps[v.side]} : c'est à lui de l'annuler sur son téléphone.`);
+  }
   const { error } = await supabase.from('visits').delete().in('id', aRetirer.map((x) => x.id));
   if (error) return message(zoneMsg, `Impossible d'annuler la volée : ${erreurFr(error)}`);
   visits.splice(visits.length - aRetirer.length, aRetirer.length);
   if (game.status === 'finished') {
-    await supabase.from('games').update({ status: 'live', winner_side: null, finished_at: null }).eq('id', id);
+    if (game.a_distance) await supabase.rpc('statut_partie_distance', { p_game: id, p_fini: false });
+    else await supabase.from('games').update({ status: 'live', winner_side: null, finished_at: null }).eq('id', id);
     game.status = 'live';
     game.winner_side = null;
   }
@@ -548,6 +567,7 @@ async function annuler() {
   saisie = '';
   afficherEvenement(`Volée annulée : ${v.is_bust ? 'bust' : v.score}`);
   rafraichir();
+  prevenirAdversaire();
 }
 
 $('btn-annuler').addEventListener('click', annuler);
@@ -565,6 +585,79 @@ $('btn-abandon').addEventListener('click', async () => {
   location.href = tournoi?.feuille ? `feuille.html?id=${encodeURIComponent(tournoi.feuille_id)}`
     : (tournoi ? `tournoi.html?id=${encodeURIComponent(tournoi.tournament_id)}` : 'jouer.html');
 });
+
+// ---------- Match à distance (script 071) ----------
+// Les deux téléphones partagent la partie : chacun saisit ses volées, l'autre
+// les reçoit aussitôt (message « maj » sur le canal, plus une vérification
+// régulière au cas où un message se perdrait).
+
+function prevenirAdversaire() {
+  canal?.send({ type: 'broadcast', event: 'maj', payload: { camp: monCamp } });
+}
+
+let resyncEnCours = false;
+async function resynchroniser() {
+  if (resyncEnCours || !game?.a_distance) return;
+  resyncEnCours = true;
+  try {
+    await file;
+    const [rv, rg] = await Promise.all([
+      supabase.from('visits').select('*').eq('game_id', id).order('id'),
+      supabase.from('games').select('status, winner_side').eq('id', id).maybeSingle(),
+    ]);
+    if (!rg.error && !rg.data) {
+      // Partie supprimée (abandon) : retour au tournoi
+      message(zoneMsg, 'Le match a été abandonné par l\'autre joueur.');
+      $('scorer').classList.add('scorer--fige');
+      if (tournoi) setTimeout(() => { location.href = `tournoi.html?id=${encodeURIComponent(tournoi.tournament_id)}`; }, 2500);
+      return;
+    }
+    if (rv.error || visits.some((x) => x.local)) return;
+    const avant = visits;
+    const nouvelles = rv.data || [];
+    const cle = (l) => l.map((x) => x.id).join(',');
+    if (rg.data) { game.status = rg.data.status; game.winner_side = rg.data.winner_side; }
+    if (cle(avant) !== cle(nouvelles)) {
+      visits = nouvelles;
+      prochainIdLocal = (visits.at(-1)?.id || 0) + 1;
+      const ajout = nouvelles.length > avant.length ? nouvelles.at(-1) : null;
+      if (nouvelles.length < avant.length) $('fen-fin').hidden = true;
+      rafraichir();
+      if (ajout && ajout.side !== monCamp) {
+        afficherEvenement(ajout.is_bust ? `${nomsCamps[ajout.side]} : bust` : (ajout.is_checkout ? `Game shot ! ${nomsCamps[ajout.side]}` : `${nomsCamps[ajout.side]} : ${ajout.score}`));
+        annoncerVolee({ score: ajout.score, bust: ajout.is_bust, finManche: ajout.is_checkout && !etat.gagnant, finPartie: !!etat.gagnant, suivant: null });
+      } else if (nouvelles.length < avant.length) {
+        afficherEvenement('L\'adversaire a annulé sa dernière volée');
+      }
+    }
+    if (tournoi && etat?.gagnant && tournoi.status !== 'done') {
+      const { data } = await supabase.from('tournament_matches').select('status').eq('id', game.tournament_match_id).maybeSingle();
+      if (data?.status === 'done') resultatValide();
+    }
+  } finally {
+    resyncEnCours = false;
+  }
+}
+
+function demarrerDistance() {
+  document.body.classList.add('scorer--distance');
+  const adverse = camps.find((c) => c !== monCamp);
+  if (monCamp && game.created_by !== moi.id) $('btn-abandon').hidden = true;   // seul celui qui a lancé le match l'abandonne
+  canal = supabase.channel(`distance-${id}`, { config: { broadcast: { self: false } } });
+  canal.on('broadcast', { event: 'maj' }, () => resynchroniser());
+  const zoneVideo = $('distance');
+  if (monCamp && window.RTCPeerConnection) {
+    zoneVideo.hidden = false;
+    video = brancherVideo({ canal, monCamp, nomAdverse: esc(nomsCamps[adverse] || 'votre adversaire'), zone: zoneVideo });
+  }
+  canal.subscribe((statut) => {
+    if (statut === 'SUBSCRIBED') { video?.pret(); resynchroniser(); }
+  });
+  // Filet de sécurité : vérification toutes les 5 s pendant le tour de l'adversaire ou en fin de partie
+  setInterval(() => { if (!document.hidden && (tourAdverse() || etat?.gagnant)) resynchroniser(); }, 5000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) resynchroniser(); });
+  window.addEventListener('pagehide', () => video?.fermer());
+}
 
 // ---------- Écran toujours allumé (tablette posée près de la cible) ----------
 
