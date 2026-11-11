@@ -206,6 +206,14 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
 - **Fil du club** (membres) : annonces calculées automatiquement — finish ≥ 100, 180, volée ≥ 120,
   moyenne ≥ 60, records perso/club ; doubles compris (lanceur déduit de l'ordre de jeu) ; exclus : dartbot,
   amicaux, parties seul.
+- **Matchs bâclés** (script 073) : une partie dont les volées ont été tapées à la chaîne (au moins 6 volées
+  saisies moins de 4 s après la précédente, et au moins 30 % des volées) est marquée **« ⚠ À vérifier »** à la
+  fin : elle sort des stats (classement, Mes stats, records, fil, stats de tournoi) tant que personne n'a
+  décidé. En tournoi, seul l'organisateur peut alors valider le résultat (il choisit de garder ou non les
+  stats). **Admin › Matchs** : filtre « À vérifier / hors stats », boutons « Garder les stats » / « Exclure
+  des stats » / « Remettre dans les stats » sur toute partie terminée ; le **résultat** du match reste
+  (tournoi, ligue), seules les statistiques sont retirées. Les matchs de tournoi peuvent aussi y être
+  supprimés : le match redevient « à jouer » dans son tournoi.
 
 ### 6.4 Équipes, calendrier, logos
 
@@ -343,7 +351,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État au 01/11/2026 : scripts **001 à 068 exécutés** en production ; **069, 070 et 072 à exécuter** (071 en pause).
+> État au 01/11/2026 : scripts **001 à 068 exécutés** en production ; **069, 070, 072 et 073 à exécuter** (071 en pause).
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
@@ -399,6 +407,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 069 | Master / phase finale : têtes de série croisées avec 2 poules (1A, 1B, 2A, 2B…) | ⏳ |
 | 070 | Feuille CPARD : spectateurs en direct, signature à distance (`signer_feuille`) | ⏳ |
 | 072 | Espace capitaine : bilan CPARD des joueurs (`stats_cpard_equipe`) | ⏳ |
+| 073 | Matchs « à vérifier » (saisie trop rapide) et « hors stats » (`statistiques_partie`) | ⏳ |
 | 071 | Ligue : match à distance avec caméra (`games.a_distance`, `camp_distance`, `statut_partie_distance`) | ⏸ en pause (ne pas exécuter) |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
@@ -450,7 +459,7 @@ d'Actions pour `outils/generer-partage.mjs`, `PG*` pour la base de test locale, 
 | `node outils/test-compter.mjs` | Compter une manche | 25 réussis |
 | `node outils/test-pentadarts.mjs` | Pentadarts, Capital, Cricket | 64 réussis |
 | `node outils/test-echauffement.mjs` | Échauffement | 20 réussis |
-| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **712 réussis, 0 échec** |
+| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **738 réussis, 0 échec** |
 
 La base de test est un Postgres 16 local qui imite Supabase (`stub.sql`) : voir `outils/test-base/LISEZMOI.md`.
 Utilisateurs de test : Tony (admin), Will, Franck, Gérald (membres), Paul (en attente).
@@ -552,5 +561,6 @@ aller-retour pour la ligue.
 | 31/10/2026 | Relecture complète, tests remis à jour (`tout-tester.sh`), documentation et cahier des charges v2 |
 | 04/11/2026 | Feuille CPARD : vrai PDF d'une page (téléchargement réparé), signature plein écran et à distance, lien spectateurs en direct |
 | 08/11/2026 | Ligue : match à distance avec caméra (script 071, en pause) ; accueil : tournoi privé cliquable pour ses participants ; espace capitaine : bilan CPARD des joueurs (072) |
+| 11/11/2026 | Matchs bâclés : alerte « à vérifier » et « hors stats » (073) ; suppression des matchs de tournoi depuis Admin › Matchs |
 
 Le détail de chaque changement est dans l'historique Git (`git log`).

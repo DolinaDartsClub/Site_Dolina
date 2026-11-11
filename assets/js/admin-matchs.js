@@ -32,10 +32,11 @@ export async function initMatchs(zoneMessage) {
 
 async function charger(plus = false) {
   const depuis = plus ? parties.length : 0;
-  const { data, error } = await supabase.from('games')
-    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, status, winner_side, visibility, match_type, created_at, finished_at, tournament_match_id, tm:tournament_matches!games_tournament_match_id_fkey(tournament_id, tournaments(name)), createur:profiles!games_created_by_fkey(first_name, last_name, nickname, use_nickname), game_players(side, display_name, throw_order, profile_id)')
-    .order('created_at', { ascending: false })
-    .range(depuis, depuis + PAR_PAGE - 1);
+  const champs = 'id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, status, winner_side, visibility, match_type, created_at, finished_at, tournament_match_id, tm:tournament_matches!games_tournament_match_id_fkey(tournament_id, tournaments(name)), createur:profiles!games_created_by_fkey(first_name, last_name, nickname, use_nickname), game_players(side, display_name, throw_order, profile_id)';
+  const requete = (c) => supabase.from('games').select(c).order('created_at', { ascending: false }).range(depuis, depuis + PAR_PAGE - 1);
+  // hors_stats / a_verifier : script 073 (si absent, la liste s'affiche sans ces options)
+  let { data, error } = await requete(`${champs}, hors_stats, a_verifier`);
+  if (error && /hors_stats|a_verifier/.test(error.message || '')) ({ data, error } = await requete(champs));
   if (error) {
     zone.innerHTML = `<p class="vide">Matchs indisponibles. (${esc(erreurFr(error))})</p>`;
     return;
@@ -65,6 +66,7 @@ function visibles() {
     if (filtre === 'finished' && g.status !== 'finished') return false;
     if (filtre === 'tournoi' && !g.tournament_match_id) return false;
     if (filtre === 'bot' && g.mode !== 'bot') return false;
+    if (filtre === 'verifier' && !g.a_verifier && !g.hors_stats) return false;
     if (recherche && !g.game_players.some((p) => (p.display_name || '').toLowerCase().includes(recherche))) return false;
     return true;
   });
@@ -78,30 +80,35 @@ function ligne(g) {
     g.mode === 'bot' ? 'Dartbot' : null,
     g.match_type === 'ligue' ? 'Ligue' : (g.match_type === 'amical' ? 'Amical' : null),
     g.visibility === 'private' ? 'Privé' : null,
+    g.hors_stats ? 'Hors stats' : null,
   ].filter(Boolean);
+  const fini = g.status === 'finished' && g.hors_stats !== undefined;
   return `
     <li class="adm-partie mt-ligne mt-ligne--${g.status}">
       <input type="checkbox" class="adm-partie__case" data-choix-match="${g.id}" aria-label="Sélectionner le match du ${esc(fmt.format(quand))}">
       <div class="adm-partie__texte">
         <div class="mt-score">${camps.map((c) => `<span class="mt-camp${g.status === 'finished' && g.winner_side === c.side ? ' mt-camp--gagnant' : ''}"><span class="mt-camp__nom">${esc(c.nom)}</span><b>${c.manches}</b></span>`).join('<i>–</i>')}</div>
         <small>${esc(fmt.format(quand))} · ${esc(formatPartie(g))}${g.createur ? ` · saisi par ${esc(nomAffiche(g.createur))}` : ''}</small>
-        <span class="mt-tags"><span class="mt-statut mt-statut--${g.status}">${esc(STATUTS[g.status] || g.status)}</span>${tags.map((t) => `<span class="mt-tag">${esc(t)}</span>`).join('')}</span>
+        <span class="mt-tags"><span class="mt-statut mt-statut--${g.status}">${esc(STATUTS[g.status] || g.status)}</span>${g.a_verifier ? '<span class="mt-tag mt-tag--alerte">⚠ À vérifier</span>' : ''}${tags.map((t) => `<span class="mt-tag">${esc(t)}</span>`).join('')}</span>
+        ${g.a_verifier ? '<small class="mt-alerte">Volées saisies à la chaîne (quelques secondes entre chacune) : ce match est hors statistiques tant que vous n\'avez pas décidé.</small>' : ''}
         ${g.tm?.tournaments?.name ? `<small>Tournoi : <a href="tournoi.html?id=${encodeURIComponent(g.tm.tournament_id)}">${esc(g.tm.tournaments.name)}</a> · supprimer ce match le remet « à jouer » dans le tournoi</small>` : ''}
       </div>
       <span class="adm-partie__actions">
         <a class="bouton bouton--petit" href="live.html?id=${encodeURIComponent(g.id)}">Voir</a>
+        ${fini && g.a_verifier ? `<button type="button" class="bouton bouton--petit bouton--plein" data-stats-match="${g.id}" data-garder="1">Garder les stats</button><button type="button" class="bouton bouton--petit" data-stats-match="${g.id}" data-garder="0">Exclure des stats</button>` : ''}
+        ${fini && !g.a_verifier ? `<button type="button" class="bouton bouton--petit" data-stats-match="${g.id}" data-garder="${g.hors_stats ? 1 : 0}">${g.hors_stats ? 'Remettre dans les stats' : 'Exclure des stats'}</button>` : ''}
         <button type="button" class="bouton bouton--petit bouton--danger" data-supprimer-match="${g.id}">Supprimer</button>
       </span>
     </li>`;
 }
 
 function afficher() {
-  const nb = (f) => parties.filter((g) => (f === 'live' ? g.status === 'live' : f === 'finished' ? g.status === 'finished' : f === 'tournoi' ? !!g.tournament_match_id : f === 'bot' ? g.mode === 'bot' : true)).length;
+  const nb = (f) => parties.filter((g) => (f === 'live' ? g.status === 'live' : f === 'finished' ? g.status === 'finished' : f === 'tournoi' ? !!g.tournament_match_id : f === 'bot' ? g.mode === 'bot' : f === 'verifier' ? (g.a_verifier || g.hors_stats) : true)).length;
   zone.innerHTML = `
     <p class="sv-aide">Toutes les parties enregistrées sur le site, de la plus récente à la plus ancienne. Supprimer un match de tournoi le remet « à jouer » dans son tournoi (impossible si le match suivant du tableau a déjà commencé, ou si la phase finale est lancée pour un match de poule).</p>
     <div class="mt-outils">
       <div class="mp-filtre" role="group" aria-label="Afficher">
-        ${[['tout', 'Tous'], ['live', 'En cours'], ['finished', 'Terminés'], ['tournoi', 'Tournois'], ['bot', 'Dartbot']].map(([v, l]) => `<button type="button" data-filtre-match="${v}" aria-pressed="${filtre === v}">${l} <b>${nb(v)}</b></button>`).join('')}
+        ${[['tout', 'Tous'], ['live', 'En cours'], ['finished', 'Terminés'], ['tournoi', 'Tournois'], ['bot', 'Dartbot'], ['verifier', 'À vérifier / hors stats']].map(([v, l]) => `<button type="button" data-filtre-match="${v}" aria-pressed="${filtre === v}">${l} <b>${nb(v)}</b></button>`).join('')}
       </div>
       <label class="champ mt-recherche"><span class="visuellement-cache">Rechercher un joueur</span>
         <input type="search" id="mt-recherche" placeholder="Rechercher un joueur" value="${esc(recherche)}" autocomplete="off">
@@ -181,6 +188,18 @@ async function clic(e) {
   if (!b) return;
   if (b.dataset.filtreMatch) { filtre = b.dataset.filtreMatch; afficher(); return; }
   if (b.id === 'mt-charger-plus') { b.disabled = true; await charger(true); return; }
+  if (b.dataset.statsMatch) {
+    const garder = b.dataset.garder === '1';
+    if (!garder && !confirm('Sortir ce match des statistiques ?\n\nSes moyennes, 180, finishs et records ne compteront plus (classement, Mes stats, records, fil du club). Le résultat du match, lui, reste (tournoi, ligue…).')) return;
+    b.disabled = true;
+    const { error } = await supabase.rpc('statistiques_partie', { p_game: b.dataset.statsMatch, p_garder: garder });
+    if (error) { b.disabled = false; return message(zoneMsg, error.code === 'P0001' ? error.message : erreurFr(error)); }
+    const g = parties.find((x) => x.id === b.dataset.statsMatch);
+    if (g) { g.a_verifier = false; g.hors_stats = !garder; }
+    message(zoneMsg, garder ? 'Le match compte dans les statistiques.' : 'Le match est sorti des statistiques.', 'ok');
+    afficherListe();
+    return;
+  }
   if (b.dataset.supprimerMatch) {
     const g = parties.find((x) => x.id === b.dataset.supprimerMatch);
     if (!confirm(`Supprimer définitivement ce match ?\n\nIl disparaîtra pour tous les joueurs, avec ses volées : les statistiques et le classement seront recalculés sans lui.${g?.tournament_match_id ? '\n\nMatch de tournoi : il redeviendra « à jouer » dans le tournoi.' : ''}`)) return;

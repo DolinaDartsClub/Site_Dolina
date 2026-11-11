@@ -36,6 +36,7 @@ let photosMembres = new Map();
 let scoresLive = new Map();  // match en cours -> { a: { manches, sets, reste }, b: {…}, lance: 'a' | 'b' | null, sets }
 let propositions = [];       // ligue : forfaits / nuls proposés entre joueurs, en attente (script 050)
 let partiesDistance = new Set();  // parties en cours jouées à distance, avec caméra (script 071)
+let partiesAVerifier = new Set(); // saisie anormalement rapide, à vérifier par l'organisateur (script 073)
 
 async function init() {
   moi = await profilConnecte();
@@ -68,7 +69,12 @@ async function charger() {
   matchs = data.matchs || [];
   parId = new Map(inscrits.map((e) => [e.id, e]));
   partiesDistance = new Set();
+  partiesAVerifier = new Set();
   const enCoursIds = matchs.filter((m) => m.status === 'live' && m.game_id).map((m) => m.game_id);
+  if (enCoursIds.length && moi) {
+    const r = await supabase.from('games').select('id').in('id', enCoursIds).eq('a_verifier', true);
+    if (!r.error) partiesAVerifier = new Set((r.data || []).map((g) => g.id));   // erreur = script 073 absent
+  }
   if (t.est_ligue && moi && enCoursIds.length) {
     const r = await supabase.from('games').select('id').in('id', enCoursIds).eq('a_distance', true);
     if (!r.error) partiesDistance = new Set((r.data || []).map((g) => g.id));
@@ -704,6 +710,7 @@ function etatPartieMatch(m) {
   const notes = [];
   if (m.status === 'live' && aDistance(m)) notes.push('<p class="m-carte__note"><span class="t-badge-distance">📹 À distance</span> chacun chez soi, avec caméra.</p>');
   if (m.status === 'live' && m.game_status === 'finished') notes.push('<p class="m-carte__note">Partie terminée : résultat à valider.</p>');
+  if (m.status === 'live' && partiesAVerifier.has(m.game_id)) notes.push(`<p class="m-carte__note m-carte__note--alerte">⚠ Volées saisies à la chaîne : ${estOrganisateur() ? 'vérifiez ce match avant de valider (vous pourrez exclure ses statistiques).' : 'l\'organisateur doit vérifier et valider ce résultat.'}</p>`);
   const prop = estLigue() ? propositionDe(m) : null;
   if (prop && m.status === 'ready') notes.push(`<p class="m-carte__note m-carte__note--proposition">${texteProposition(prop)}${prop.pour_moi ? ' Confirmez-vous ?' : ''}</p>`);
   if (m.status === 'done' && m.nul) notes.push(`<p class="m-carte__note m-carte__note--gris">Match nul${m.phase === 'pool' ? ' : 1 point pour chaque joueur' : ' : pas de vainqueur'}.</p>`);
@@ -2005,6 +2012,12 @@ fenBull.addEventListener('click', (e) => { if (e.target === fenBull || e.target.
 
 function valider(idPartie, bouton) {
   action(async () => {
+    // Saisie anormalement rapide (073) : l'organisateur décide des statistiques avant de valider
+    if (partiesAVerifier.has(idPartie) && estOrganisateur()) {
+      const garder = confirm('Volées saisies à la chaîne sur ce match.\n\nOK : le match a bien été joué, garder ses statistiques.\nAnnuler : valider le résultat SANS ses statistiques (moyennes, 180…).');
+      const r = await supabase.rpc('statistiques_partie', { p_game: idPartie, p_garder: garder });
+      if (r.error) return message(zoneMsg, erreurFr(r.error));
+    }
     bouton.disabled = true;
     const { error } = await supabase.rpc('valider_match_tournoi', { p_game: idPartie });
     if (error) { bouton.disabled = false; return message(zoneMsg, `Le résultat n'a pas été validé : ${erreurFr(error)}`); }

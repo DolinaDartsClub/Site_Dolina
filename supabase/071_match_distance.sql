@@ -212,6 +212,10 @@ begin
           or (g.a_distance and public.camp_distance(g.id) is not null)) or not public.is_active_member() then
     raise exception 'Seuls la personne qui a tenu le score, les joueurs d''un match à distance et l''organisateur peuvent valider ce résultat.';
   end if;
+  -- 073 : saisie anormalement rapide → seul l'organisateur (ou un admin) tranche
+  if coalesce((to_jsonb(g) ->> 'a_verifier')::boolean, false) and not public.tournoi_organisateur(m.tournament_id) then
+    raise exception 'Saisie très rapide détectée sur ce match : l''organisateur du tournoi doit vérifier et valider le résultat.';
+  end if;
   if m.status = 'done' then
     return;                                  -- déjà validé (double clic, deux appareils…) : rien à refaire
   end if;

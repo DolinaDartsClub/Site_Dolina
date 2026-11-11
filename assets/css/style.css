@@ -2745,3 +2745,8 @@ select.t-niveau { min-height: 34px; padding: 0 8px; border-radius: 8px; backgrou
 .cs-cpard td b { font-family: var(--police-titre); font-size: 18px; color: var(--blanc); }
 .cs-cpard td i { font-style: normal; color: var(--gris); margin: 0 2px; }
 .cs-cpard__fort b { color: var(--orange) !important; font-size: 20px !important; }
+
+/* Admin › Matchs : alerte saisie trop rapide (script 073) */
+.mt-tag--alerte { background: rgba(255, 90, 79, .15); color: #ff8a80; border-color: rgba(255, 90, 79, .5); }
+.mt-alerte { display: block; color: #ff8a80; }
+.m-carte__note--alerte { color: #ff8a80; }
