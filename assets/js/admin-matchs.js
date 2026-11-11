@@ -33,7 +33,7 @@ export async function initMatchs(zoneMessage) {
 async function charger(plus = false) {
   const depuis = plus ? parties.length : 0;
   const { data, error } = await supabase.from('games')
-    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, status, winner_side, visibility, match_type, created_at, finished_at, tournament_match_id, createur:profiles!games_created_by_fkey(first_name, last_name, nickname, use_nickname), game_players(side, display_name, throw_order, profile_id)')
+    .select('id, variant, start_score, mode, legs_kind, legs_n, sets_kind, sets_n, status, winner_side, visibility, match_type, created_at, finished_at, tournament_match_id, tm:tournament_matches!games_tournament_match_id_fkey(tournament_id, tournaments(name)), createur:profiles!games_created_by_fkey(first_name, last_name, nickname, use_nickname), game_players(side, display_name, throw_order, profile_id)')
     .order('created_at', { ascending: false })
     .range(depuis, depuis + PAR_PAGE - 1);
   if (error) {
@@ -81,15 +81,16 @@ function ligne(g) {
   ].filter(Boolean);
   return `
     <li class="adm-partie mt-ligne mt-ligne--${g.status}">
-      ${g.tournament_match_id ? '<span class="adm-partie__case"></span>' : `<input type="checkbox" class="adm-partie__case" data-choix-match="${g.id}" aria-label="Sélectionner le match du ${esc(fmt.format(quand))}">`}
+      <input type="checkbox" class="adm-partie__case" data-choix-match="${g.id}" aria-label="Sélectionner le match du ${esc(fmt.format(quand))}">
       <div class="adm-partie__texte">
         <div class="mt-score">${camps.map((c) => `<span class="mt-camp${g.status === 'finished' && g.winner_side === c.side ? ' mt-camp--gagnant' : ''}"><span class="mt-camp__nom">${esc(c.nom)}</span><b>${c.manches}</b></span>`).join('<i>–</i>')}</div>
         <small>${esc(fmt.format(quand))} · ${esc(formatPartie(g))}${g.createur ? ` · saisi par ${esc(nomAffiche(g.createur))}` : ''}</small>
         <span class="mt-tags"><span class="mt-statut mt-statut--${g.status}">${esc(STATUTS[g.status] || g.status)}</span>${tags.map((t) => `<span class="mt-tag">${esc(t)}</span>`).join('')}</span>
+        ${g.tm?.tournaments?.name ? `<small>Tournoi : <a href="tournoi.html?id=${encodeURIComponent(g.tm.tournament_id)}">${esc(g.tm.tournaments.name)}</a> · supprimer ce match le remet « à jouer » dans le tournoi</small>` : ''}
       </div>
       <span class="adm-partie__actions">
         <a class="bouton bouton--petit" href="live.html?id=${encodeURIComponent(g.id)}">Voir</a>
-        ${g.tournament_match_id ? '' : `<button type="button" class="bouton bouton--petit bouton--danger" data-supprimer-match="${g.id}">Supprimer</button>`}
+        <button type="button" class="bouton bouton--petit bouton--danger" data-supprimer-match="${g.id}">Supprimer</button>
       </span>
     </li>`;
 }
@@ -97,7 +98,7 @@ function ligne(g) {
 function afficher() {
   const nb = (f) => parties.filter((g) => (f === 'live' ? g.status === 'live' : f === 'finished' ? g.status === 'finished' : f === 'tournoi' ? !!g.tournament_match_id : f === 'bot' ? g.mode === 'bot' : true)).length;
   zone.innerHTML = `
-    <p class="sv-aide">Toutes les parties enregistrées sur le site, de la plus récente à la plus ancienne. Les matchs de tournoi se corrigent depuis la page du tournoi.</p>
+    <p class="sv-aide">Toutes les parties enregistrées sur le site, de la plus récente à la plus ancienne. Supprimer un match de tournoi le remet « à jouer » dans son tournoi (impossible si le match suivant du tableau a déjà commencé, ou si la phase finale est lancée pour un match de poule).</p>
     <div class="mt-outils">
       <div class="mp-filtre" role="group" aria-label="Afficher">
         ${[['tout', 'Tous'], ['live', 'En cours'], ['finished', 'Terminés'], ['tournoi', 'Tournois'], ['bot', 'Dartbot']].map(([v, l]) => `<button type="button" data-filtre-match="${v}" aria-pressed="${filtre === v}">${l} <b>${nb(v)}</b></button>`).join('')}
@@ -120,7 +121,7 @@ function afficherListe() {
   const ul = zone.querySelector('#mt-liste');
   if (!ul) return;
   ul.innerHTML = liste.length ? liste.map(ligne).join('') : '<li class="vide">Aucun match pour ce filtre.</li>';
-  zone.querySelector('#mt-selection').hidden = !liste.some((g) => !g.tournament_match_id);
+  zone.querySelector('#mt-selection').hidden = !liste.length;
   zone.querySelector('#mt-plus').innerHTML = complet
     ? `<p class="match__format" style="margin:0">${parties.length} match${parties.length > 1 ? 's' : ''} au total.</p>`
     : `<button type="button" class="bouton bouton--petit" id="mt-charger-plus">Afficher ${PAR_PAGE} matchs de plus</button>`;
@@ -146,10 +147,28 @@ function changement(e) {
 }
 
 async function supprimer(ids) {
-  const { data, error } = await supabase.from('games').delete().in('id', ids).select('id');
-  if (error) return message(zoneMsg, error.code === 'P0001' ? error.message : erreurFr(error));
-  const n = data?.length || 0;
-  const retirees = new Set((data || []).map((x) => x.id));
+  // Matchs de tournoi : réinitialisés par le tournoi (la partie est supprimée, le match redevient « à jouer »)
+  const parId = new Map(parties.map((g) => [g.id, g]));
+  const tournoi = ids.filter((x) => parId.get(x)?.tournament_match_id);
+  const libres = ids.filter((x) => !parId.get(x)?.tournament_match_id);
+  const retirees = new Set();
+  const refus = [];
+  for (const gid of tournoi) {
+    const { error } = await supabase.rpc('reinitialiser_match', { p_match: parId.get(gid).tournament_match_id });
+    if (error) refus.push(`${nomsCamps(parId.get(gid)).map((c) => c.nom).join(' – ')} : ${error.code === 'P0001' ? error.message : erreurFr(error)}`);
+    else retirees.add(gid);
+  }
+  if (libres.length) {
+    const { data, error } = await supabase.from('games').delete().in('id', libres).select('id');
+    if (error) refus.push(error.code === 'P0001' ? error.message : erreurFr(error));
+    (data || []).forEach((x) => retirees.add(x.id));
+  }
+  const n = retirees.size;
+  if (refus.length) {
+    parties = parties.filter((g) => !retirees.has(g.id));
+    afficher();
+    return message(zoneMsg, `${n ? `${n} match${n > 1 ? 's' : ''} supprimé${n > 1 ? 's' : ''}. ` : ''}Non supprimé${refus.length > 1 ? 's' : ''} : ${refus.join(' · ')}`);
+  }
   parties = parties.filter((g) => !retirees.has(g.id));
   message(zoneMsg, n === ids.length
     ? `${n} match${n > 1 ? 's' : ''} supprimé${n > 1 ? 's' : ''}.`
@@ -163,7 +182,8 @@ async function clic(e) {
   if (b.dataset.filtreMatch) { filtre = b.dataset.filtreMatch; afficher(); return; }
   if (b.id === 'mt-charger-plus') { b.disabled = true; await charger(true); return; }
   if (b.dataset.supprimerMatch) {
-    if (!confirm('Supprimer définitivement ce match ?\n\nIl disparaîtra pour tous les joueurs, avec ses volées : les statistiques et le classement seront recalculés sans lui.')) return;
+    const g = parties.find((x) => x.id === b.dataset.supprimerMatch);
+    if (!confirm(`Supprimer définitivement ce match ?\n\nIl disparaîtra pour tous les joueurs, avec ses volées : les statistiques et le classement seront recalculés sans lui.${g?.tournament_match_id ? '\n\nMatch de tournoi : il redeviendra « à jouer » dans le tournoi.' : ''}`)) return;
     b.disabled = true;
     await supprimer([b.dataset.supprimerMatch]);
     return;
