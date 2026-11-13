@@ -279,7 +279,7 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
     scorer, compositions visibles seulement après le lancement, rien de modifiable, signatures non affichées.
 12. **Bilan des joueurs** (072) : dans l'espace capitaine › Statistiques, tableau « Championnat CPARD » cumulant
     les feuilles **validées** : matchs gagnés–perdus (simples, doubles), manches gagnées–perdues, rencontres
-    jouées, selon la période choisie. Sous les simples et les doubles : les manches (gagnées en orange, script 075). Joueurs réellement alignés (remplacements compris), invités par leur nom.
+    jouées, selon la période choisie. Affichage : par joueur **journées**, **matchs joués**, **matchs gagnés** et **%** (barre), tri au choix ; un toucher sur le joueur déplie le détail simples / doubles / manches (script 075). Joueurs réellement alignés (remplacements compris), invités par leur nom.
 
 ### 6.6 Tournois
 

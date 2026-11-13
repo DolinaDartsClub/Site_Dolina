@@ -114,6 +114,7 @@ async function blocJoueurs(zone, t, effectif) {
 }
 
 // Bilan CPARD (script 072) : cumul des feuilles de match validées, joueurs réellement alignés
+let triCpard = 'gagnes';
 async function blocCpard(zone, t) {
   zone.innerHTML = '<p class="vide">Chargement…</p>';
   const b = bornes();
@@ -123,29 +124,62 @@ async function blocCpard(zone, t) {
     zone.innerHTML = `<p class="vide">${/stats_cpard_equipe|schema cache|function/i.test(error.message) ? 'Bilan CPARD bientôt disponible (script 072 à exécuter dans Supabase).' : esc(error.message)}</p>`;
     return;
   }
-  const j = data?.joueurs || [];
-  if (!j.length) { zone.innerHTML = `<p class="vide">Aucune feuille de match validée sur la période.</p>`; return; }
-  const gp = (g, p) => `<b>${g}</b><i>–</i>${p}`;
-  // Manches gagnées en orange (simples / doubles, script 075 ; absent avant : rien)
-  const manches = (g, p) => (g === undefined ? '' : `<small class="cs-manches"><em>${g}</em>–${p}</small>`);
-  const pct = (g, p) => (g + p ? `${Math.round((g / (g + p)) * 100)} %` : '–');
-  zone.innerHTML = `
-    <p class="match__format cs-resume">${data.feuilles} feuille${data.feuilles > 1 ? 's' : ''} de match validée${data.feuilles > 1 ? 's' : ''} · gagnés–perdus, <span class="cs-orange">gagnés en orange</span> ; sous les matchs simples et doubles : leurs manches</p>
-    <div class="cs-cpard-defile"><table class="cs-cpard">
-      <thead><tr><th>Joueur</th><th>Matchs<br>simples</th><th>Matchs<br>doubles</th><th class="cs-cpard__total">Total<br>matchs</th><th class="cs-cpard__total">Total<br>manches</th></tr></thead>
-      <tbody>${j.map((x) => {
-    const mg = x.simples_g + x.doubles_g; const mp = x.simples_p + x.doubles_p;
-    const nom = x.profile_id ? `<a href="profil.html?id=${encodeURIComponent(x.profile_id)}">${esc(x.nom)}</a>` : `${esc(x.nom)} <small>invité</small>`;
-    return `<tr>
-          <th scope="row">${nom}<small>${x.rencontres} rencontre${x.rencontres > 1 ? 's' : ''}</small></th>
-          <td>${gp(x.simples_g, x.simples_p)}${manches(x.manches_simples_g, x.manches_simples_p)}</td>
-          <td>${gp(x.doubles_g, x.doubles_p)}${manches(x.manches_doubles_g, x.manches_doubles_p)}</td>
-          <td class="cs-cpard__fort cs-cpard__total">${gp(mg, mp)}<small>${pct(mg, mp)}</small></td>
-          <td class="cs-cpard__manches cs-cpard__total">${gp(x.manches_g, x.manches_p)}<small>${x.manches_g - x.manches_p > 0 ? '+' : ''}${x.manches_g - x.manches_p}</small></td>
-        </tr>`;
-  }).join('')}</tbody>
-    </table></div>
-    <p class="match__format cs-note">Matchs de championnat saisis sur les feuilles de match CPARD validées (remplacements compris). Un double compte pour les deux joueurs de la paire.</p>`;
+  const liste = (data?.joueurs || []).map((x) => {
+    const g = x.simples_g + x.doubles_g; const joues = g + x.simples_p + x.doubles_p;
+    return { ...x, g, joues, pct: joues ? Math.round((g / joues) * 100) : 0 };
+  });
+  if (!liste.length) { zone.innerHTML = '<p class="vide">Aucune feuille de match validée sur la période.</p>'; return; }
+  const ordre = {
+    gagnes: (a, c) => c.g - a.g || c.pct - a.pct,
+    pct: (a, c) => c.pct - a.pct || c.joues - a.joues,
+    joues: (a, c) => c.joues - a.joues || c.g - a.g,
+    journees: (a, c) => c.rencontres - a.rencontres || c.joues - a.joues,
+  };
+  const dessiner = () => {
+    const j = [...liste].sort(ordre[triCpard] || ordre.gagnes);
+    const ligne = (lib, g, p, mg, mp) => {
+      const n = g + p;
+      return `<span><b>${lib}</b> ${n ? `${n} joué${n > 1 ? 's' : ''}, <em>${g} gagné${g > 1 ? 's' : ''}</em> · ${Math.round((g / n) * 100)} %` : 'aucun'}${mg !== undefined && n ? ` <i>· manches ${mg}–${mp}</i>` : ''}</span>`;
+    };
+    zone.innerHTML = `
+      <div class="cs-cp-tete">
+        <p class="match__format" style="margin:0"><strong>${data.feuilles}</strong> journée${data.feuilles > 1 ? 's' : ''} jouée${data.feuilles > 1 ? 's' : ''} (feuilles validées)</p>
+        <label class="cs-cp-tri">Trier par
+          <select data-tri-cpard>
+            ${[['gagnes', 'Matchs gagnés'], ['pct', '% de victoires'], ['joues', 'Matchs joués'], ['journees', 'Journées']].map(([v, l]) => `<option value="${v}"${v === triCpard ? ' selected' : ''}>${l}</option>`).join('')}
+          </select>
+        </label>
+      </div>
+      <table class="cs-cp">
+        <thead><tr><th>Joueur</th><th>Journées</th><th>Matchs<br>joués</th><th>Matchs<br>gagnés</th><th>%</th></tr></thead>
+        <tbody>${j.map((x, i) => `
+          <tr class="cs-cp-ligne" data-detail="${i}" tabindex="0" aria-expanded="false">
+            <th scope="row"><span class="cs-cp-nom">${esc(x.nom)}</span>${x.profile_id ? '' : '<small>invité</small>'}</th>
+            <td>${x.rencontres}</td>
+            <td>${x.joues}</td>
+            <td class="cs-cp-g">${x.g}</td>
+            <td class="cs-cp-pct"><span class="cs-cp-barre"><span style="width:${x.pct}%"></span></span><strong>${x.pct} %</strong></td>
+          </tr>
+          <tr class="cs-cp-detail" id="cs-cp-d${i}" hidden><td colspan="5">
+            ${ligne('Simples', x.simples_g, x.simples_p, x.manches_simples_g, x.manches_simples_p)}
+            ${ligne('Doubles', x.doubles_g, x.doubles_p, x.manches_doubles_g, x.manches_doubles_p)}
+            <span><b>Manches</b> ${x.manches_g} gagnées, ${x.manches_p} perdues${x.profile_id ? ` · <a href="profil.html?id=${encodeURIComponent(x.profile_id)}">voir son profil</a>` : ''}</span>
+          </td></tr>`).join('')}
+        </tbody>
+      </table>
+      <p class="match__format cs-note">Touchez un joueur pour le détail simples / doubles / manches. Journées = feuilles de match où il a été aligné (remplacements compris) ; un double compte pour les deux joueurs de la paire.</p>`;
+    zone.querySelector('[data-tri-cpard]').addEventListener('change', (e) => { triCpard = e.target.value; dessiner(); });
+    zone.querySelectorAll('[data-detail]').forEach((tr) => {
+      const basculer = () => {
+        const d = zone.querySelector(`#cs-cp-d${tr.dataset.detail}`);
+        d.hidden = !d.hidden;
+        tr.setAttribute('aria-expanded', String(!d.hidden));
+      };
+      tr.addEventListener('click', (e) => { if (!e.target.closest('a')) basculer(); });
+      tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); basculer(); } });
+    });
+  };
+  dessiner();
 }
 
 export async function afficherStatsEquipe(conteneur, t, effectif) {

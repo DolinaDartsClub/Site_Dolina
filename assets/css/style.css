@@ -2774,3 +2774,29 @@ select.t-niveau { min-height: 34px; padding: 0 8px; border-radius: 8px; backgrou
 .cs-cpard thead th { line-height: 1.15; }
 .cs-cpard th.cs-cpard__total, .cs-cpard td.cs-cpard__total { background: rgba(245, 122, 0, .06); }
 .cs-cpard thead th.cs-cpard__total { color: var(--orange); }
+
+/* Bilan CPARD v2 : journées, matchs joués / gagnés, % (détail au toucher) */
+.cs-cp-tete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.cs-cp-tri { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--gris); }
+.cs-cp-tri select { min-height: 36px; border-radius: 8px; border: 1px solid var(--bord-fort); background: var(--carte); color: var(--blanc); font: inherit; padding: 0 8px; }
+.cs-cp { width: 100%; border-collapse: collapse; font-size: 15px; }
+.cs-cp th, .cs-cp td { padding: 10px 4px; text-align: center; border-bottom: 1px solid var(--bord); }
+.cs-cp thead th { font-size: 11px; line-height: 1.15; text-transform: uppercase; letter-spacing: .04em; color: var(--gris); font-weight: 700; vertical-align: bottom; }
+.cs-cp tbody th { text-align: left; font-weight: 600; }
+.cs-cp tbody th small { display: block; font-size: 11px; color: var(--gris); font-weight: 500; }
+.cs-cp-ligne { cursor: pointer; }
+.cs-cp-ligne:hover, .cs-cp-ligne[aria-expanded="true"] { background: rgba(245, 122, 0, .06); }
+.cs-cp-nom::after { content: ' ›'; color: var(--gris); }
+.cs-cp-ligne[aria-expanded="true"] .cs-cp-nom::after { content: ' ⌄'; }
+.cs-cp td { font-family: var(--police-titre); font-size: 20px; font-weight: 700; }
+.cs-cp td.cs-cp-g { color: var(--orange); }
+.cs-cp-pct { width: 30%; }
+.cs-cp-pct strong { display: block; font-size: 16px; color: var(--orange); }
+.cs-cp-barre { display: block; height: 6px; border-radius: 3px; background: var(--bord); overflow: hidden; margin: 0 auto 4px; max-width: 90px; }
+.cs-cp-barre span { display: block; height: 100%; background: var(--orange); border-radius: 3px; }
+.cs-cp-detail td { text-align: left; font-family: inherit; font-size: 13px; font-weight: 400; color: var(--gris); padding: 4px 8px 12px; background: rgba(245, 122, 0, .04); }
+.cs-cp-detail span { display: block; padding: 2px 0; }
+.cs-cp-detail b { color: var(--blanc); }
+.cs-cp-detail em { font-style: normal; color: var(--orange); font-weight: 700; }
+.cs-cp-detail i { font-style: normal; }
+.cs-cp-detail a { color: var(--orange); }
