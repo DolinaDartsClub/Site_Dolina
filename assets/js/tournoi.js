@@ -5,6 +5,7 @@
 //  organisateur, participant, ou spectateur (tournoi lancé à matchs publics).
 // =====================================================================
 
+import { chargerInvites, chercherInvites, brancherSuggestions } from './annuaire.js?v=__VERSION__';
 import { MATCH_DISTANCE_ACTIF } from './config.js?v=__VERSION__';
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche, BASE_URL, dateFr, formatPartie, avatar, etatPartie, lienJoueur } from './app.js?v=__VERSION__';
 import { chargerMembres } from './tournoi-commun.js?v=__VERSION__';
@@ -2185,9 +2186,17 @@ function afficherMembresAjout() {
         <span><strong>${esc(nomAffiche(m))}</strong>${m.use_nickname ? `<small>${esc(`${m.first_name} ${m.last_name}`)}</small>` : (m.nickname ? `<small>${esc(m.nickname)}</small>` : '')}</span>
       </label>`).join('')
     : `<p class="vide">${q ? 'Aucun membre ne correspond : ajoutez-le comme invité ci-dessous.' : 'Tous les membres sont déjà inscrits.'}</p>`;
+  // Invités déjà venus (script 074) : un toucher les ajoute à la liste des invités
+  const dejaNoms = [...inscrits.map((e) => e.guest_name).filter(Boolean), ...lireInvites()];
+  const trouves = q.length >= 2 ? chercherInvites(q, { exclure: dejaNoms }) : [];
+  if (trouves.length) {
+    document.getElementById('aj-liste').insertAdjacentHTML('afterbegin', `<p class="rj-titre">Invités déjà venus</p>${trouves.map((x) => `
+      <button type="button" class="rj-invite" data-ajout-invite="${esc(x.nom)}"><span><strong>${esc(x.nom)}</strong><small>Invité${x.equipe ? ` · ${esc(x.equipe)}` : ''}</small></span></button>`).join('')}`);
+  }
 }
 
 async function ouvrirAjout() {
+  chargerInvites();
   const double = t.team_mode === 'double';
   fenAjout.querySelectorAll('[data-double]').forEach((el) => { el.hidden = !double; });
   fenAjout.querySelectorAll('[data-simple]').forEach((el) => { el.hidden = double; });
@@ -2230,6 +2239,15 @@ async function ouvrirAjout() {
 }
 
 document.getElementById('aj-recherche').addEventListener('input', afficherMembresAjout);
+document.getElementById('aj-liste').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ajout-invite]');
+  if (!b) return;
+  e.preventDefault();
+  const zoneTxt = document.getElementById('aj-invites');
+  zoneTxt.value = [...lireInvites(), b.dataset.ajoutInvite].join('\n');
+  afficherMembresAjout();
+  majPlacesAjout();
+});
 document.getElementById('aj-invites').addEventListener('input', majPlacesAjout);
 document.getElementById('aj-liste').addEventListener('change', (e) => {
   const c = e.target.closest('input[type=checkbox]');
@@ -2269,6 +2287,8 @@ function zoneJoueur(n) {
     if (choisi) { choixAjout[n] = choisi; zoneJoueur(n); }
   });
   z.querySelector('[data-vider]')?.addEventListener('click', () => { choixAjout[n] = null; zoneJoueur(n); });
+  const champInvite = z.querySelector('[data-invite]');
+  if (champInvite) { chargerInvites(); brancherSuggestions(champInvite); }
 }
 
 fenAjout.addEventListener('click', (e) => {

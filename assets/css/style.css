@@ -2750,3 +2750,16 @@ select.t-niveau { min-height: 34px; padding: 0 8px; border-radius: 8px; backgrou
 .mt-tag--alerte { background: rgba(255, 90, 79, .15); color: #ff8a80; border-color: rgba(255, 90, 79, .5); }
 .mt-alerte { display: block; color: #ff8a80; }
 .m-carte__note--alerte { color: #ff8a80; }
+
+/* Répertoire des joueurs : suggestions sous un champ (script 074) */
+.rj-liste { display: flex; flex-direction: column; margin-top: 4px; border: 1px solid var(--bord-fort); border-radius: 10px; background: var(--carte); overflow: hidden; max-height: 260px; overflow-y: auto; }
+.rj-liste[hidden] { display: none; }
+.rj-item { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 9px 12px; border: 0; border-bottom: 1px solid var(--bord); background: transparent; color: var(--blanc); font: inherit; text-align: left; cursor: pointer; min-height: 44px; }
+.rj-item:last-child { border-bottom: 0; }
+.rj-item:hover, .rj-item:focus { background: rgba(245, 122, 0, .12); }
+.rj-item small { color: var(--gris); font-size: 12px; }
+.rj-titre { margin: 10px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); }
+.rj-invite { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 1px dashed var(--bord-fort); border-radius: 10px; background: transparent; color: var(--blanc); font: inherit; text-align: left; cursor: pointer; margin-bottom: 6px; min-height: 44px; }
+.rj-invite small { display: block; color: var(--gris); font-size: 12px; }
+.rj-invite::after { content: '+'; margin-left: auto; color: var(--orange); font-weight: 800; font-size: 20px; }
+.fm-poste > .rj-liste { grid-column: 2 / -1; }

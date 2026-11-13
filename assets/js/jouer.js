@@ -2,6 +2,7 @@
 //  Jouer : création d'un match X01 et reprise des parties en cours
 // =====================================================================
 
+import { chargerInvites, chercherInvites, brancherSuggestions } from './annuaire.js?v=__VERSION__';
 import { BOT_DEFAUT, nomCampBot, bullBot } from './dartbot.js?v=__VERSION__';
 import { cibleSvg, pointCible, marque } from './cible.js?v=__VERSION__';
 import { reglageVoix, definirVoix, voixDisponible, dire, voixDeLaLangue, quandVoixChangent, tonDuScore } from './voix.js?v=__VERSION__';
@@ -243,6 +244,7 @@ async function chargerMembres() {
     .eq('status', 'active')
     .order('last_name');
   membres = data || [];
+  chargerInvites();   // répertoire des invités (script 074)
 }
 
 function afficherMembres() {
@@ -251,15 +253,20 @@ function afficherMembres() {
   const liste = membres.filter((m) => !deja.has(m.id)
     && (!q || [m.first_name, m.last_name, m.nickname].some((v) => (v || '').toLowerCase().includes(q))));
   const zone = document.getElementById('liste-membres');
+  // Invités déjà venus (script 074) qui correspondent à la recherche
+  const dejaInvites = joueurs.filter((j) => j.type === 'invite').map((j) => j.nom);
+  const invitesTrouves = q.length >= 2 ? chercherInvites(q, { exclure: dejaInvites }) : [];
+  const blocInvites = invitesTrouves.length ? `<p class="rj-titre">Invités déjà venus</p>${invitesTrouves.map((x) => `
+      <button type="button" class="rj-invite" data-invite-nom="${esc(x.nom)}"><span><strong>${esc(x.nom)}</strong><small>Invité${x.equipe ? ` · ${esc(x.equipe)}` : ''}</small></span></button>`).join('')}` : '';
   if (!liste.length) {
-    zone.innerHTML = `
+    zone.innerHTML = `${blocInvites}
       <div class="vide">
         Aucun membre ne correspond. Le joueur n'a peut-être pas de compte.
-        <div class="actions" style="margin-top:10px"><button type="button" class="bouton bouton--petit" id="vers-invite">L'ajouter comme invité</button></div>
+        <div class="actions" style="margin-top:10px"><button type="button" class="bouton bouton--petit" id="vers-invite">L'ajouter comme nouvel invité</button></div>
       </div>`;
     return;
   }
-  zone.innerHTML = liste.map((m) => {
+  zone.innerHTML = blocInvites + liste.map((m) => {
     const equipes = (m.team_members || []).filter((t) => t.status === 'accepted').map((t) => t.teams?.name).filter(Boolean).join(', ');
     return `
       <button type="button" class="ligne-membre" data-membre="${m.id}">
@@ -284,6 +291,13 @@ document.getElementById('liste-membres').addEventListener('click', (e) => {
     ouvrir('fenetre-invite');
     return;
   }
+  const inv = e.target.closest('[data-invite-nom]');
+  if (inv) {
+    joueurs.push({ type: 'invite', nom: inv.dataset.inviteNom });
+    fermer(document.getElementById('fenetre-membre'));
+    afficherJoueurs();
+    return;
+  }
   const b = e.target.closest('[data-membre]');
   if (!b) return;
   const m = membres.find((x) => x.id === b.dataset.membre);
@@ -294,7 +308,9 @@ document.getElementById('liste-membres').addEventListener('click', (e) => {
 
 // ----- Invités -----
 
+brancherSuggestions(document.getElementById('form-invite').nom, { exclure: () => joueurs.filter((j) => j.type === 'invite').map((j) => j.nom) });
 document.getElementById('btn-invite').addEventListener('click', () => {
+  chargerInvites();
   document.getElementById('form-invite').reset();
   ouvrir('fenetre-invite');
 });

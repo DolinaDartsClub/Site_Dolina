@@ -6,7 +6,8 @@
 //  feuille.html?code=<code>     : lien du capitaine adverse (sans compte)
 // =====================================================================
 
-import { supabase, esc, message, erreurFr, profilConnecte, estCapitaineDe, BASE_URL, dateFr } from './app.js?v=__VERSION__';
+import { chargerInvites, brancherSuggestions } from './annuaire.js?v=__VERSION__';
+import { supabase, esc, message, erreurFr, profilConnecte, estCapitaineDe, BASE_URL, dateFr, nomAffiche } from './app.js?v=__VERSION__';
 
 // Ordre officiel des 20 matchs (feuille FFD) : poste A, poste E, camp qui commence (⊙)
 export const ORDRE = [
@@ -494,9 +495,45 @@ function lireCompo(camp) {
   return res;
 }
 
+// Membres du club proposés dans la recherche d'un joueur (script 074)
+let membresClub = null;
+async function chargerMembresClub() {
+  if (membresClub) return;
+  membresClub = [];
+  const { data } = await supabase.from('profiles').select('id, first_name, last_name, nickname, use_nickname').eq('status', 'active').order('last_name');
+  membresClub = (data || []).map((p) => ({ id: p.id, nom: nomAffiche(p), detail: 'Membre du club' }));
+}
+
+// Champs « nom libre » de notre équipe : recherche dans les membres et les invités déjà venus
+function brancherRechercheJoueurs(form, camp) {
+  if (code || camp !== f().notre_camp || !peutGerer()) return;
+  chargerInvites();
+  chargerMembresClub();
+  form.querySelectorAll('input[data-libre]').forEach((input) => {
+    input.placeholder = 'Rechercher ou taper Prénom Nom';
+    brancherSuggestions(input, {
+      equipe: d.equipe?.id || null,
+      membres: () => membresClub || [],
+      surChoix: (it) => {
+        const sel = form.querySelector(`select[data-poste="${input.dataset.libre}"]`);
+        if (it.type === 'membre' && sel) {
+          if (![...sel.options].some((o) => o.value === it.id)) sel.add(new Option(it.nom, it.id), sel.querySelector('option[value="libre"]'));
+          sel.value = it.id;
+          input.value = '';
+          input.hidden = true;
+        } else {
+          input.value = it.nom;
+        }
+        sale[camp] = true;
+      },
+    });
+  });
+}
+
 function brancherCompos() {
   zone.querySelectorAll('.fm-compo').forEach((form) => {
     const camp = form.dataset.compo;
+    brancherRechercheJoueurs(form, camp);
     form.addEventListener('input', () => { sale[camp] = true; });
     form.addEventListener('change', (e) => {
       sale[camp] = true;

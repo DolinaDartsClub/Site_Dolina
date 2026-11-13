@@ -196,6 +196,7 @@ GitHub Pages + Supabase gratuits ✅. ⏳ Passage sur **dolina.mydarts.org** (CN
 | 01/11/2026 | Ligue : contact WhatsApp entre adversaires, numéro partagé avec accord |
 | 04/11/2026 | Feuille CPARD : PDF d'une page en vrai fichier, signature à distance, lien spectateurs public |
 | 08/11/2026 | Ligue : match à distance avec caméra ; chacun saisit ses volées ; mêmes règles de validation |
+| 13/11/2026 | Joueurs invités gardés dans un répertoire ; recherche par nom partout où l'on ajoute un joueur |
 | 11/11/2026 | Statistiques protégées : match à saisie trop rapide « à vérifier », exclusion des stats par l'admin (le résultat reste) |
 
 ## 12. Feuille de route

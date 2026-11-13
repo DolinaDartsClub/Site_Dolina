@@ -215,6 +215,19 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
   (tournoi, ligue), seules les statistiques sont retirées. Les matchs de tournoi peuvent aussi y être
   supprimés : le match redevient « à jouer » dans son tournoi.
 
+### 6.3 bis Répertoire des joueurs invités (script 074)
+
+- Chaque nom d'invité saisi est **gardé automatiquement** dans `joueurs_invites` : joueurs d'une partie (Jouer),
+  participants et partenaires de doublette d'un tournoi ou de la ligue, joueurs de **notre** équipe saisis à la
+  main sur une feuille CPARD (avec l'équipe). Les joueurs de l'équipe adverse ne sont pas enregistrés.
+- Un même nom n'est gardé qu'une fois (casse, accents et espaces ignorés) ; un nom identique à celui d'un membre
+  actif n'est pas enregistré. Reprise des invités déjà saisis avant le script.
+- **Recherche** (`assets/js/annuaire.js`) : Jouer › + Membre (section « Invités déjà venus ») et + Invité
+  (suggestions) ; tournoi › Ajouter des participants (un toucher ajoute l'invité) et partenaire de doublette ;
+  feuille CPARD › « Autre joueur » : suggestions des membres du club (le choisir le sélectionne comme membre) et
+  des invités, ceux de l'équipe en premier.
+- Lecture : membres actifs ; renommer / supprimer : admin (table, pas encore d'écran dédié).
+
 ### 6.4 Équipes, calendrier, logos
 
 - Calendrier par équipe (saison CPARD 2026-2027 chargée par le script 031), filtres À venir / Résultats / Tout,
@@ -351,7 +364,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État au 13/11/2026 : scripts **001 à 073 tous exécutés** en production. Le match à distance (071) reste masqué sur le site.
+> État au 13/11/2026 : scripts **001 à 073 exécutés** en production ; **074 à exécuter**. Le match à distance (071) reste masqué sur le site.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
@@ -409,6 +422,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 071 | Ligue : match à distance avec caméra (`games.a_distance`, `camp_distance`, `statut_partie_distance`) | ✅ exécuté, option masquée sur le site (`MATCH_DISTANCE_ACTIF = false`) |
 | 072 | Espace capitaine : bilan CPARD des joueurs (`stats_cpard_equipe`) | ✅ |
 | 073 | Matchs « à vérifier » (saisie trop rapide) et « hors stats » (`statistiques_partie`) | ✅ |
+| 074 | Répertoire des joueurs invités (`joueurs_invites`, enregistrement automatique) | ⏳ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
@@ -459,7 +473,7 @@ d'Actions pour `outils/generer-partage.mjs`, `PG*` pour la base de test locale, 
 | `node outils/test-compter.mjs` | Compter une manche | 25 réussis |
 | `node outils/test-pentadarts.mjs` | Pentadarts, Capital, Cricket | 64 réussis |
 | `node outils/test-echauffement.mjs` | Échauffement | 20 réussis |
-| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **738 réussis, 0 échec** |
+| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **761 réussis, 0 échec** |
 
 La base de test est un Postgres 16 local qui imite Supabase (`stub.sql`) : voir `outils/test-base/LISEZMOI.md`.
 Utilisateurs de test : Tony (admin), Will, Franck, Gérald (membres), Paul (en attente).
@@ -561,6 +575,7 @@ aller-retour pour la ligue.
 | 31/10/2026 | Relecture complète, tests remis à jour (`tout-tester.sh`), documentation et cahier des charges v2 |
 | 04/11/2026 | Feuille CPARD : vrai PDF d'une page (téléchargement réparé), signature plein écran et à distance, lien spectateurs en direct |
 | 08/11/2026 | Ligue : match à distance avec caméra (script 071, en pause) ; accueil : tournoi privé cliquable pour ses participants ; espace capitaine : bilan CPARD des joueurs (072) |
+| 13/11/2026 | Répertoire des joueurs invités : enregistrement automatique et recherche partout où l'on ajoute un joueur (074) |
 | 11/11/2026 | Matchs bâclés : alerte « à vérifier » et « hors stats » (073) ; suppression des matchs de tournoi depuis Admin › Matchs |
 
 Le détail de chaque changement est dans l'historique Git (`git log`).

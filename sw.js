@@ -54,6 +54,7 @@ const FICHIERS = [
   'assets/js/x01.js',
   'assets/js/jouer.js',
   'assets/js/scorer.js',
+  'assets/js/annuaire.js',
   'assets/js/distance.js',
   'assets/js/voix.js',
   'assets/js/dartbot.js',
