@@ -2768,3 +2768,9 @@ select.t-niveau { min-height: 34px; padding: 0 8px; border-radius: 8px; backgrou
 .cs-cpard .cs-manches { margin-top: 2px; }
 .cs-cpard .cs-manches em, .cs-orange { font-style: normal; font-weight: 800; color: var(--orange); }
 .cs-cpard td.cs-cpard__manches b { color: var(--orange); }
+
+/* Bilan CPARD : tout ce qui est gagné en orange, colonnes « Total » marquées */
+.cs-cpard td b { color: var(--orange) !important; }
+.cs-cpard thead th { line-height: 1.15; }
+.cs-cpard th.cs-cpard__total, .cs-cpard td.cs-cpard__total { background: rgba(245, 122, 0, .06); }
+.cs-cpard thead th.cs-cpard__total { color: var(--orange); }
