@@ -146,12 +146,12 @@ async function blocCpard(zone, t) {
         <p class="match__format" style="margin:0"><strong>${data.feuilles}</strong> journée${data.feuilles > 1 ? 's' : ''} jouée${data.feuilles > 1 ? 's' : ''} (feuilles validées)</p>
         <label class="cs-cp-tri">Trier par
           <select data-tri-cpard>
-            ${[['gagnes', 'Matchs gagnés'], ['pct', '% de victoires'], ['joues', 'Matchs joués'], ['journees', 'Journées']].map(([v, l]) => `<option value="${v}"${v === triCpard ? ' selected' : ''}>${l}</option>`).join('')}
+            ${[['gagnes', 'Matchs gagnés'], ['pct', '% de victoires'], ['joues', 'Matchs joués'], ['journees', 'Nombre de journées']].map(([v, l]) => `<option value="${v}"${v === triCpard ? ' selected' : ''}>${l}</option>`).join('')}
           </select>
         </label>
       </div>
       <table class="cs-cp">
-        <thead><tr><th>Joueur</th><th>Journées</th><th>Matchs<br>joués</th><th>Matchs<br>gagnés</th><th>%</th></tr></thead>
+        <thead><tr><th>Joueur</th><th>Nombre de<br>journées</th><th>Matchs<br>joués</th><th>Matchs<br>gagnés</th><th>%</th></tr></thead>
         <tbody>${j.map((x, i) => `
           <tr class="cs-cp-ligne" data-detail="${i}" tabindex="0" aria-expanded="false">
             <th scope="row"><span class="cs-cp-nom">${esc(x.nom)}</span>${x.profile_id ? '' : '<small>invité</small>'}</th>
