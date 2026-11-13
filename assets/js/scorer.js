@@ -394,11 +394,8 @@ function valider(score) {
     $('choix-finish').innerHTML = [1, 2, 3].filter((n) => n >= mini)
       .map((n) => `<button type="button" class="bouton bouton--plein touche-choix" data-flechettes="${n}">${n}</button>`).join('');
     $('fen-finish').hidden = false;
-  } else if (reste <= 50 || reste - score <= 50) {
-    // Le reste est passé à 50 ou moins pendant la volée (avant ou après) :
-    // des fléchettes ont pu être lancées sur un double
-    demanderDouble(0, 3);
   } else {
+    // On ne demande les fléchettes au double qu'à la fin d'une manche (finish)
     enregistrer();
   }
 }
