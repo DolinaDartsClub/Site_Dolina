@@ -351,7 +351,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État au 13/11/2026 : scripts **001 à 068 et 070 à 073 exécutés** en production ; **069 à exécuter** (avant les Masters). Le match à distance (071) reste masqué sur le site.
+> État au 13/11/2026 : scripts **001 à 073 tous exécutés** en production. Le match à distance (071) reste masqué sur le site.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
@@ -404,7 +404,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 066 | Correctif tableau B (DELETE sans WHERE) | ✅ |
 | 067 | Prolongation des matchs « premier à N » | ✅ |
 | 068 | Ligue : contacter son adversaire sur WhatsApp (numéro partagé avec accord) | ✅ |
-| 069 | Master / phase finale : têtes de série croisées avec 2 poules (1A, 1B, 2A, 2B…) | ⏳ |
+| 069 | Master / phase finale : têtes de série croisées avec 2 poules (1A, 1B, 2A, 2B…) | ✅ |
 | 070 | Feuille CPARD : spectateurs en direct, signature à distance (`signer_feuille`) | ✅ |
 | 071 | Ligue : match à distance avec caméra (`games.a_distance`, `camp_distance`, `statut_partie_distance`) | ✅ exécuté, option masquée sur le site (`MATCH_DISTANCE_ACTIF = false`) |
 | 072 | Espace capitaine : bilan CPARD des joueurs (`stats_cpard_equipe`) | ✅ |
