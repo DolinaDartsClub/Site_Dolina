@@ -279,7 +279,7 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
     scorer, compositions visibles seulement après le lancement, rien de modifiable, signatures non affichées.
 12. **Bilan des joueurs** (072) : dans l'espace capitaine › Statistiques, tableau « Championnat CPARD » cumulant
     les feuilles **validées** : matchs gagnés–perdus (simples, doubles), manches gagnées–perdues, rencontres
-    jouées, selon la période choisie. Joueurs réellement alignés (remplacements compris), invités par leur nom.
+    jouées, selon la période choisie. Sous les simples et les doubles : les manches (gagnées en orange, script 075). Joueurs réellement alignés (remplacements compris), invités par leur nom.
 
 ### 6.6 Tournois
 
@@ -364,7 +364,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État au 13/11/2026 : scripts **001 à 073 exécutés** en production ; **074 à exécuter**. Le match à distance (071) reste masqué sur le site.
+> État au 13/11/2026 : scripts **001 à 073 exécutés** en production ; **074 et 075 à exécuter**. Le match à distance (071) reste masqué sur le site.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
@@ -423,6 +423,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 072 | Espace capitaine : bilan CPARD des joueurs (`stats_cpard_equipe`) | ✅ |
 | 073 | Matchs « à vérifier » (saisie trop rapide) et « hors stats » (`statistiques_partie`) | ✅ |
 | 074 | Répertoire des joueurs invités (`joueurs_invites`, enregistrement automatique) | ⏳ |
+| 075 | Bilan CPARD : manches gagnées/perdues en simples et en doubles | ⏳ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
@@ -473,7 +474,7 @@ d'Actions pour `outils/generer-partage.mjs`, `PG*` pour la base de test locale, 
 | `node outils/test-compter.mjs` | Compter une manche | 25 réussis |
 | `node outils/test-pentadarts.mjs` | Pentadarts, Capital, Cricket | 64 réussis |
 | `node outils/test-echauffement.mjs` | Échauffement | 20 réussis |
-| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **761 réussis, 0 échec** |
+| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **763 réussis, 0 échec** |
 
 La base de test est un Postgres 16 local qui imite Supabase (`stub.sql`) : voir `outils/test-base/LISEZMOI.md`.
 Utilisateurs de test : Tony (admin), Will, Franck, Gérald (membres), Paul (en attente).

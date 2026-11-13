@@ -2763,3 +2763,8 @@ select.t-niveau { min-height: 34px; padding: 0 8px; border-radius: 8px; backgrou
 .rj-invite small { display: block; color: var(--gris); font-size: 12px; }
 .rj-invite::after { content: '+'; margin-left: auto; color: var(--orange); font-weight: 800; font-size: 20px; }
 .fm-poste > .rj-liste { grid-column: 2 / -1; }
+
+/* Bilan CPARD : manches gagnées en orange (script 075) */
+.cs-cpard .cs-manches { margin-top: 2px; }
+.cs-cpard .cs-manches em, .cs-orange { font-style: normal; font-weight: 800; color: var(--orange); }
+.cs-cpard td.cs-cpard__manches b { color: var(--orange); }

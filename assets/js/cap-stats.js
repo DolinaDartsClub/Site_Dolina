@@ -126,9 +126,11 @@ async function blocCpard(zone, t) {
   const j = data?.joueurs || [];
   if (!j.length) { zone.innerHTML = `<p class="vide">Aucune feuille de match validée sur la période.</p>`; return; }
   const gp = (g, p) => `<b>${g}</b><i>–</i>${p}`;
+  // Manches gagnées en orange (simples / doubles, script 075 ; absent avant : rien)
+  const manches = (g, p) => (g === undefined ? '' : `<small class="cs-manches"><em>${g}</em>–${p}</small>`);
   const pct = (g, p) => (g + p ? `${Math.round((g / (g + p)) * 100)} %` : '–');
   zone.innerHTML = `
-    <p class="match__format cs-resume">${data.feuilles} feuille${data.feuilles > 1 ? 's' : ''} de match validée${data.feuilles > 1 ? 's' : ''} · gagnés–perdus</p>
+    <p class="match__format cs-resume">${data.feuilles} feuille${data.feuilles > 1 ? 's' : ''} de match validée${data.feuilles > 1 ? 's' : ''} · matchs gagnés–perdus, et en dessous les manches (<span class="cs-orange">gagnées en orange</span>)</p>
     <div class="cs-cpard-defile"><table class="cs-cpard">
       <thead><tr><th>Joueur</th><th>Matchs</th><th>Simples</th><th>Doubles</th><th>Manches</th></tr></thead>
       <tbody>${j.map((x) => {
@@ -137,9 +139,9 @@ async function blocCpard(zone, t) {
     return `<tr>
           <th scope="row">${nom}<small>${x.rencontres} rencontre${x.rencontres > 1 ? 's' : ''}</small></th>
           <td class="cs-cpard__fort">${gp(mg, mp)}<small>${pct(mg, mp)}</small></td>
-          <td>${gp(x.simples_g, x.simples_p)}</td>
-          <td>${gp(x.doubles_g, x.doubles_p)}</td>
-          <td>${gp(x.manches_g, x.manches_p)}<small>${x.manches_g - x.manches_p > 0 ? '+' : ''}${x.manches_g - x.manches_p}</small></td>
+          <td>${gp(x.simples_g, x.simples_p)}${manches(x.manches_simples_g, x.manches_simples_p)}</td>
+          <td>${gp(x.doubles_g, x.doubles_p)}${manches(x.manches_doubles_g, x.manches_doubles_p)}</td>
+          <td class="cs-cpard__manches">${gp(x.manches_g, x.manches_p)}<small>${x.manches_g - x.manches_p > 0 ? '+' : ''}${x.manches_g - x.manches_p}</small></td>
         </tr>`;
   }).join('')}</tbody>
     </table></div>

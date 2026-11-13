@@ -141,6 +141,10 @@ select _v('bilan CPARD : 4 doubles × 2 joueurs', $$select sum((j ->> 'doubles_g
 select _v('bilan CPARD : manches = celles de la feuille', $$select (select sum((j ->> 'manches_g')::int) from json_array_elements(stats_cpard_equipe_test()) j)::text
   || ' / ' || (select sum(case when o.poste_e ~ '\d' then 2 else 1 end * m.manches_e)::text from feuille_matchs m join feuille_ordre() o on o.numero = m.numero)$$,
   (select sum(case when o.poste_e ~ '\d' then 2 else 1 end * m.manches_e)::text || ' / ' || sum(case when o.poste_e ~ '\d' then 2 else 1 end * m.manches_e)::text from feuille_matchs m join feuille_ordre() o on o.numero = m.numero));
+select _v('bilan CPARD (075) : manches simples + doubles = total', $$select count(*) filter (where (j ->> 'manches_simples_g')::int + (j ->> 'manches_doubles_g')::int <> (j ->> 'manches_g')::int
+  or (j ->> 'manches_simples_p')::int + (j ->> 'manches_doubles_p')::int <> (j ->> 'manches_p')::int)::text from json_array_elements(stats_cpard_equipe_test()) j$$, '0');
+select _v('bilan CPARD (075) : manches des simples = celles de la feuille', $$select (select sum((j ->> 'manches_simples_g')::int) from json_array_elements(stats_cpard_equipe_test()) j)::text$$,
+  (select sum(m.manches_e)::text from feuille_matchs m join feuille_ordre() o on o.numero = m.numero where o.poste_e !~ '\d'));
 select _v('bilan CPARD : invité compté par son nom', $$select count(*)::text from json_array_elements(stats_cpard_equipe_test()) j where j ->> 'nom' = 'Invité G' and j ->> 'profile_id' is null$$, '1');
 select _v('bilan CPARD : saison suivante vide', $$select (stats_cpard_equipe_test_debut(current_date + 1) -> 'joueurs')::text$$, '[]');
 select _v('signatures gardées à la validation', $$select signature_a || ' ' || signature_e from feuilles_match$$, 'data:image/png;base64,AA data:image/png;base64,EE');
