@@ -322,6 +322,9 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
   STUN gratuits ; si la vidéo ne passe pas entre deux réseaux, on peut ajouter un relais TURN dans
   `config.js` (`SERVEURS_TURN`), les scores fonctionnent de toute façon. Un match à distance n'occupe pas de cible
   du club. Validation par l'un ou l'autre joueur ; règles de points inchangées.
+- **Capitaines** (script 076) : les capitaines et vice-capitaines voient la ligue (ouverte aux membres) en
+  **spectateur** : classement, Master, matchs et résultats, onglet Stats (récap du scoring) ; rien de modifiable,
+  code caché. Raccourci « <ligue> : résultats et scoring » dans l'espace capitaine.
 - **Ajouter un membre** après le lancement, même ligue complète (une place est créée) ; ses matchs contre sa poule sont créés.
 - Puis **Master** (phase finale) avec les qualifiés. Têtes de série avec 2 poules : 1A, 1B, 2A, 2B, 3A, 3B…
   (script 069) ; arbre à la puissance de 2 supérieure, exemptions pour les mieux classés. Exemple 5 qualifiés
@@ -364,7 +367,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 
 ### 7.2 Scripts SQL (à exécuter dans l'ordre)
 
-> État au 13/11/2026 : scripts **001 à 073 exécutés** en production ; **074 et 075 à exécuter**. Le match à distance (071) reste masqué sur le site.
+> État au 13/11/2026 : scripts **001 à 073 exécutés** en production ; **074, 075 et 076 à exécuter**. Le match à distance (071) reste masqué sur le site.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 > Pour chaque nouveau script : l'exécuter une fois, dans l'ordre, puis cocher sa ligne ici.
 
@@ -424,6 +427,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 073 | Matchs « à vérifier » (saisie trop rapide) et « hors stats » (`statistiques_partie`) | ✅ |
 | 074 | Répertoire des joueurs invités (`joueurs_invites`, enregistrement automatique) | ⏳ |
 | 075 | Bilan CPARD : manches gagnées/perdues en simples et en doubles | ⏳ |
+| 076 | Ligue interne visible des capitaines en lecture (`est_capitaine`, `ligue_ouverte_capitaine`) | ⏳ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
@@ -474,7 +478,7 @@ d'Actions pour `outils/generer-partage.mjs`, `PG*` pour la base de test locale, 
 | `node outils/test-compter.mjs` | Compter une manche | 25 réussis |
 | `node outils/test-pentadarts.mjs` | Pentadarts, Capital, Cricket | 64 réussis |
 | `node outils/test-echauffement.mjs` | Échauffement | 20 réussis |
-| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **763 réussis, 0 échec** |
+| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **778 réussis, 0 échec** |
 
 La base de test est un Postgres 16 local qui imite Supabase (`stub.sql`) : voir `outils/test-base/LISEZMOI.md`.
 Utilisateurs de test : Tony (admin), Will, Franck, Gérald (membres), Paul (en attente).
@@ -576,6 +580,7 @@ aller-retour pour la ligue.
 | 31/10/2026 | Relecture complète, tests remis à jour (`tout-tester.sh`), documentation et cahier des charges v2 |
 | 04/11/2026 | Feuille CPARD : vrai PDF d'une page (téléchargement réparé), signature plein écran et à distance, lien spectateurs en direct |
 | 08/11/2026 | Ligue : match à distance avec caméra (script 071, en pause) ; accueil : tournoi privé cliquable pour ses participants ; espace capitaine : bilan CPARD des joueurs (072) |
+| 16/11/2026 | Ligue interne accessible aux capitaines en lecture, raccourci dans l'espace capitaine (076) |
 | 13/11/2026 | Répertoire des joueurs invités : enregistrement automatique et recherche partout où l'on ajoute un joueur (074) |
 | 11/11/2026 | Matchs bâclés : alerte « à vérifier » et « hors stats » (073) ; suppression des matchs de tournoi depuis Admin › Matchs |
 

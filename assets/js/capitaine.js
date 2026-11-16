@@ -73,7 +73,7 @@ async function afficher() {
   const lienEquipe = `equipes.html#${encodeURIComponent(t.name)}`;
   zone.innerHTML = '<p class="vide">Chargement…</p>';
   const auj = new Date().toLocaleDateString('fr-CA');
-  const [rm, rr, rc] = await Promise.all([
+  const [rm, rr, rc, , rl] = await Promise.all([
     supabase.from('team_members')
       .select('profile_id, status, requested_at, profiles!team_members_profile_id_fkey(id, first_name, last_name, nickname, use_nickname, photo_path, status)')
       .eq('team_id', t.id).in('status', ['pending', 'accepted']).order('requested_at'),
@@ -82,6 +82,9 @@ async function afficher() {
       .order('date_match').limit(6),
     t.captain_id ? supabase.from('profiles').select('first_name, last_name, nickname, use_nickname').eq('id', t.captain_id).maybeSingle() : Promise.resolve({ data: null }),
     chargerClubs(),
+    // Ligue interne : visible des capitaines en lecture (script 076)
+    supabase.from('tournaments').select('id, name, status').eq('est_ligue', true).eq('ligue_visible', true)
+      .in('status', ['open', 'running', 'finished']).order('created_at', { ascending: false }).limit(2),
   ]);
   if (rm.error) { zone.innerHTML = `<p class="vide">${esc(erreurFr(rm.error))}</p>`; return; }
   const demandes = (rm.data || []).filter((m) => m.status === 'pending' && m.profiles);
@@ -117,6 +120,7 @@ async function afficher() {
       <div class="cap-raccourcis">
         <a class="cap-raccourci" href="${lienEquipe}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Calendrier et scores</span></a>
         <a class="cap-raccourci" href="equipes.html?ajouter=1#${encodeURIComponent(t.name)}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Ajouter une rencontre</span></a>
+        ${(rl?.data || []).map((l) => `<a class="cap-raccourci" href="tournoi.html?id=${encodeURIComponent(l.id)}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3a3 3 0 0 1-3 4M7 5H4a3 3 0 0 0 3 4"/></svg><span>${esc(l.name)} : résultats et scoring</span></a>`).join('')}
         ${admin ? `<a class="cap-raccourci" href="admin.html#equipes"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span>Gérer dans l'admin</span></a>` : ''}
       </div>
     </section>
