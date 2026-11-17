@@ -2800,3 +2800,11 @@ select.t-niveau { min-height: 34px; padding: 0 8px; border-radius: 8px; backgrou
 .cs-cp-detail em { font-style: normal; color: var(--orange); font-weight: 700; }
 .cs-cp-detail i { font-style: normal; }
 .cs-cp-detail a { color: var(--orange); }
+
+/* Accueil : liens Instagram et Facebook dans l'en-tête */
+.entete__reseaux { display: flex; gap: 6px; margin-left: auto; }
+.entete__reseaux + #lien-compte, .entete__reseaux ~ .entete__actions { margin-left: 0; }
+.reseau { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; border: 1.5px solid var(--bord-fort); color: var(--blanc); transition: border-color .15s, color .15s; }
+.reseau svg { width: 21px; height: 21px; }
+.reseau:hover, .reseau:focus-visible { border-color: var(--orange); color: var(--orange); }
+@media (max-width: 420px) { .reseau { width: 34px; height: 34px; border-radius: 10px; } .reseau svg { width: 18px; height: 18px; } .entete__reseaux { gap: 4px; } .entete:has(.entete__reseaux) { gap: 8px; } .entete:has(.entete__reseaux) .entete__nom { font-size: 17px; } .entete:has(.entete__reseaux) .entete__marque { gap: 8px; } }
