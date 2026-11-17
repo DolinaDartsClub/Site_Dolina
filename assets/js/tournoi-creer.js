@@ -195,7 +195,7 @@ form.addEventListener('submit', (e) => {
   ];
   if (v.format === 'pools') {
     lignes.push(['Poules', `${v.pools_count ? `${v.pools_count} poules` : 'Nombre proposé au lancement'} · ${v.pool_qualifiers} qualifié${v.pool_qualifiers > 1 ? 's' : ''} par poule`]);
-    lignes.push(['Classement des poules', '3 pts par victoire, 1 pt par défaite · égalité : manches gagnées, puis confrontation directe']);
+    lignes.push(['Classement des poules', '3 pts par victoire, 1 pt par défaite · égalité : différence de manches, manches gagnées, matchs joués, puis confrontation directe']);
   }
   if (v.format === 'pools') lignes.push(['Tableau B (non-qualifiés)', v.tournoi_b ? 'Oui, créé à la fin des poules' : 'Non']);
   if (v.format === 'knockout') lignes.push(['Tableau B (double élimination)', v.b_double ? 'Oui : les éliminés du A rejoignent le B, qui a son propre vainqueur. Format des matchs du B choisi au lancement' : 'Non']);

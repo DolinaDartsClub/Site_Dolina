@@ -591,6 +591,8 @@ function fileDePoule(k) { return matchsDePoule(k).filter((x) => x.status === 're
 // Joueurs (inscriptions) qui ont un match en cours dans le tournoi
 function occupes() {
   const s = new Set();
+  // Ligue (077) : un match pas fini n'empêche pas ses joueurs d'en lancer d'autres
+  if (estLigue()) return s;
   matchs.forEach((x) => { if (x.status === 'live') { s.add(x.entry_a); s.add(x.entry_b); } });
   return s;
 }
@@ -600,7 +602,8 @@ const joueurOccupe = (m, occ = occupes()) => occ.has(m.entry_a) || occ.has(m.ent
 function etatPoule(k) {
   const enCours = enCoursDePoule(k);
   const file = fileDePoule(k);
-  const libres = Math.max(0, ciblesParPoule() - enCours.length);
+  // Ligue (077) : un match en pause ne bloque pas la cible (la base vérifie les matchs vraiment en cours)
+  const libres = estLigue() ? Math.max(1, ciblesParPoule() - enCours.length) : Math.max(0, ciblesParPoule() - enCours.length);
   const occ = occupes();
   const lancables = file.filter((x) => !joueurOccupe(x, occ));
   const proposes = estLigue() ? lancables : (libres ? lancables.slice(0, libres + 1) : []);
@@ -664,6 +667,10 @@ function boutonMatch(m) {
     }
     if (jeTiensLeScore || (moi?.role === 'admin')) {
       boutons.push(`<a class="bouton bouton--petit${m.game_status === 'finished' ? '' : ' bouton--plein'}" href="scorer.html?id=${encodeURIComponent(m.game_id)}">${m.game_status === 'finished' ? 'Ouvrir le scorer' : (jeJoueADistance(m) ? 'Rejoindre le match (caméra)' : 'Reprendre le scorer')}</a>`);
+    } else if (estMonMatch(m) && m.game_status !== 'finished') {
+      // L'autre joueur (ou celui qui n'a pas lancé le match) reprend le scorer (077)
+      boutons.push(`<button type="button" class="bouton bouton--petit bouton--plein" data-reprendre="${m.game_id}">Reprendre le match</button>`);
+      boutons.push(`<a class="bouton bouton--petit" href="live.html?id=${encodeURIComponent(m.game_id)}">Suivre</a>`);
     } else {
       boutons.push(`<a class="bouton bouton--petit" href="live.html?id=${encodeURIComponent(m.game_id)}">${m.game_status === 'finished' ? 'Voir le score' : 'Suivre en direct'}</a>`);
     }
@@ -871,7 +878,9 @@ function ligneMonMatch(m, mi) {
     const jeTiens = (moi && m.game_created_by === moi.id) || jeJoueADistance(m);
     actions = m.game_status === 'finished' && jeTiens
       ? `<button type="button" class="bouton bouton--petit bouton--plein" data-valider="${m.game_id}">Valider</button>`
-      : `<a class="bouton bouton--petit${jeTiens ? ' bouton--plein' : ''}" href="${jeTiens ? 'scorer' : 'live'}.html?id=${encodeURIComponent(m.game_id)}">${jeTiens ? (jeJoueADistance(m) && m.game_created_by !== moi.id ? 'Rejoindre' : 'Reprendre') : 'Suivre'}</a>`;
+      : (!jeTiens && m.game_status !== 'finished'
+        ? `<button type="button" class="bouton bouton--petit bouton--plein" data-reprendre="${m.game_id}">Reprendre</button>`
+        : `<a class="bouton bouton--petit${jeTiens ? ' bouton--plein' : ''}" href="${jeTiens ? 'scorer' : 'live'}.html?id=${encodeURIComponent(m.game_id)}">${jeTiens ? (jeJoueADistance(m) && m.game_created_by !== moi.id ? 'Rejoindre' : 'Reprendre') : 'Suivre'}</a>`);
   } else if (prop?.pour_moi) {
     etat = `<span class="lm-res lm-res--prop">${prop.type === 'nul' ? 'Propose un nul' : (prop.perdant === mi.id ? 'Vous demande de déclarer forfait' : 'Déclare forfait')}</span>`;
     actions = `<button type="button" class="bouton bouton--petit bouton--plein" data-repondre="${prop.id}" data-reponse="accepter">Accepter</button>
@@ -1017,7 +1026,7 @@ function vueLigue() {
           <td class="p-rang">${c.rang}</td>
           <th scope="row" class="p-nom">${e ? nomLien(c.id) : '—'}${moiIci ? ' <span class="t-moi">Vous</span>' : ''}${c.critere ? `<small>${esc(c.critere)}</small>` : ''}</th>
           <td>${c.joues}</td><td>${c.victoires}</td><td>${c.nuls}</td><td>${c.defaites}</td>
-          <td>${c.pour}-${c.contre}</td>
+          <td>${c.pour}-${c.contre} <small class="p-diff">(${c.diff > 0 ? '+' : ''}${c.diff})</small></td>
           <td class="p-points">${c.points}</td>
         </tr>`;
     }).join('');
@@ -1026,7 +1035,7 @@ function vueLigue() {
       <header class="p-poule__haut"><h3>${titre}</h3>${mi?.pool_no === k && nbPoules > 1 ? '<span class="m-moi">Ma poule</span>' : ''}<span class="p-poule__info">${membres.length} joueurs · ${joues}/${mP.length} matchs</span></header>
       <div class="p-tableau-cadre">
         <table class="p-tableau">
-          <thead><tr><th>#</th><th class="p-nom">Joueur</th><th title="Matchs joués">J</th><th title="Victoires">V</th><th title="Matchs nuls">N</th><th title="Défaites">D</th><th title="Manches gagnées - perdues">Manches</th><th title="Points">Pts</th></tr></thead>
+          <thead><tr><th>#</th><th class="p-nom">Joueur</th><th title="Matchs joués">J</th><th title="Victoires">V</th><th title="Matchs nuls">N</th><th title="Défaites">D</th><th title="Manches gagnées - perdues (différence)">Manches</th><th title="Points">Pts</th></tr></thead>
           <tbody>${lignes}</tbody>
         </table>
       </div>
@@ -1064,7 +1073,7 @@ function vueLigue() {
     ${blocFinSaison(mPoule)}
     ${joueur ? blocMesMatchsLigue() : ''}
     ${!joueur && aTraiter.length ? `<section class="lg-traiter"><h3 class="cs-sous-titre" style="margin-top:0">À confirmer <span class="t-compte t-compte--moi">${aTraiter.length}</span></h3><div class="m-liste">${aTraiter.map((m) => carteMatch(m, { avecLibelle: false })).join('')}</div></section>` : ''}
-    <p class="t-legende">${nbPoules > 1 ? `${nbPoules} poules : chacun joue une fois contre chaque joueur de sa poule. ` : ''}Victoire ${POINTS_VICTOIRE} pts · défaite ${POINTS_DEFAITE} pt · forfait 0 · nul ${POINTS_NUL} pt chacun.${texteQualif} À égalité : manches gagnées, puis match entre eux.</p>
+    <p class="t-legende">${nbPoules > 1 ? `${nbPoules} poules : chacun joue une fois contre chaque joueur de sa poule. ` : ''}Victoire ${POINTS_VICTOIRE} pts · défaite ${POINTS_DEFAITE} pt · forfait 0 · nul ${POINTS_NUL} pt chacun.${texteQualif} À égalité de points : différence de manches, puis manches gagnées, puis matchs joués, puis match entre eux.</p>
     ${reglageQualifies()}
     ${reglageFinSaison()}
     ${nbPoules > 1 ? `<div class="p-poules">${tableaux.join('')}</div>` : tableaux.join('')}
@@ -1145,7 +1154,7 @@ function vuePoules() {
           <td class="p-rang">${c.rang}</td>
           <th scope="row" class="p-nom">${e ? nomLien(c.id) : '—'}${moiIci ? ' <span class="t-moi">Vous</span>' : ''}${c.critere ? `<small>${esc(c.critere)}</small>` : ''}</th>
           <td>${c.joues}</td><td>${c.victoires}</td><td>${c.defaites}</td>
-          <td>${c.pour}-${c.contre}</td>
+          <td>${c.pour}-${c.contre} <small class="p-diff">(${c.diff > 0 ? '+' : ''}${c.diff})</small></td>
           <td class="p-points">${c.points}</td>
         </tr>`;
     }).join('');
@@ -1160,7 +1169,7 @@ function vuePoules() {
         </header>
         <div class="p-tableau-cadre">
           <table class="p-tableau">
-            <thead><tr><th>#</th><th class="p-nom">${t.team_mode === 'double' ? 'Doublette' : 'Joueur'}</th><th title="Matchs joués">J</th><th title="Victoires">V</th><th title="Défaites">D</th><th title="Manches gagnées - perdues">Manches</th><th title="Points">Pts</th></tr></thead>
+            <thead><tr><th>#</th><th class="p-nom">${t.team_mode === 'double' ? 'Doublette' : 'Joueur'}</th><th title="Matchs joués">J</th><th title="Victoires">V</th><th title="Défaites">D</th><th title="Manches gagnées - perdues (différence)">Manches</th><th title="Points">Pts</th></tr></thead>
             <tbody>${lignes}</tbody>
           </table>
         </div>
@@ -1525,6 +1534,14 @@ function brancher() {
   zone.querySelector('[data-action="phase-finale"]')?.addEventListener('click', () => ouvrirLancement('finale'));
   zone.querySelector('[data-action="tableau-b"]')?.addEventListener('click', ouvrirTableauB);
   zone.querySelectorAll('[data-lancer]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirBull(b.dataset.lancer); }));
+  // Reprendre un match en pause (077) : on devient la personne qui tient le score
+  zone.querySelectorAll('[data-reprendre]').forEach((b) => b.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    b.disabled = true;
+    const { error } = await supabase.rpc('reprendre_partie_tournoi', { p_game: b.dataset.reprendre });
+    if (error) { b.disabled = false; message(zoneMsg, erreurFr(error)); return; }
+    location.href = `scorer.html?id=${encodeURIComponent(b.dataset.reprendre)}`;
+  }));
   zone.querySelectorAll('[data-valider]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); valider(b.dataset.valider, b); }));
   zone.querySelectorAll('[data-forfait]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirForfait(b.dataset.forfait); }));
   zone.querySelectorAll('[data-corriger]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ouvrirCorrection(b.dataset.corriger); }));

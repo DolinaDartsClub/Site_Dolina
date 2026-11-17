@@ -140,8 +140,8 @@ export function choisirMembre({ titre = 'Choisir un membre', exclure = new Set()
 // Classement d'une poule (règles du club)
 //   3 points par victoire, 1 point par défaite, 0 par forfait ;
 //   match nul (ligue interne) : 1 point chacun.
-//   Égalité de points : le plus de manches gagnées ;
-//   puis le résultat des matchs entre les joueurs à égalité.
+//   Égalité de points (077) : différence de manches, puis manches gagnées,
+//   puis matchs joués (le plus passe devant), puis le match entre eux.
 //   matchs : matchs de la poule (status 'done' comptés)
 // ---------------------------------------------------------------------
 export const POINTS_VICTOIRE = 3;
@@ -172,15 +172,17 @@ export function classementPoule(idsInscrits, matchs) {
     p.defaites += 1; p.points += m.forfeit ? 0 : POINTS_DEFAITE;
   }
   const liste = [...lignes.values()];
+  liste.forEach((x) => { x.diff = x.pour - x.contre; });
 
-  // Points puis manches gagnées
-  liste.sort((x, y) => y.points - x.points || y.pour - x.pour);
+  // Points, puis différence de manches, puis manches gagnées, puis matchs joués (le plus passe devant)
+  const memeNiveau = (x, y) => x.points === y.points && x.diff === y.diff && x.pour === y.pour && x.joues === y.joues;
+  liste.sort((x, y) => y.points - x.points || y.diff - x.diff || y.pour - x.pour || y.joues - x.joues);
 
-  // Groupes encore à égalité : matchs entre eux
+  // Groupes encore à égalité parfaite : match entre eux, sinon ex aequo
   const resultat = [];
   for (let i = 0; i < liste.length;) {
     let j = i + 1;
-    while (j < liste.length && liste[j].points === liste[i].points && liste[j].pour === liste[i].pour) j += 1;
+    while (j < liste.length && memeNiveau(liste[j], liste[i])) j += 1;
     const groupe = liste.slice(i, j);
     if (groupe.length > 1 && groupe.some((x) => x.joues > 0)) {
       const ids = new Set(groupe.map((x) => x.id));
@@ -190,12 +192,16 @@ export function classementPoule(idsInscrits, matchs) {
       }
       groupe.sort((x, y) => entre[y.id] - entre[x.id]);
       const departages = new Set(groupe.map((x) => entre[x.id])).size > 1;
-      groupe.forEach((x) => { x.critere = departages ? 'Départagé par le match entre eux' : 'Égalité parfaite'; });
+      groupe.forEach((x) => { x.critere = departages ? 'Départagé par le match entre eux' : 'Égalité parfaite'; x.entre = entre[x.id]; });
     }
     resultat.push(...groupe);
     i = j;
   }
-  resultat.forEach((x, i) => { x.rang = i + 1; });
+  // Rang : ex aequo seulement en cas d'égalité parfaite (même après le match entre eux)
+  resultat.forEach((x, i) => {
+    const p = resultat[i - 1];
+    x.rang = p && memeNiveau(p, x) && p.entre === x.entre && x.critere === 'Égalité parfaite' ? p.rang : i + 1;
+  });
   return resultat;
 }
 

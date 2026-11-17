@@ -47,7 +47,7 @@ async function chargerTournois() {
   const zone = document.getElementById('mes-tournois');
   const [{ data: tournois, error }, { data: inscriptions }] = await Promise.all([
     supabase.from('tournaments')
-      .select('id, code, name, format, team_mode, pool_qualifiers, status, max_participants, created_by, created_at, tournament_entries(count)')
+      .select('id, code, name, format, team_mode, pool_qualifiers, status, max_participants, created_by, created_at, est_ligue, tournament_entries(count)')
       .order('created_at', { ascending: false }),
     supabase.from('tournament_entries').select('tournament_id')
       .or(`profile_id.eq.${moi.id},partner_profile_id.eq.${moi.id}`),
@@ -56,6 +56,9 @@ async function chargerTournois() {
     zone.innerHTML = `<p class="vide">Impossible de charger les tournois pour le moment. ${esc(erreurFr(error))}</p>`;
     return;
   }
+  // Ordre (077) : tournois en cours, puis la ligue interne, puis inscriptions ouvertes, puis terminés
+  const poids = (t) => (t.status === 'running' && !t.est_ligue ? 0 : t.est_ligue ? 1 : t.status === 'running' ? 0 : t.status === 'open' ? 2 : 3);
+  tournois.sort((a, b) => poids(a) - poids(b) || new Date(b.created_at) - new Date(a.created_at));
   const inscrit = new Set((inscriptions || []).map((i) => i.tournament_id));
   const miens = tournois.filter((t) => t.created_by === moi.id || inscrit.has(t.id));
   const autres = tournois.filter((t) => !miens.includes(t));   // visibles seulement par un admin

@@ -27,7 +27,9 @@ async function charger() {
     zone.innerHTML = `<p class="vide">Tournois indisponibles. (${esc(erreurFr(error))})</p>`;
     return;
   }
-  tournois = data || [];
+  // Ordre (077) : tournois en cours, puis la ligue interne, puis inscriptions ouvertes, puis terminés
+  const poids = (t) => (t.status === 'running' && !t.est_ligue ? 0 : t.est_ligue ? 1 : t.status === 'running' ? 0 : t.status === 'open' ? 2 : 3);
+  tournois = (data || []).sort((a, b) => poids(a) - poids(b) || new Date(b.created_at) - new Date(a.created_at));
   afficher();
 }
 

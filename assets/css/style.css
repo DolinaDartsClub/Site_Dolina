@@ -2808,3 +2808,5 @@ select.t-niveau { min-height: 34px; padding: 0 8px; border-radius: 8px; backgrou
 .reseau svg { width: 21px; height: 21px; }
 .reseau:hover, .reseau:focus-visible { border-color: var(--orange); color: var(--orange); }
 @media (max-width: 420px) { .reseau { width: 34px; height: 34px; border-radius: 10px; } .reseau svg { width: 18px; height: 18px; } .entete__reseaux { gap: 4px; } .entete:has(.entete__reseaux) { gap: 8px; } .entete:has(.entete__reseaux) .entete__nom { font-size: 17px; } .entete:has(.entete__reseaux) .entete__marque { gap: 8px; } }
+
+.p-diff { font-size: 11px; color: var(--gris); font-weight: 500; }

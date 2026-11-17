@@ -115,7 +115,7 @@ Règles validées :
 - Poules + phase finale, ou élimination directe ; individuel ou doublettes ; code et QR code.
 - Cibles par poule et pour la phase finale ; score en direct ; corrections, forfaits, clôture nul / sans suite ;
   ajout d'un joueur en cours (poules).
-- Poules : 3 points par victoire, 1 par défaite ; départage manches puis confrontation directe.
+- Poules : 3 points par victoire, 1 par défaite ; départage : différence de manches, manches gagnées, matchs joués (le plus devant), puis confrontation directe.
 - **Tableau B** pour les non-qualifiés des poules (poule unique ou élimination directe).
 - **Tableau B en double élimination** pour l'élimination directe : chaque éliminé du A rejoint le B au tour
   correspondant ; le B a son propre vainqueur (pas de grande finale), format à part ; pas de match pour la
