@@ -16,7 +16,7 @@ import { join } from 'node:path';
 
 const RACINE = process.cwd();
 const SORTIE = join(RACINE, '_site');
-const SITE_URL = (process.env.SITE_URL || 'https://dolinadartsclub.github.io/Site_Dolina/').replace(/\/?$/, '/');
+const SITE_URL = (process.env.SITE_URL || 'https://dolina.mydarts.org/').replace(/\/?$/, '/');
 const EXCLUS = new Set(['.git', '.github', '_site', 'outils', 'supabase', 'docs', 'README.md', 'node_modules', '.env', '.env.example', '.gitignore']);
 
 // Adresse et clé publique lues dans config.js (une seule source de vérité)

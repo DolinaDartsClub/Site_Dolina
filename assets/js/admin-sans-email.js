@@ -140,7 +140,7 @@ export async function motDePasseProvisoire({ id, prenom, telephone, email, zone,
   if (error) { message(zoneMessage, error.code === 'P0001' ? error.message : erreurFr(error)); return null; }
   const texte = `Bonjour ${prenom || ''}, voici ton mot de passe provisoire pour le site du Dolina Darts Club :\n`
     + `${data.identifiant ? 'Identifiant' : 'Email'} : ${data.connexion}\nMot de passe : ${code}\n`
-    + `Connecte-toi sur https://dolinadartsclub.github.io/Site_Dolina/connexion.html puis choisis ton propre mot de passe dans « Mon compte ».`;
+    + `Connecte-toi sur https://dolina.mydarts.org/connexion.html puis choisis ton propre mot de passe dans « Mon compte ».`;
   const tel = (telephone || '').replace(/[^\d+]/g, '');
   const telInter = tel.startsWith('0') ? `33${tel.slice(1)}` : tel.replace(/^\+/, '');
   const mail = email && !email.endsWith('.invalid') ? email : '';

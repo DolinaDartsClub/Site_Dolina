@@ -4,7 +4,8 @@ Site web du Dolina Darts Club (fléchettes traditionnelles depuis 1984) : actual
 scorer X01, statistiques et classement, équipes et feuilles de match CPARD, tournois, ligue interne,
 jeux du club et espace d'administration.
 
-- **En ligne** : https://dolinadartsclub.github.io/Site_Dolina/ (GitHub Pages, publié par GitHub Actions)
+- **En ligne** : https://dolina.mydarts.org/ (serveur OVH, envoi FTPS automatique par GitHub Actions) ;
+  copie de secours sur https://dolinadartsclub.github.io/Site_Dolina/ (GitHub Pages)
 - **Données, comptes, droits** : Supabase (offre gratuite, région européenne)
 - **Code** : HTML, CSS et JavaScript simples, sans outil de compilation
 

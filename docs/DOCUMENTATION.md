@@ -29,7 +29,7 @@
 
 | | |
 |---|---|
-| **Adresse actuelle** | https://dolinadartsclub.github.io/Site_Dolina/ |
+| **Adresse actuelle** | https://dolina.mydarts.org/ (copie GitHub Pages : https://dolinadartsclub.github.io/Site_Dolina/) |
 | **Adresse prévue** | dolina.mydarts.org (migration en attente, voir § 13) — domaine envisagé à l'origine : dolinadartsclub.fr |
 | **Dépôt** | GitHub `DolinaDartsClub/Site_Dolina`, branche `main` |
 | **Hébergement des pages** | GitHub Pages (gratuit), publié par GitHub Actions |
@@ -545,21 +545,26 @@ de Supabase ne sauvegarde pas). Les images ne sont pas dans le fichier (seulemen
 
 ## 13. Migration vers dolina.mydarts.org
 
-État : **en attente** du bon mot de passe FTP (Vince ; FileZilla renvoie « 530 Login authentication failed »).
+État : **faite le 18/11/2026**. Le site est servi par le serveur OVH du gestionnaire de mydarts.org (dossier `web`,
+HTTPS automatique) ; la publication GitHub Actions l'y envoie en FTPS à chaque mise à jour.
 
-- **Option A (recommandée)** : enregistrement DNS CNAME `dolina` → `dolinadartsclub.github.io`, domaine
-  personnalisé dans Settings › Pages, HTTPS forcé. Rien ne change dans la publication.
-- **Option B** : envoi FTPS par GitHub Actions avec les secrets `FTP_SERVEUR`, `FTP_UTILISATEUR`,
-  `FTP_MOT_DE_PASSE`, `FTP_DOSSIER` (dossier web à confirmer avec l'hébergeur).
-- Dans les deux cas : Supabase › Authentication › URL Configuration (Site URL + Redirect URLs), puis remplacer
-  l'adresse codée en dur dans : `index.html` (balises og), `article.html` (og:image),
-  `outils/generer-partage.mjs` (`SITE_URL`), `assets/js/admin-sans-email.js` (message du code).
+- Secrets du dépôt : `FTP_SERVEUR`, `FTP_UTILISATEUR`, `FTP_MOT_DE_PASSE`, `FTP_DOSSIER` (= `/web/`) ; variable
+  `SITE_URL` = `https://dolina.mydarts.org/` (aperçus de partage). Ne jamais les écrire ailleurs.
+- Serveur : `web` = racine du site (le dossier `stats` de l'hébergeur est à garder), `private` = fichiers non
+  publics, `log` = journaux. Sauvegardes du serveur : à demander à l'hébergeur (le code est sur GitHub, les
+  données sur Supabase).
+- Supabase › Authentication › URL Configuration : Site URL `https://dolina.mydarts.org`, Redirect URLs
+  `https://dolina.mydarts.org/**` (+ l'ancienne adresse GitHub pendant la transition).
+- Adresses mises à jour : balises og (`index.html`, `article.html`), `generer-partage.mjs`, message du code
+  (`admin-sans-email.js`), README.
+- Pas de CNAME : le DNS de mydarts.org appartient à la plateforme du gestionnaire. Supabase reste dans le cloud
+  (pas de Supabase sous Docker sur le serveur pour l'instant).
+- GitHub Pages continue d'être publié (copie de secours, mêmes données).
 
 ## 14. Suivi : à faire et en attente
 
 **À faire par le club**
 - Noter le niveau des membres de la ligue ; créer et lancer la ligue (2 poules, Master à 8 conseillé).
-- Obtenir les accès FTP / DNS pour la migration (§ 13).
 - Fournir les informations de l'association pour les mentions légales (RGPD).
 
 **En attente d'un élément**
@@ -586,6 +591,7 @@ aller-retour pour la ligue.
 | 31/10/2026 | Relecture complète, tests remis à jour (`tout-tester.sh`), documentation et cahier des charges v2 |
 | 04/11/2026 | Feuille CPARD : vrai PDF d'une page (téléchargement réparé), signature plein écran et à distance, lien spectateurs en direct |
 | 08/11/2026 | Ligue : match à distance avec caméra (script 071, en pause) ; accueil : tournoi privé cliquable pour ses participants ; espace capitaine : bilan CPARD des joueurs (072) |
+| 18/11/2026 | Migration vers https://dolina.mydarts.org (envoi FTPS automatique), adresses mises à jour |
 | 17/11/2026 | Ligue : matchs en pause et reprise, départage par différence de manches, ordre des tournois (077) ; liens Instagram et Facebook sur l'accueil |
 | 16/11/2026 | Ligue interne accessible aux capitaines en lecture, raccourci dans l'espace capitaine (076) |
 | 13/11/2026 | Répertoire des joueurs invités : enregistrement automatique et recherche partout où l'on ajoute un joueur (074) |
