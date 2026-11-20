@@ -42,7 +42,9 @@ let minuteur = null;
 const f = () => d.feuille;
 const nomEquipe = (camp) => (camp === f().notre_camp ? d.equipe.name : d.rencontre.adversaire);
 const peutGerer = () => d.role === 'gerer';
-const peutJouer = () => ['gerer', 'joueur'].includes(d.role) && f().statut !== 'validee';
+// 078 : tout membre du club connecté peut scorer ; avec le lien du capitaine adverse, saisie du score
+const peutJouer = () => ['gerer', 'joueur', 'membre'].includes(d.role) && f().statut !== 'validee';
+const peutSaisirScore = () => (peutJouer() || d.role === 'adverse') && f().statut !== 'validee';
 const commence = () => d.matchs.some((m) => m.statut !== 'a_jouer');
 const lancee = () => !!f().lancee_le;
 const visible = (camp) => f()[`voir_${camp.toLowerCase()}`] !== false;
@@ -672,6 +674,9 @@ function carteMatch(n, pret) {
     actions = `${m.game_id ? `<a class="bouton bouton--petit" href="live.html?id=${m.game_id}">Récap</a>` : '<span class="fm-info">Manches saisies</span>'}${peutGerer() && f().statut !== 'validee' ? `<button type="button" class="bouton bouton--petit" data-remettre="${n}">Corriger</button>` : ''}`;
   } else if (peutJouer() && pret) {
     actions = `<button type="button" class="bouton bouton--petit bouton--plein" data-jouer="${n}">Jouer au scorer</button><button type="button" class="bouton bouton--petit" data-saisir="${n}">Saisir le score</button>`;
+  } else if (peutSaisirScore() && pret) {
+    // Lien du capitaine adverse (sans compte) : saisie du score en manches
+    actions = `<button type="button" class="bouton bouton--petit bouton--plein" data-saisir="${n}">Saisir le score</button>`;
   }
   return `
     <article class="fm-match fm-match--${m.statut}${o.a.length === 2 ? ' fm-match--double' : ''}" id="fm-m-${n}">
@@ -721,7 +726,9 @@ fenScore.addEventListener('click', async (e) => {
   if (!b) return;
   const [x, y] = b.dataset.score.split('-').map(Number);
   const n = Number(fenScore.dataset.n);
-  const ok = await appelSurPlace('saisir_resultat_feuille', { p_feuille: f().id, p_numero: n, p_manches_a: x, p_manches_e: y }, document.getElementById('erreur-score'));
+  const ok = code
+    ? await appelSurPlace('saisir_resultat_feuille_code', { p_code: code, p_numero: n, p_manches_a: x, p_manches_e: y }, document.getElementById('erreur-score'))
+    : await appelSurPlace('saisir_resultat_feuille', { p_feuille: f().id, p_numero: n, p_manches_a: x, p_manches_e: y }, document.getElementById('erreur-score'));
   if (ok) { fenScore.hidden = true; await actualiserSurPlace(n); }
 });
 
