@@ -435,11 +435,11 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 071 | Ligue : match à distance avec caméra (`games.a_distance`, `camp_distance`, `statut_partie_distance`) | ✅ exécuté, option masquée sur le site (`MATCH_DISTANCE_ACTIF = false`) |
 | 072 | Espace capitaine : bilan CPARD des joueurs (`stats_cpard_equipe`) | ✅ |
 | 073 | Matchs « à vérifier » (saisie trop rapide) et « hors stats » (`statistiques_partie`) | ✅ |
-| 074 | Répertoire des joueurs invités (`joueurs_invites`, enregistrement automatique) | ⏳ |
-| 075 | Bilan CPARD : manches gagnées/perdues en simples et en doubles | ⏳ |
-| 076 | Ligue interne visible des capitaines en lecture (`est_capitaine`, `ligue_ouverte_capitaine`) | ⏳ |
-| 077 | Ligue : matchs en pause (`partie_active`, `reprendre_partie_tournoi`), départage par différence de manches, ordre des tournois | ⏳ |
-| 078 | Feuille CPARD : scorer et saisie du score par le lien adverse (sans compte) et par tout membre du club | ⏳ |
+| 074 | Répertoire des joueurs invités (`joueurs_invites`, enregistrement automatique) | ✅ |
+| 075 | Bilan CPARD : manches gagnées/perdues en simples et en doubles | ✅ |
+| 076 | Ligue interne visible des capitaines en lecture (`est_capitaine`, `ligue_ouverte_capitaine`) | ✅ |
+| 077 | Ligue : matchs en pause (`partie_active`, `reprendre_partie_tournoi`), départage par différence de manches, ordre des tournois | ✅ |
+| 078 | Feuille CPARD : scorer et saisie du score par le lien adverse (sans compte) et par tout membre du club | ✅ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
