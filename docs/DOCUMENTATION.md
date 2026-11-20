@@ -279,7 +279,9 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
     scorer, compositions visibles seulement après le lancement, rien de modifiable, signatures non affichées.
 13. **Qui peut scorer** (078) : le capitaine et les joueurs de l'équipe, **tout membre du club connecté**
     (scorer complet ou saisie du score) et **quiconque a le lien du capitaine adverse**, même sans compte
-    (saisie du score en manches). Corriger un match saisi reste réservé au capitaine qui gère.
+    (**scorer complet** ou saisie du score : `scorer.html?id=…&code=…`, écritures par `volee_feuille_code`,
+    `annuler_volees_feuille_code`, `statut_partie_feuille_code`, `valider_match_feuille_code`,
+    `abandonner_partie_feuille_code` ; partie au nom du capitaine qui a créé la feuille, stats aux joueurs du club). Corriger un match saisi reste réservé au capitaine qui gère.
 12. **Bilan des joueurs** (072) : dans l'espace capitaine › Statistiques, tableau « Championnat CPARD » cumulant
     les feuilles **validées** : matchs gagnés–perdus (simples, doubles), manches gagnées–perdues, rencontres
     jouées, selon la période choisie. Affichage : par joueur **journées**, **matchs joués**, **matchs gagnés** et **%** (barre), tri au choix ; un toucher sur le joueur déplie le détail simples / doubles / manches (script 075). Joueurs réellement alignés (remplacements compris), invités par leur nom.
@@ -437,7 +439,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 075 | Bilan CPARD : manches gagnées/perdues en simples et en doubles | ⏳ |
 | 076 | Ligue interne visible des capitaines en lecture (`est_capitaine`, `ligue_ouverte_capitaine`) | ⏳ |
 | 077 | Ligue : matchs en pause (`partie_active`, `reprendre_partie_tournoi`), départage par différence de manches, ordre des tournois | ⏳ |
-| 078 | Feuille CPARD : saisie du score par le lien adverse (sans compte) et par tout membre du club | ⏳ |
+| 078 | Feuille CPARD : scorer et saisie du score par le lien adverse (sans compte) et par tout membre du club | ⏳ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
@@ -488,7 +490,7 @@ d'Actions pour `outils/generer-partage.mjs`, `PG*` pour la base de test locale, 
 | `node outils/test-compter.mjs` | Compter une manche | 25 réussis |
 | `node outils/test-pentadarts.mjs` | Pentadarts, Capital, Cricket | 64 réussis |
 | `node outils/test-echauffement.mjs` | Échauffement | 20 réussis |
-| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **813 réussis, 0 échec** |
+| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **823 réussis, 0 échec** |
 
 La base de test est un Postgres 16 local qui imite Supabase (`stub.sql`) : voir `outils/test-base/LISEZMOI.md`.
 Utilisateurs de test : Tony (admin), Will, Franck, Gérald (membres), Paul (en attente).

@@ -43,9 +43,14 @@ const bloque = () => tourDuBot() || tourAdverse();
 
 // ---------- Chargement ----------
 
+// Scorer ouvert avec le lien d'une feuille CPARD, sans compte (script 078) :
+// toutes les écritures passent par des fonctions qui vérifient ce lien
+const codeLien = (new URLSearchParams(location.search).get('code') || '').trim().toUpperCase() || null;
+let parLien = false;
+
 async function init() {
   moi = await profilConnecte();
-  if (!moi) return location.replace('connexion.html');
+  if (!moi && !codeLien) return location.replace('connexion.html');
   const { data, error } = await supabase
     .from('games')
     .select('*, game_sides(side, name, is_bot), game_players(id, side, display_name, throw_order, profile_id)')
@@ -55,8 +60,10 @@ async function init() {
     $('titre-format').textContent = 'Partie introuvable';
     return message(zoneMsg, 'Cette partie n\'existe pas ou vous n\'y avez pas accès.');
   }
-  if (data.a_distance) monCamp = data.game_players.find((p) => p.profile_id === moi.id)?.side || null;
-  if (data.created_by !== moi.id && moi.role !== 'admin' && !monCamp) {
+  if (data.a_distance && moi) monCamp = data.game_players.find((p) => p.profile_id === moi.id)?.side || null;
+  if (codeLien && data.feuille_match_id && (!moi || (data.created_by !== moi.id && moi.role !== 'admin'))) {
+    parLien = true;   // le lien de la feuille donne le droit de tenir le score
+  } else if (!moi || (data.created_by !== moi.id && moi.role !== 'admin' && !monCamp)) {
     // Seul le créateur de la partie saisit les scores : les autres la suivent en direct
     return location.replace(`live.html?id=${encodeURIComponent(id)}`);
   }
@@ -223,7 +230,7 @@ async function chargerFeuille() {
   const { data } = await supabase.rpc('feuille_de_partie', { p_game: id });
   if (!data) return;
   tournoi = { feuille: true, match_no: data.numero, status: data.statut === 'termine' ? 'done' : 'live', feuille_id: data.feuille_id, nom: 'Feuille de match' };
-  const lien = `feuille.html?id=${encodeURIComponent(data.feuille_id)}`;
+  const lien = codeLien ? `feuille.html?code=${encodeURIComponent(codeLien)}` : `feuille.html?id=${encodeURIComponent(data.feuille_id)}`;
   $('btn-quitter').href = lien;
   $('btn-quitter').setAttribute('aria-label', 'Retour à la feuille de match (le match reste en cours)');
   $('fin-tournoi').href = lien;
@@ -250,7 +257,9 @@ $('fin-valider').addEventListener('click', async () => {
   if (bouton.disabled) return;
   bouton.disabled = true;                    // pas de double validation
   await file;                                // dernières volées bien enregistrées
-  const { error } = await supabase.rpc(tournoi?.feuille ? 'valider_match_feuille' : 'valider_match_tournoi', { p_game: id });
+  const { error } = parLien
+    ? await supabase.rpc('valider_match_feuille_code', { p_code: codeLien, p_game: id })
+    : await supabase.rpc(tournoi?.feuille ? 'valider_match_feuille' : 'valider_match_tournoi', { p_game: id });
   bouton.disabled = false;
   if (error) return message(zoneMsg, `Le résultat n'a pas été validé : ${erreurFr(error)}`);
   resultatValide();
@@ -460,7 +469,9 @@ function enregistrer() {
   const gagnant = etat.gagnant;
   file = file.then(async () => {
     const { local, id: idLocal, ...donnees } = v;
-    const { data, error } = await supabase.from('visits').insert({ game_id: id, ...donnees }).select('id').single();
+    const { data, error } = parLien
+      ? await supabase.rpc('volee_feuille_code', { p_code: codeLien, p_game: id, p_volee: donnees }).then((r) => ({ data: r.data ? { id: r.data } : null, error: r.error }))
+      : await supabase.from('visits').insert({ game_id: id, ...donnees }).select('id').single();
     if (error) {
       visits = visits.filter((x) => x !== v);
       rafraichir();
@@ -470,7 +481,9 @@ function enregistrer() {
     v.id = data.id;
     delete v.local;
     if (finDePartie) {
-      const r = game.a_distance
+      const r = parLien
+        ? await supabase.rpc('statut_partie_feuille_code', { p_code: codeLien, p_game: id, p_fini: true, p_gagnant: gagnant })
+        : game.a_distance
         ? await supabase.rpc('statut_partie_distance', { p_game: id, p_fini: true, p_gagnant: gagnant })
         : await supabase.from('games').update({ status: 'finished', winner_side: gagnant, finished_at: new Date().toISOString() }).eq('id', id);
       if (!r.error) game.status = 'finished';
@@ -551,11 +564,14 @@ async function annuler() {
   if (monCamp && v.side !== monCamp) {
     return message(zoneMsg, `La dernière volée est celle de ${nomsCamps[v.side]} : c'est à lui de l'annuler sur son téléphone.`);
   }
-  const { error } = await supabase.from('visits').delete().in('id', aRetirer.map((x) => x.id));
+  const { error } = parLien
+    ? await supabase.rpc('annuler_volees_feuille_code', { p_code: codeLien, p_game: id, p_ids: aRetirer.map((x) => x.id) })
+    : await supabase.from('visits').delete().in('id', aRetirer.map((x) => x.id));
   if (error) return message(zoneMsg, `Impossible d'annuler la volée : ${erreurFr(error)}`);
   visits.splice(visits.length - aRetirer.length, aRetirer.length);
   if (game.status === 'finished') {
-    if (game.a_distance) await supabase.rpc('statut_partie_distance', { p_game: id, p_fini: false });
+    if (parLien) await supabase.rpc('statut_partie_feuille_code', { p_code: codeLien, p_game: id, p_fini: false });
+    else if (game.a_distance) await supabase.rpc('statut_partie_distance', { p_game: id, p_fini: false });
     else await supabase.from('games').update({ status: 'live', winner_side: null, finished_at: null }).eq('id', id);
     game.status = 'live';
     game.winner_side = null;
@@ -578,6 +594,12 @@ $('btn-abandon').addEventListener('click', async () => {
     : 'Abandonner la partie ? Elle sera supprimée définitivement, avec tous ses scores.';
   if (!confirm(texte)) return;
   await file;
+  if (parLien) {
+    const { error } = await supabase.rpc('abandonner_partie_feuille_code', { p_code: codeLien, p_game: id });
+    if (error) return message(zoneMsg, erreurFr(error));
+    location.href = `feuille.html?code=${encodeURIComponent(codeLien)}`;
+    return;
+  }
   await supprimerPartie(id);
   location.href = tournoi?.feuille ? `feuille.html?id=${encodeURIComponent(tournoi.feuille_id)}`
     : (tournoi ? `tournoi.html?id=${encodeURIComponent(tournoi.tournament_id)}` : 'jouer.html');

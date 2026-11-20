@@ -669,14 +669,16 @@ function carteMatch(n, pret) {
   };
   let actions = '';
   if (m.statut === 'en_cours' && m.game_id) {
-    actions = `<a class="bouton bouton--petit bouton--plein" href="scorer.html?id=${m.game_id}">Scorer</a><a class="bouton bouton--petit" href="live.html?id=${m.game_id}">Suivre</a>`;
+    // Avec le lien de la feuille (sans compte), le scorer s'ouvre avec ce lien (078)
+    const lienScorer = `scorer.html?id=${m.game_id}${code ? `&code=${encodeURIComponent(code)}` : ''}`;
+    actions = `<a class="bouton bouton--petit bouton--plein" href="${lienScorer}">Scorer</a><a class="bouton bouton--petit" href="live.html?id=${m.game_id}">Suivre</a>`;
   } else if (fini) {
     actions = `${m.game_id ? `<a class="bouton bouton--petit" href="live.html?id=${m.game_id}">Récap</a>` : '<span class="fm-info">Manches saisies</span>'}${peutGerer() && f().statut !== 'validee' ? `<button type="button" class="bouton bouton--petit" data-remettre="${n}">Corriger</button>` : ''}`;
   } else if (peutJouer() && pret) {
     actions = `<button type="button" class="bouton bouton--petit bouton--plein" data-jouer="${n}">Jouer au scorer</button><button type="button" class="bouton bouton--petit" data-saisir="${n}">Saisir le score</button>`;
   } else if (peutSaisirScore() && pret) {
-    // Lien du capitaine adverse (sans compte) : saisie du score en manches
-    actions = `<button type="button" class="bouton bouton--petit bouton--plein" data-saisir="${n}">Saisir le score</button>`;
+    // Lien du capitaine adverse (sans compte) : scorer complet ou saisie du score (078)
+    actions = `<button type="button" class="bouton bouton--petit bouton--plein" data-jouer="${n}">Jouer au scorer</button><button type="button" class="bouton bouton--petit" data-saisir="${n}">Saisir le score</button>`;
   }
   return `
     <article class="fm-match fm-match--${m.statut}${o.a.length === 2 ? ' fm-match--double' : ''}" id="fm-m-${n}">
@@ -689,8 +691,10 @@ function carteMatch(n, pret) {
 zone.addEventListener('click', async (e) => {
   const jouer = e.target.closest('[data-jouer]');
   if (jouer) {
-    const g = await appel('lancer_match_feuille', { p_feuille: f().id, p_numero: Number(jouer.dataset.jouer) });
-    if (g) location.href = `scorer.html?id=${g}`;
+    const g = code
+      ? await appel('lancer_match_feuille_code', { p_code: code, p_numero: Number(jouer.dataset.jouer) })
+      : await appel('lancer_match_feuille', { p_feuille: f().id, p_numero: Number(jouer.dataset.jouer) });
+    if (g) location.href = `scorer.html?id=${g}${code ? `&code=${encodeURIComponent(code)}` : ''}`;
     return;
   }
   const saisir = e.target.closest('[data-saisir]');
