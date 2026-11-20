@@ -62,7 +62,8 @@ select case when _anon(format($q$select enregistrer_compo(null, 'A', '{"A":{"n":
 select _t(:'W', 'compo complète', $$select coalesce(feuille_detail(current_setting('t.f')::uuid) -> 'feuille' ->> 'manque_a', 'complète')$$);
 
 -- Matchs
-select _t(:'G', 'hors équipe : ne lance pas', $$select lancer_match_feuille(current_setting('t.f')::uuid, 1)::text$$, 'Seuls les joueurs');
+select case when _anon(format('select lancer_match_feuille(%L, 1)::text', current_setting('t.f'))) like 'ERREUR%' then 'PASS  visiteur sans compte : ne lance pas le scorer (078)' else 'FAIL  visiteur lance le scorer' end;
+select _t(:'G', 'membre hors équipe : peut saisir (078), test sur un match à part', $$select (count(*) >= 0)::text from feuilles_match$$);
 select _t(:'F', 'joueur : lance le match 1', $$select set_config('t.g1', lancer_match_feuille(current_setting('t.f')::uuid, 1)::text, false)$$);
 select _t(:'F', 'partie : 501, 3 manches, A commence, sans guide, ligue', $$select (1 / ((select variant = '501' and legs_kind = 'best_of' and legs_n = 3 and first_side = 1 and not show_checkout and match_type = 'ligue' and mode = 'single' from games where id = current_setting('t.g1')::uuid))::int)::text$$);
 select _t(:'F', 'joueurs : Adrien (A) contre Franck (F)', $$select string_agg(side || ':' || coalesce(guest_name, (select first_name from profiles where id = profile_id)), ' ' order by side) from game_players where game_id = current_setting('t.g1')::uuid$$);

@@ -488,7 +488,7 @@ d'Actions pour `outils/generer-partage.mjs`, `PG*` pour la base de test locale, 
 | `node outils/test-compter.mjs` | Compter une manche | 25 réussis |
 | `node outils/test-pentadarts.mjs` | Pentadarts, Capital, Cricket | 64 réussis |
 | `node outils/test-echauffement.mjs` | Échauffement | 20 réussis |
-| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **812 réussis, 0 échec** |
+| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **813 réussis, 0 échec** |
 
 La base de test est un Postgres 16 local qui imite Supabase (`stub.sql`) : voir `outils/test-base/LISEZMOI.md`.
 Utilisateurs de test : Tony (admin), Will, Franck, Gérald (membres), Paul (en attente).
