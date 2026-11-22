@@ -495,6 +495,8 @@ img { max-width: 100%; display: block; }
 .camp__badge { padding: 3px 8px; flex-shrink: 0; border-radius: 999px; background: var(--orange); color: var(--noir); font-size: 11px; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
 .camp__debut { color: var(--gris); font-size: 12px; }
 .camp__lanceur { font-size: 13px; color: var(--gris-clair); }
+.camp__premier { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 2px; }
+.camp__premier small { width: 100%; font-size: 12px; color: var(--gris-clair); }
 .camp__reste { font-family: var(--police-titre); font-weight: 700; font-size: clamp(56px, 16vw, 120px); line-height: 0.95; text-align: center; }
 .scorer--nombreux .camp__reste { font-size: clamp(44px, 11vw, 84px); }
 .camp__stats { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 2px; text-align: center; }
@@ -2369,6 +2371,15 @@ a.jeu-tuile:hover { border-color: var(--orange); transform: translateY(-1px); bo
 .pd-touches--cricket { grid-template-columns: repeat(4, 1fr); }
 .pd-touches--cricket .touche { font-size: 17px; line-height: 1.1; }
 .pd-touches--cricket .touche small { display: block; font-family: var(--police); font-size: 10px; font-weight: 500; color: var(--gris); }
+.pd-cricket { display: grid; gap: 6px; }
+.pd-cricket__ligne { display: grid; grid-template-columns: 1.1fr 1fr 1fr 1fr; gap: 6px; align-items: stretch; }
+.pd-cricket__ligne--centre .touche:last-child { grid-column: span 2; }
+.pd-cricket__ligne .touche { font-size: 18px; min-height: 48px; }
+.pd-cricket__num { display: flex; flex-direction: column; justify-content: center; font-family: var(--police-titre); font-weight: 800; font-size: 20px; line-height: 1.05; }
+.pd-cricket__num small { font-family: var(--police); font-size: 11px; font-weight: 500; color: var(--gris); }
+.pd-cricket__ligne--mort { opacity: .45; }
+.pd-table tr.pd-mort th, .pd-table tr.pd-mort td { opacity: .45; }
+.pd-ligne-points td { font-weight: 800; color: var(--orange); }
 /* Volée en cours : effacer une fléchette en la touchant */
 button.pd-fleche { position: relative; font: inherit; font-weight: 700; cursor: pointer; }
 button.pd-fleche:hover { background: rgba(245,122,0,.22); }

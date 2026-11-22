@@ -168,39 +168,65 @@ console.log('Totaux :', JSON.stringify(tot), e.final.groupes.map((g) => g.map((p
   egal([s.jeux.mickey.touches[1]['20'], s.jeux.mickey.touches[1].T, s.jeux.mickey.touches[1].C], [3, 1, 2], 'T20 → 20 fermé ; Triple 1 ; bulle 2 touches');
 }
 
-// ---------- Cricket seul ----------
+// ---------- Cricket seul : règles classiques, avec points ----------
 {
   const c2 = cfg(2, 'cricket');
-  const tout = [V('20*3', '19*3', '18*3'), V('17*3', '16*3', '15*3'), V('C*2', 'C', 'T'), V('T', 'T', 'D'), V('D', 'D', null)];
+  // J1 ferme le 20 et marque 2 × 20 ; J2 ne touche rien
+  let B = [V('20*3', '20', '20'), V()];
+  let s = calculer(c2, B);
+  egal([s.jeu, s.jeux.cricket.touches[0]['20'], s.jeux.cricket.points[0]], ['cricket', 3, 40], 'T20 ferme, 2 touches en plus = 40 pts');
+  // J2 ferme le 20 : il ne marque rien de plus, et J1 ne marque plus sur le 20
+  B.push(V(), V('20*3', '20*3', null), V('20*3', null, null));   // J1 rien ; J2 ferme (ses touches en plus ne comptent pas : J1 a fermé) ; J1 T20
+  s = calculer(c2, B);
+  egal([s.jeux.cricket.points[0], s.jeux.cricket.points[1]], [40, 0], 'numéro fermé des deux côtés : plus de points');
+  // Les cases Double / Triple n'existent plus en cricket seul
+  s = calculer(c2, [V('T', 'D', null)]);
+  egal(s.jeux.cricket.points[0] + Object.values(s.jeux.cricket.touches[0]).reduce((a, b) => a + b, 0), 0, 'case Triple / Double ignorées');
+  // Bulle 50 = 2 touches ; touche en plus = 25 pts
+  s = calculer(c2, [V('C*2', 'C*2', null)]);
+  egal([s.jeux.cricket.touches[0].C, s.jeux.cricket.points[0]], [3, 25], 'centre : 50 + 50 = fermé + 25 pts');
+}
+{
+  // Tout fermer ne suffit pas si on est derrière aux points
+  const c2 = cfg(2, 'cricket');
+  const B = [V(), V('20*3', '20*3', '20*3')];                // J2 : 20 fermé + 120 pts
+  B.push(V('20*3', '19*3', '18*3'), V());
+  B.push(V('17*3', '16*3', '15*3'), V());
+  B.push(V('C*2', 'C', null));                                // J1 a tout fermé mais 0 pt contre 120
+  let s = calculer(c2, B);
+  egal(s.termine, false, 'tout fermé mais derrière aux points : on continue');
+  B.push(V(), V('19*3', '19*3', null));                       // J1 marque 19 × 6 = 114… toujours derrière
+  s = calculer(c2, B);
+  egal([s.termine, s.jeux.cricket.points[0]], [false, 114], '114 < 120 : pas encore gagné');
+  B.push(V(), V('19', null, null));                           // 133 ≥ 120 → gagne aussitôt
+  s = calculer(c2, B);
+  egal([s.termine, s.final.groupes, s.final.unite, s.final.totaux], [true, [[0], [1]], 'points', { 0: 133, 1: 120 }], 'J1 gagne dès qu\'il a tout fermé et au moins autant de points');
+}
+{
+  // Gagne immédiatement, sans finir le tour
+  const c2 = cfg(2, 'cricket');
+  const tout = [V('20*3', '19*3', '18*3'), V('17*3', '16*3', '15*3'), V('C*2', 'C', null)];
   const B = [];
-  tout.forEach((v, i) => { B.push(v); B.push(V(i < 3 ? '20' : null, null, null)); });
+  tout.forEach((v, i) => { B.push(v); if (i < 2) B.push(V()); });
   const s = calculer(c2, B);
-  egal(s.termine, true, 'cricket seul : fini quand J1 a tout fermé (fin du tour)');
-  egal(s.final.groupes, [[0], [1]], 'J1 gagne');
-  egal(s.final.totaux, { 0: 27, 1: 3 }, 'touches 27 / 3');
-  // Égalité : les deux ferment tout au même tour → bulle
-  const E = [];
-  tout.forEach((v) => { E.push(v); E.push(v); });
-  const e2 = calculer(c2, E);
-  egal(e2.departage?.type, 'bulle', 'les deux ferment au même tour : bulle');
-  E.push({ bulle: 25 }, { bulle: 50 });
-  egal(calculer(c2, E).final.groupes, [[1], [0]], 'J2 gagne à la bulle');
+  egal([s.termine, s.final.groupes], [true, [[0], [1]]], 'J1 gagne à sa 3e volée, sans attendre J2');
 }
 
 // ---------- Cricket seul en manches ----------
 {
   const c2 = { ...cfg(2, 'cricket'), format: { type: 'premier', n: 2 } };
-  const tout = [V('20*3', '19*3', '18*3'), V('17*3', '16*3', '15*3'), V('C*2', 'C', 'T'), V('T', 'T', 'D'), V('D', 'D', null)];
+  const tout = [V('20*3', '19*3', '18*3'), V('17*3', '16*3', '15*3'), V('C*2', 'C', null)];
+  const manche = (B) => tout.forEach((v, i) => { B.push(v); if (i < 2) B.push(V()); });   // celui qui commence gagne
   const B = [];
-  tout.forEach((v) => { B.push(v); B.push(V()); });          // manche 1 : J1 commence et gagne
+  manche(B);
   let s = calculer(c2, B);
   egal([s.termine, s.gagnees, s.joueur], [false, [1, 0], 1], 'manche 1 à J1 ; J2 commence la manche 2');
-  tout.forEach((v) => { B.push(v); B.push(V()); });          // manche 2 : J2 commence et gagne
+  manche(B);
   s = calculer(c2, B);
   egal([s.termine, s.gagnees], [false, [1, 1]], '1 manche partout');
-  tout.forEach((v) => { B.push(v); B.push(V()); });          // manche 3 : J1 commence et gagne
+  manche(B);
   s = calculer(c2, B);
-  egal([s.termine, s.final.groupes, s.final.totaux], [true, [[0], [1]], { 0: 2, 1: 1 }], 'J1 gagne 2 manches à 1');
+  egal([s.termine, s.final.groupes, s.final.totaux, s.final.unite], [true, [[0], [1]], { 0: 2, 1: 1 }, 'manches'], 'J1 gagne 2 manches à 1');
   const m = calculer({ ...cfg(2, 'cricket'), format: { type: 'meilleur', n: 3 } }, []);
   egal(m.objectif, 2, 'au meilleur de 3 = 2 manches gagnantes');
 }

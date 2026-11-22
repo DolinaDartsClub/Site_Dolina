@@ -27,6 +27,7 @@ let botSide = null;       // camp du dartbot (partie contre le bot)
 let reglageBot = null;
 let minuterieBot = null;
 let joueursCamps = {};    // side -> [noms des joueurs dans l'ordre de lancer]
+let idsCamps = {};        // side -> [id game_players dans l'ordre de lancer] (choix du 1er lanceur en double)
 let visits = [];
 let etat = null;
 let saisie = '';
@@ -72,6 +73,7 @@ async function init() {
   for (const s of camps) {
     const joueurs = game.game_players.filter((p) => p.side === s).sort((a, b) => a.throw_order - b.throw_order);
     joueursCamps[s] = joueurs.map((p) => p.display_name);
+    idsCamps[s] = joueurs.map((p) => p.id);
     const camp = game.game_sides.find((x) => x.side === s);
     nomsCamps[s] = game.mode === 'double' && camp?.name ? camp.name : joueursCamps[s].join(' / ');
   }
@@ -135,7 +137,7 @@ function carteCamp(s, volees = false) {
   const actif = etat.auLancer === s;
   const moy = moyenne(st);
   const lanceur = game.mode === 'double' && joueursCamps[s].length > 1
-    ? joueursCamps[s][etat.voleesTotal[s] % joueursCamps[s].length] : null;
+    ? joueursCamps[s][etat.voleesManche[s] % joueursCamps[s].length] : null;
   const detail = volees ? etat.historique.filter((v) => v.side === s) : [];
   return `
     <article class="camp${actif ? ' camp--actif' : ''}${etat.gagnant === s ? ' camp--gagnant' : ''}">
@@ -143,7 +145,9 @@ function carteCamp(s, volees = false) {
         <span class="camp__nom">${esc(nomsCamps[s])}</span>
         ${actif ? '<span class="camp__badge">Au lancer</span>' : (etat.debutManche === s && !etat.gagnant ? '<span class="camp__debut" title="A commencé la manche">●</span>' : '')}
       </div>
-      ${lanceur ? `<span class="camp__lanceur">${actif ? 'Lance : ' : 'Prochain : '}${esc(lanceur)}</span>` : ''}
+      ${peutChoisirPremier(s)
+        ? `<div class="camp__premier" role="group" aria-label="Qui commence dans l'équipe ?"><small>Qui commence ? (toutes les manches)</small>${joueursCamps[s].map((n, i) => `<button type="button" class="bouton bouton--petit${i === 0 ? ' bouton--plein' : ''}" data-premier="${s}:${idsCamps[s][i]}" aria-pressed="${i === 0}">${esc(n)}</button>`).join('')}</div>`
+        : (lanceur ? `<span class="camp__lanceur">${actif ? 'Lance : ' : 'Prochain : '}${esc(lanceur)}</span>` : '')}
       <span class="camp__reste">${etat.reste[s]}</span>
       <div class="camp__stats">
         <span><small>Manches</small><b class="orange">${etat.manches[s]}</b></span>
@@ -172,10 +176,33 @@ function campsNombreux() {
   return `${carteCamp(focus, true)}<div class="mini-camps">${lignes}</div>`;
 }
 
+// Double : tant que l'équipe n'a pas lancé, on choisit son premier lanceur
+// (il commence ensuite chaque manche)
+function peutChoisirPremier(s) {
+  return game.mode === 'double' && (idsCamps[s] || []).length === 2 && game.status === 'live'
+    && !visits.some((v) => v.side === s) && !$('scorer').classList.contains('scorer--fige')
+    && (!game.a_distance || !monCamp || monCamp === s);
+}
+
+$('camps').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-premier]');
+  if (!b || b.getAttribute('aria-pressed') === 'true') return;
+  const [side, joueur] = b.dataset.premier.split(':');
+  const s = Number(side);
+  b.disabled = true;
+  const { error } = await supabase.rpc('choisir_premier_lanceur', { p_game: id, p_side: s, p_joueur: joueur, p_code: parLien ? codeLien : null });
+  if (error) { b.disabled = false; return message(zoneMsg, error.message); }
+  const i = idsCamps[s].indexOf(joueur);
+  idsCamps[s] = [idsCamps[s][i], idsCamps[s][1 - i]];
+  joueursCamps[s] = [joueursCamps[s][i], joueursCamps[s][1 - i]];
+  game.game_players.forEach((p) => { if (p.side === s) p.throw_order = p.id === joueur ? 1 : 2; });
+  rafraichir();
+});
+
 // Nom prononcé : le joueur qui va lancer (en double, celui du camp dont c'est le tour)
 function nomVoix(side) {
   const j = joueursCamps[side] || [];
-  if (game.mode === 'double' && j.length > 1) return j[etat.voleesTotal[side] % j.length];
+  if (game.mode === 'double' && j.length > 1) return j[etat.voleesManche[side] % j.length];
   return nomsCamps[side];
 }
 
@@ -451,6 +478,9 @@ function enregistrer() {
   enAttente = null;
   saisie = '';
   const v = { id: prochainIdLocal++, ...nouvelleVolee(etat, score, detail), local: true };
+  // Double : on note qui a lancé (le 1er lanceur choisi ouvre chaque manche) pour les stats de chacun
+  const ids = idsCamps[v.side] || [];
+  if (game.mode === 'double' && ids.length === 2) v.player_id = ids[etat.voleesManche[v.side] % 2];
   visits.push(v);
   const avant = etat;
   rafraichir();

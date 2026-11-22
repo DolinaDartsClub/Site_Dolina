@@ -8,7 +8,7 @@
 import { supabase, esc, message, erreurFr, profilConnecte, nomAffiche } from './app.js?v=__VERSION__';
 import {
   calculer, JEUX, CIBLES_MICKEY, LIBELLES_MICKEY, FINISHS, MANCHES_CAPITAL, LIBELLES_CAPITAL,
-  CENTRE_BUT, IMPOSSIBLES_301, pointsCentre, totalMickey, mancheCapital, mickeyFerme, libelleCricket, touchesFleche,
+  CENTRE_BUT, IMPOSSIBLES_301, pointsCentre, totalMickey, mancheCapital, mickeyFerme, libelleCricket, touchesFleche, CIBLES_CRICKET, simulerCricket,
 } from './pentadarts-regles.js?v=__VERSION__';
 
 const MODE = ['capital', 'cricket'].includes(new URLSearchParams(location.search).get('jeu')) ? new URLSearchParams(location.search).get('jeu') : 'pentadarts';
@@ -41,13 +41,14 @@ const REGLES = {
   finish: 'Réussir 50, 40, 36, 32, 24 puis 7, en finissant sur un double.',
   '301a': 'Le premier qui finit sur un double gagne. Les autres : classés selon leur reste.',
   '301b': 'Le premier qui finit sur un double gagne. Les autres : classés selon leur reste.',
+  cricket: 'Fermez 20, 19, 18, 17, 16, 15 et le centre (3 touches : un double compte 2, un triple 3). Une fois un numéro fermé, chaque touche en plus rapporte ses points tant qu\'un adversaire ne l\'a pas fermé. Gagne : celui qui a tout fermé avec au moins autant de points.',
   capital: '1re volée : votre capital. Ensuite, seuls les points sur la case comptent ; 0 point = capital divisé par 2.',
 };
 if (MODE === 'cricket') {
   document.title = 'Cricket – Dolina Darts Club';
   $('pd-nom-jeu').textContent = 'Cricket';
   $('pd-titre').textContent = 'Le cricket';
-  $('pd-intro').textContent = 'Fermez le 20, 19, 18, 17, 16, 15, le centre, le triple et le double (3 touches chacun), dans l\'ordre de votre choix. Un triple 20 ferme le 20 d\'un coup, ou coche une fois la case Triple. Le premier qui ferme tout gagne, à la fin du tour ; les autres sont classés selon leurs touches. Mêmes règles que dans le Pentadarts.';
+  $('pd-intro').textContent = 'Cricket classique : fermez le 20, 19, 18, 17, 16, 15 et le centre (3 touches chacun, dans l\'ordre de votre choix ; un double compte 2 touches, un triple 3, la bulle 50 compte 2 touches au centre). Une fois un numéro fermé, chaque touche en plus vous rapporte sa valeur (25 au centre) tant qu\'un adversaire ne l\'a pas fermé. Le premier qui a tout fermé avec au moins autant de points que les autres gagne la manche, tout de suite.';
   $('pd-legende-joueurs').textContent = 'Joueurs (1 à 8)';
 } else if (MODE === 'capital') {
   document.title = 'Capital – Dolina Darts Club';
@@ -258,6 +259,15 @@ const TABLEAUX = {
       <tbody>${CIBLES_MICKEY.map((c) => `<tr><th>${esc(LIBELLES_MICKEY[c] || c)}</th>${st.ordre.map((p) => `<td class="${st.touches[p][c] >= 3 ? 'pd-ferme' : ''} ${p === etat.joueur ? 'pd-actif' : ''}">${marque(st.touches[p][c])}</td>`).join('')}</tr>`).join('')}
       <tr class="pd-ligne-total"><th>Touches</th>${st.ordre.map((p) => `<td class="${p === etat.joueur ? 'pd-actif' : ''}">${totalMickey(st, p)}<small>/27</small></td>`).join('')}</tr></tbody></table></div>`;
   },
+  cricket(etat, st) {
+    const marque = (n) => ['', '/', 'X', '⊗'][n];
+    const mort = (c) => st.ordre.every((p) => st.touches[p][c] >= 3);
+    return `<div class="pd-defile"><table class="pd-table pd-table--mickey pd-table--cricket">
+      <thead><tr><th></th>${enTete(st, etat)}</tr></thead>
+      <tbody><tr class="pd-ligne-total pd-ligne-points"><th>Points</th>${st.ordre.map((p) => `<td class="${p === etat.joueur ? 'pd-actif' : ''}">${st.points[p]}</td>`).join('')}</tr>
+      ${CIBLES_CRICKET.map((c) => `<tr class="${mort(c) ? 'pd-mort' : ''}"><th>${c === 'C' ? 'Centre' : c}</th>${st.ordre.map((p) => `<td class="${st.touches[p][c] >= 3 ? 'pd-ferme' : ''} ${p === etat.joueur ? 'pd-actif' : ''}">${marque(st.touches[p][c])}</td>`).join('')}</tr>`).join('')}
+      </tbody></table></div>`;
+  },
   finish(etat, st) {
     return `<div class="pd-defile"><table class="pd-table pd-table--finish">
       <thead><tr><th></th>${enTete(st, etat)}</tr></thead>
@@ -340,11 +350,32 @@ function saisieHtml(etat) {
         <button type="button" class="touche touche--effacer" data-fleche="" ${plein ? 'disabled' : ''}>Raté</button></div>
       ${boutonValider(volee.length === 3 || (mickeyFermeAvec(st, p) && volee.length))}`;
   }
+  if (cle === 'cricket') {
+    // Cricket classique : une ligne par numéro, avec ses boutons simple / double / triple
+    const p = etat.joueur;
+    const sim = simulerCricket(st, p, volee);
+    const plein = volee.length >= 3 || sim.gagne;
+    const lignes = CIBLES_CRICKET.map((c) => {
+      // Numéro « mort » : fermé par tout le monde, il ne sert plus à rien
+      const mort = st.ordre.every((q) => sim.touches[q][c] >= 3);
+      const t = sim.touches[p][c];
+      const etatNum = mort ? 'fermé partout' : t >= 3 ? `fermé · +${valeurNum(c)} par touche` : `${t}/3`;
+      const b = (val, texte) => `<button type="button" class="touche" data-fleche="${val}" ${plein || mort ? 'disabled' : ''}>${texte}</button>`;
+      const boutons = c === 'C' ? b('C', '25') + b('C*2', '50') : b(c, c) + b(`${c}*2`, `D${c}`) + b(`${c}*3`, `T${c}`);
+      return `<div class="pd-cricket__ligne${mort ? ' pd-cricket__ligne--mort' : ''}${c === 'C' ? ' pd-cricket__ligne--centre' : ''}"><span class="pd-cricket__num">${c === 'C' ? 'Centre' : c}<small>${etatNum}</small></span>${boutons}</div>`;
+    }).join('');
+    return `${emplacements(volee.map(libelleCricket))}
+      ${sim.points[p] !== st.points[p] ? `<p class="pd-astuce">Cette volée : +${sim.points[p] - st.points[p]} points</p>` : ''}
+      <div class="pd-cricket">${lignes}
+        <button type="button" class="touche touche--effacer pd-cricket__rate" data-fleche="" ${plein ? 'disabled' : ''}>Raté</button></div>
+      ${boutonValider(volee.length === 3 || (sim.gagne && volee.length), sim.gagne ? 'Valider : manche gagnée' : 'Valider la volée')}`;
+  }
   if (cle === 'finish') return saisieReussite(FINISHS[st.etape[etat.joueur]]);
   if (cle === '301a' || cle === '301b') return saisieX01(st, etat.joueur);
   if (cle === 'capital') return saisieCapital(st);
   return '';
 }
+const valeurNum = (c) => (c === 'C' ? 25 : Number(c));
 function mickeyFermeAvec(st, p) {
   return CIBLES_MICKEY.every((c) => st.touches[p][c] + volee.filter((f) => String(f || '').split('*')[0] === c).reduce((n, f) => n + touchesFleche(f), 0) >= 3);
 }
@@ -447,7 +478,7 @@ function feuilleHtml(etat) {
     const m = etat.final?.manches || etat.manches || [];
     const liste = m.length > 1 || etat.objectif > 1
       ? `<ol class="pd-manches">${m.map((x, i) => `<li>Manche ${i + 1} : <strong>${x.gagnant !== null ? esc(nom(x.gagnant)) : '—'}</strong></li>`).join('')}</ol>` : '';
-    return liste + (m.length <= 1 ? TABLEAUX.mickey({ joueur: -1 }, etat.jeux.mickey) : '');
+    return liste + (m.length <= 1 ? TABLEAUX.cricket({ joueur: -1 }, etat.jeux.cricket) : '');
   }
   const lignes = etat.phases.map((c) => {
     const r = etat.resultats[c];
@@ -479,7 +510,7 @@ function finPartie(etat) {
     <div class="carte-info pd-fin">
       <p class="pd-fin__sur">${NOMS_MODE[MODE]} terminé</p>
       <h1 class="pd-fin__gagnant">${groupes[0].map((p) => esc(nom(p))).join(' et ')} ${groupes[0].length > 1 ? 'gagnent' : 'gagne'} !</h1>
-      <ol class="pd-podium">${podium.map(({ p, r }) => `<li class="pd-podium__ligne${r === 1 ? ' pd-podium__ligne--1' : ''}"><span class="pd-podium__rang">${r}</span><span class="pd-podium__nom">${esc(nom(p))}</span><b>${totaux[p]}<small>${MODE === 'capital' ? '' : MODE === 'cricket' ? (etat.final.unite === 'manches' ? ` manche${totaux[p] > 1 ? 's' : ''}` : ' /27') : ' pts'}</small></b></li>`).join('')}</ol>
+      <ol class="pd-podium">${podium.map(({ p, r }) => `<li class="pd-podium__ligne${r === 1 ? ' pd-podium__ligne--1' : ''}"><span class="pd-podium__rang">${r}</span><span class="pd-podium__nom">${esc(nom(p))}</span><b>${totaux[p]}<small>${MODE === 'capital' ? '' : MODE === 'cricket' ? (etat.final.unite === 'manches' ? ` manche${totaux[p] > 1 ? 's' : ''}` : ' pts') : ' pts'}</small></b></li>`).join('')}</ol>
       ${(etat.final.departages || []).length ? '<p class="match__format">Égalité au total départagée par une manche de 501.</p>' : ''}
       ${feuilleHtml(etat)}
       <p class="match__format" id="pd-etat-enregistrement"></p>

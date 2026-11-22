@@ -12,6 +12,8 @@
 //  L'ordre de départ (tiré à la bulle) tourne d'un joueur à chaque jeu.
 //  Tous les joueurs lancent le même nombre de volées, sauf au 301
 //  (le premier qui finit gagne la manche).
+//  Le cricket joué seul (Jouer › Le cricket) suit les règles classiques
+//  (15 à 20 et le centre, avec points) : voir MOTEURS.cricket.
 //  Égalité dans un jeu : départage à la bulle (le premier qui touche la
 //  bulle ou la demi-bulle prend la meilleure place) ; au finish, les
 //  joueurs bloqués sur le même finish le rejouent (le premier qui le
@@ -28,6 +30,7 @@ export const JEUX = {
   '301a': { titre: 'Le 301 (1re manche)', num: '4', points: [3, 1, 0] },
   '301b': { titre: 'Le 301 (2e manche)', num: "4'", points: [3, 1, 0] },
   capital: { titre: 'Le capital', num: '5', points: [7, 3, 0] },
+  cricket: { titre: 'Le cricket', num: 'C', points: [1] },   // cricket seul (règles classiques)
 };
 export const ORDRE_PENTADARTS = ['centre', 'mickey', 'finish', '301a', '301b', 'capital'];
 
@@ -42,6 +45,35 @@ export function libelleCricket(f) {
   if (LIBELLES_MICKEY[c]) return LIBELLES_MICKEY[c];
   return `${n === '3' ? 'T' : n === '2' ? 'D' : ''}${c}`;
 }
+// Cricket classique (joué seul) : 20 à 15 et le centre (25 ; la bulle 50 = 2 touches)
+export const CIBLES_CRICKET = ['20', '19', '18', '17', '16', '15', 'C'];
+export const valeurCricket = (c) => (c === 'C' ? 25 : Number(c));
+
+// Joue des fléchettes de cricket classique pour le joueur p (modifie touches et points).
+// Les 3 premières touches ferment le numéro ; les suivantes rapportent sa valeur
+// tant qu'au moins un adversaire ne l'a pas fermé.
+function jouerFlechesCricket(touches, points, p, fleches) {
+  (fleches || []).forEach((f) => {
+    const [c, n] = String(f || '').split('*');
+    if (!c || !CIBLES_CRICKET.includes(c)) return;
+    const coups = Number(n) || 1;
+    const fermees = Math.min(coups, 3 - touches[p][c]);
+    touches[p][c] += fermees;
+    const enPlus = coups - fermees;
+    if (enPlus > 0 && touches.some((t, q) => q !== p && t[c] < 3)) points[p] += enPlus * valeurCricket(c);
+  });
+}
+const cricketFerme = (touches, p) => CIBLES_CRICKET.every((c) => touches[p][c] >= 3);
+const cricketGagne = (touches, points, p) => cricketFerme(touches, p) && points.every((x, q) => q === p || points[p] >= x);
+
+// Ce que donnerait la volée en cours (affichage et bouton « Valider »)
+export function simulerCricket(st, p, fleches) {
+  const touches = st.touches.map((t) => ({ ...t }));
+  const points = [...st.points];
+  jouerFlechesCricket(touches, points, p, fleches);
+  return { touches, points, gagne: cricketGagne(touches, points, p) };
+}
+
 export const touchesFleche = (f) => (f ? Number(String(f).split('*')[1]) || 1 : 0);
 export const FINISHS = [50, 40, 36, 32, 24, 7];
 export const MANCHES_CAPITAL = ['$', '20', 'D', '19', 'T', '18', '57', 'C'];
@@ -107,6 +139,27 @@ const MOTEURS = {
     ferme: (st, p) => CIBLES_MICKEY.every((c) => st.touches[p][c] >= 3),
     fini(st) { return st.t > 0 && st.t % st.ordre.length === 0 && st.ordre.some((p) => this.ferme(st, p)); },
     groupes(st) { return grouper(st.ordre, (p) => this.total(st, p)); },
+  },
+
+  // Cricket classique : le premier qui a tout fermé avec au moins autant de points
+  // que chacun des autres gagne la manche, aussitôt (sans finir le tour).
+  cricket: {
+    creer: (ordre) => ({ ordre, t: 0, touches: ordre.map(() => Object.fromEntries(CIBLES_CRICKET.map((c) => [c, 0]))), points: ordre.map(() => 0), volees: ordre.map(() => []), gagnant: null }),
+    ...parTours,
+    jouer(st, a) {
+      const p = this.courant(st);
+      const fl = (a.fleches || []).slice(0, 3);
+      jouerFlechesCricket(st.touches, st.points, p, fl);
+      st.volees[p].push(fl);
+      if (cricketGagne(st.touches, st.points, p)) st.gagnant = p;
+      st.t += 1;
+    },
+    touches: (st, p) => somme(Object.values(st.touches[p])),
+    fini: (st) => st.gagnant !== null,
+    groupes(st) {
+      const autres = st.ordre.filter((p) => p !== st.gagnant);
+      return [[st.gagnant], ...grouper(autres, (p) => st.points[p] * 100 + this.touches(st, p))];
+    },
   },
 
   finish: {
@@ -254,7 +307,7 @@ function jouerDepartage(d, a, etapes, points) {
 
 export function phasesDe(config) {
   if (config.mode === 'capital') return ['capital'];
-  if (config.mode === 'cricket') return ['mickey'];   // le cricket seul : mêmes règles que dans le Pentadarts
+  if (config.mode === 'cricket') return ['cricket'];   // le cricket seul : règles classiques, avec points
   return ORDRE_PENTADARTS;
 }
 
@@ -309,12 +362,12 @@ export function calculer(config, actions) {
     // Cricket seul : un match en plusieurs manches (comme en X01)
     if (config.mode === 'cricket') {
       const gagnant = res.groupes[0].length === 1 ? res.groupes[0][0] : null;
-      etat.manches.push({ gagnant, touches: Object.fromEntries(st.ordre.map((p) => [p, MOTEURS.mickey.total(st, p)])) });
+      etat.manches.push({ gagnant, points: Object.fromEntries(st.ordre.map((p) => [p, st.points[p]])) });
       if (gagnant !== null) etat.gagnees[gagnant] += 1;
       if (Math.max(...etat.gagnees) >= etat.objectif) { finir(); return; }
       // Manche suivante : le joueur suivant commence
-      delete etat.resultats.mickey;
-      etat.jeux.mickey = MOTEURS.mickey.creer(rotation(ordre0, etat.manches.length));
+      delete etat.resultats.cricket;
+      etat.jeux.cricket = MOTEURS.cricket.creer(rotation(ordre0, etat.manches.length));
       return;
     }
     if (etat.k + 1 < phases.length) { etat.k += 1; ouvrir(etat.k); } else finir();
@@ -340,12 +393,11 @@ export function calculer(config, actions) {
   // Fin de partie : total des points ; égalité pour la 1re ou la 2e place → manche de 501
   const finir = () => {
     if (config.mode === 'cricket') {
-      // Classement du match : manches gagnées, puis touches sur toutes les manches
-      const touches = (p) => etat.manches.reduce((t, m) => t + (m.touches[p] || 0), 0);
-      const groupes = grouper(ordre0, (p) => etat.gagnees[p] * 1000 + touches(p));
-      // Une seule manche : on affiche les touches ; sinon les manches gagnées
-      const unite = etat.objectif === 1 ? 'touches' : 'manches';
-      etat.final = { groupes, unite, totaux: Object.fromEntries(ordre0.map((p) => [p, unite === 'touches' ? touches(p) : etat.gagnees[p]])), manches: etat.manches };
+      // Classement du match : manches gagnées ; une seule manche : le gagnant, puis les points
+      const pts = (p) => etat.manches.reduce((t, m) => t + (m.points[p] || 0), 0);
+      const unite = etat.objectif === 1 ? 'points' : 'manches';
+      const groupes = unite === 'points' ? etat.resultats.cricket.groupes : grouper(ordre0, (p) => etat.gagnees[p] * 1e6 + pts(p));
+      etat.final = { groupes, unite, totaux: Object.fromEntries(ordre0.map((p) => [p, unite === 'points' ? pts(p) : etat.gagnees[p]])), manches: etat.manches };
       etat.termine = true;
       return;
     }

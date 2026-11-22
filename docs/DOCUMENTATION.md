@@ -190,6 +190,10 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
   « premier à 4 manches (5 si 3-3) ».
 - Saisie : pavé, raccourcis de scores, fléchettes au double demandées à 50 ou moins, appui long = saisie du reste,
   guide de finish (masqué par défaut en tournoi), annonce vocale.
+- **Double 2 contre 2** (script 079) : avant sa première volée, chaque équipe choisit son **premier lanceur**
+  (`choisir_premier_lanceur` ; scoreur, joueur de l'équipe ou lien de la feuille CPARD). Il commence **chaque
+  manche**, puis les joueurs alternent dans la manche. Chaque volée enregistre son lanceur (`visits.player_id`),
+  ce qui fait les stats individuelles ; les anciennes parties gardent l'alternance depuis le début de la partie.
 - Parties publiques visibles en direct ; parties contre le dartbot **toujours privées** ; une partie abandonnée
   est supprimée ; toutes les parties lancées depuis Jouer sont des **parties de club** (le choix ligue/amical a été retiré).
 
@@ -343,7 +347,11 @@ Continuer en tant que visiteur » (pas sur connexion, inscription, live, article
 ### 6.8 Jeux du club et entraînement
 
 Pentadarts (5 jeux, 3 à 5 joueurs), Capital, Cricket (1 à 8 joueurs, en manches) avec reprise sur un autre
-appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expert) ; Compter une manche
+appareil. Le **cricket joué seul** suit les règles classiques (22/11/2026) : 20 à 15 et le centre, 3 touches pour
+fermer, chaque touche en plus rapporte sa valeur (25 au centre) tant qu'un adversaire n'a pas fermé ; gagne la
+manche, aussitôt, celui qui a tout fermé avec au moins autant de points que chacun des autres. Saisie : une ligne
+par numéro avec simple / double / triple. Le jeu 2 « cricket » du **Pentadarts** garde les règles du club
+(cases Double et Triple, sans points) ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expert) ; Compter une manche
 (dont match dartbot contre dartbot). « À venir » : exercices par niveau, défi du mois, tour de l'horloge.
 
 ### 6.9 Actualités, contact, administration
@@ -440,6 +448,7 @@ appareil ; Échauffement (20, 19, 18, 16, bulle puis doubles 20→1, normal/expe
 | 076 | Ligue interne visible des capitaines en lecture (`est_capitaine`, `ligue_ouverte_capitaine`) | ✅ |
 | 077 | Ligue : matchs en pause (`partie_active`, `reprendre_partie_tournoi`), départage par différence de manches, ordre des tournois | ✅ |
 | 078 | Feuille CPARD : scorer et saisie du score par le lien adverse (sans compte) et par tout membre du club | ✅ |
+| 079 | Doublettes : choix du premier lanceur de chaque équipe (`choisir_premier_lanceur`) | ⏳ |
 
 Le dossier `supabase/emails/` contient les modèles d'emails (confirmation, nouveau mot de passe) à coller dans
 Supabase › Authentication › Email Templates le jour où les emails seront activés.
@@ -488,9 +497,9 @@ d'Actions pour `outils/generer-partage.mjs`, `PG*` pour la base de test locale, 
 | `node outils/test-x01.mjs` | Règles du scorer (dont prolongation) | 18 réussis |
 | `node outils/test-dartbot.mjs` | Dartbot | 45 réussis |
 | `node outils/test-compter.mjs` | Compter une manche | 25 réussis |
-| `node outils/test-pentadarts.mjs` | Pentadarts, Capital, Cricket | 64 réussis |
+| `node outils/test-pentadarts.mjs` | Pentadarts, Capital, Cricket | 67 réussis |
 | `node outils/test-echauffement.mjs` | Échauffement | 20 réussis |
-| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (31 groupes, base neuve à chaque groupe) | **823 réussis, 0 échec** |
+| `bash outils/test-base/tout-tester.sh` | **Toute la base** : droits, tournois, ligue, feuille, niveaux… (41 groupes, base neuve à chaque groupe) | **833 réussis, 0 échec** |
 
 La base de test est un Postgres 16 local qui imite Supabase (`stub.sql`) : voir `outils/test-base/LISEZMOI.md`.
 Utilisateurs de test : Tony (admin), Will, Franck, Gérald (membres), Paul (en attente).
@@ -597,6 +606,7 @@ aller-retour pour la ligue.
 | 31/10/2026 | Relecture complète, tests remis à jour (`tout-tester.sh`), documentation et cahier des charges v2 |
 | 04/11/2026 | Feuille CPARD : vrai PDF d'une page (téléchargement réparé), signature plein écran et à distance, lien spectateurs en direct |
 | 08/11/2026 | Ligue : match à distance avec caméra (script 071, en pause) ; accueil : tournoi privé cliquable pour ses participants ; espace capitaine : bilan CPARD des joueurs (072) |
+| 22/11/2026 | Doublettes : premier lanceur choisi par chaque équipe, le même à chaque manche (079) ; cricket seul en règles classiques avec points et boutons simple / double / triple par numéro |
 | 20/11/2026 | Feuille CPARD : tout le monde peut scorer (lien adverse sans compte, membres du club) (078) |
 | 18/11/2026 | Migration vers https://dolina.mydarts.org (envoi FTPS automatique), adresses mises à jour |
 | 17/11/2026 | Ligue : matchs en pause et reprise, départage par différence de manches, ordre des tournois (077) ; liens Instagram et Facebook sur l'accueil |
