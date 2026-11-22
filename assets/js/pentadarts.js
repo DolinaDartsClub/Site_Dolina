@@ -41,7 +41,7 @@ const REGLES = {
   finish: 'Réussir 50, 40, 36, 32, 24 puis 7, en finissant sur un double.',
   '301a': 'Le premier qui finit sur un double gagne. Les autres : classés selon leur reste.',
   '301b': 'Le premier qui finit sur un double gagne. Les autres : classés selon leur reste.',
-  cricket: 'Fermez 20, 19, 18, 17, 16, 15 et le centre (3 touches : un double compte 2, un triple 3). Une fois un numéro fermé, chaque touche en plus rapporte ses points tant qu\'un adversaire ne l\'a pas fermé. Gagne : celui qui a tout fermé avec au moins autant de points.',
+  cricket: 'Fermez 20 à 15 et le centre : 3 touches chacun (double = 2, triple = 3, bulle 50 = 2). Numéro fermé : chaque touche en plus rapporte sa valeur (centre 25) tant qu\'un adversaire ne l\'a pas fermé. Gagne celui qui a tout fermé avec au moins autant de points.',
   capital: '1re volée : votre capital. Ensuite, seuls les points sur la case comptent ; 0 point = capital divisé par 2.',
 };
 if (MODE === 'cricket') {
@@ -214,7 +214,7 @@ function rendre() {
   // Cricket en manches : manche en cours et score du match
   if (MODE === 'cricket' && etat.objectif > 1) {
     $('pd-jeu-titre').textContent = `${d ? 'Départage · ' : ''}Manche ${etat.manches.length + 1}`;
-    $('pd-jeu-regle').innerHTML = `${esc(texteFormat(config.format))}<span class="pd-score-match">${config.ordre.map((p) => `${esc(nom(p))} <b>${etat.gagnees[p]}</b>`).join(' · ')}</span>`;
+    $('pd-jeu-regle').innerHTML = `${d ? '' : `${esc(REGLES.cricket)}<br>`}${esc(texteFormat(config.format))}<span class="pd-score-match">${config.ordre.map((p) => `${esc(nom(p))} <b>${etat.gagnees[p]}</b>`).join(' · ')}</span>`;
   }
   $('pd-voir-feuille').hidden = SEUL;
   $('pd-tableau').innerHTML = d ? tableauDepartage(etat, d) : TABLEAUX[cle](etat, etat.jeux[cle]);

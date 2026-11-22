@@ -108,7 +108,7 @@ Règles validées :
 - Voix de commentateur enregistrée 🟡 (annonces et prompt prêts, fichiers audio à produire).
 
 ### 6.8 Entraînement et jeux du club
-- ✅ Pentadarts, Capital, Cricket (reprise sur un autre appareil) ; Échauffement ; Compter une manche (dont dartbot contre dartbot).
+- ✅ Pentadarts, Capital, Cricket (règles classiques avec points ; reprise sur un autre appareil) ; Échauffement ; Compter une manche (dont dartbot contre dartbot).
 - ⏳ Exercices par niveau avec carnet d'entraînement ; défi du mois avec classement ; tour de l'horloge.
 
 ### 6.9 Tournois ✅
